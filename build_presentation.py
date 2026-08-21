@@ -1806,55 +1806,83 @@ def slide_aggregator_selection(prs):
             margin=0,
         )
         cursor += width
+    add_box(slide, 0.82, 4.38, 11.70, 0.64, fill=LIGHT, line=TU_RED, radius=False)
+    add_rich_text(
+        slide,
+        [
+            ("1 · HASH DRAW CONTEXT   ", TU_RED, True, 10.0),
+            (
+                "r = uint256(keccak256(prevrandao, timestamp, block number, round, "
+                "current aggregator public address))",
+                DARK,
+                True,
+                10.2,
+            ),
+        ],
+        1.02,
+        4.57,
+        11.30,
+        0.22,
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
+    )
+
+    add_box(slide, 0.82, 5.16, 5.78, 0.78, fill=BLUE_TINT, line=BLUE)
+    add_text(slide, "2 · DRAW ONE TICKET", 1.08, 5.31, 2.18, 0.20, 10.5, BLUE, True)
     add_text(
         slide,
-        "On-chain draw: hash(prevrandao, time, block, round, incumbent) mod 14 → cumulative interval",
-        1.12,
-        4.27,
-        11.08,
-        0.25,
-        11,
+        "ticket = r mod W = r mod 14  ∈  {0, …, 13}",
+        1.08,
+        5.57,
+        5.20,
+        0.22,
+        12.2,
         DARK,
         True,
         align=PP_ALIGN.CENTER,
-    )
-
-    add_box(slide, 0.82, 4.72, 5.78, 1.05, fill=GREEN_TINT, line=GREEN)
-    add_text(slide, "SCORE CHANGES", 1.08, 4.92, 1.90, 0.22, 11.5, GREEN, True)
-    add_text(
-        slide,
-        "+1 for a first accepted update or completed aggregation; −1 after defined failure, floored at zero.",
-        1.08,
-        5.22,
-        5.20,
-        0.34,
-        11.5,
-        DARK,
-        True,
         valign=MSO_ANCHOR.MIDDLE,
     )
-    add_box(slide, 6.78, 4.72, 5.74, 1.05, fill=ORANGE_TINT, line=ORANGE)
-    add_text(slide, "SCOPE", 7.04, 4.92, 1.10, 0.22, 11.5, ORANGE, True)
+    add_box(slide, 6.78, 5.16, 5.74, 0.78, fill=GREEN_TINT, line=GREEN)
+    add_text(slide, "3 · MAP TO CUMULATIVE INTERVAL", 7.04, 5.31, 3.20, 0.20, 10.5, GREEN, True)
     add_text(
         slide,
-        "Auditable weighted pseudo-random selection—not a bias-resistant randomness beacon or a quality score.",
+        "A: 0   ·   B: 1–2   ·   C: 3–6   ·   D: 7–13   |   Example: 5 → C",
         7.04,
-        5.22,
+        5.57,
         5.18,
-        0.34,
-        11.5,
+        0.22,
+        10.4,
         DARK,
         True,
+        align=PP_ALIGN.CENTER,
         valign=MSO_ANCHOR.MIDDLE,
     )
+    source = add_rich_text(
+        slide,
+        [
+            ("prevrandao pseudorandom value: ", DARK, False, 7.5),
+            ("https://eips.ethereum.org/EIPS/eip-4399", TU_RED, False, 7.5),
+        ],
+        0.90,
+        6.10,
+        11.54,
+        0.16,
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
+    )
+    source.text_frame.paragraphs[0].runs[-1].hyperlink.address = "https://eips.ethereum.org/EIPS/eip-4399"
     add_note(
         slide,
-        "Aggregator selection is weighted by recorded participation. Every currently authorized "
-        "participant receives a base weight of one, so a newcomer remains selectable. Accepted worker "
-        "updates and completed aggregations increase the corresponding score, while defined failures can "
-        "subtract one. The contract maps a hash-derived value into cumulative weight intervals. This is "
-        "auditable weighted pseudo-randomness; the block-derived entropy is not an unbiased VRF and the "
-        "score represents participation history rather than model quality.",
+        "Each authorized worker receives weight score plus one. In the example the weights sum to 14, "
+        "so the displayed probabilities are one, two, four, and seven divided by 14. For the normal "
+        "selection, the contract hashes prevrandao, the block timestamp, block number, round, and the "
+        "current aggregator public address. The resulting 256-bit value is converted to an integer and "
+        "reduced modulo the total weight. This produces one ticket from zero through 13. The ticket is "
+        "then mapped into the cumulative intervals in the displayed worker order: A receives zero, B "
+        "one through two, C three through six, and D seven through 13. A ticket of five therefore selects "
+        "Worker C. The interval widths—not the hash itself—create the probabilities. prevrandao is the "
+        "EVM-accessible beacon-chain RANDAO value specified by EIP-4399 and is pseudorandom rather than "
+        "an unbiased randomness oracle. Source: https://eips.ethereum.org/EIPS/eip-4399.",
     )
 
 
@@ -2618,67 +2646,81 @@ def slide_results(prs):
 
 
 def slide_conclusion(prs):
-    slide = new_content_slide(prs, 21, "Conclusion and outlook", "Trust-minimized—not trustless")
+    slide = new_content_slide(
+        prs,
+        21,
+        "Conclusion and outlook",
+        "Composed evidence works · next: strengthen source-to-deployment trust",
+    )
     add_box(slide, 0.70, 1.52, 5.75, 3.67, fill=GREEN_TINT, line=GREEN)
-    add_text(slide, "DEMONSTRATED", 0.98, 1.82, 2.2, 0.32, 15, GREEN, True)
+    add_text(slide, "CONCLUSION · DEMONSTRATED", 0.98, 1.82, 4.50, 0.32, 15, GREEN, True)
     add_bullets(
         slide,
         [
-            "Reproducible, fail-closed path from DFL publication to agent-mediated inference",
-            "Authoritative model selection and deterministic validation outside the language model",
-            "User-inspectable tool receipts and complete inference evidence",
+            "End-to-end chain: ledger-selected model → encrypted handoff → TDX/AIR result → three tool receipts → SCITT record",
+            "Deterministic trust path: selection, decryption, validation, and inference remain outside the language model",
+            "Fail-closed bindings: identities, freshness, artifacts, inputs, and outputs are checked across component boundaries",
         ],
         0.98,
-        2.38,
+        2.25,
         5.13,
-        2.12,
-        15,
+        2.62,
+        10.8,
         DARK,
         GREEN,
-        8,
+        6,
     )
     add_box(slide, 6.82, 1.52, 5.75, 3.67, fill=ORANGE_TINT, line=ORANGE)
-    add_text(slide, "REMAINING BOUNDARIES", 7.10, 1.82, 3.1, 0.32, 15, ORANGE, True)
+    add_text(slide, "CONCRETE NEXT STEPS", 7.10, 1.82, 3.1, 0.32, 15, ORANGE, True)
     add_bullets(
         slide,
         [
-            "TEE/dstack, policies, key custody, and ledger consensus remain trust anchors",
-            "Independent log witnesses, supply-chain provenance, and adversarial live testing remain future work",
-            "Native DICOM data, larger models, repeated runs, and a user study",
+            "Supply chain: signed source → build → image provenance, reproducible or attestable builds, verified SBOMs, image signatures, and vulnerability gates",
+            "Independent logs: replicated SCITT/CCF operators, witnessed or gossiped checkpoints, external anchoring, and split-view tests",
+            "Assurance at scale: robust aggregation and poisoning tests, native DICOM provenance, separated inference keys, and repeated runs",
         ],
         7.10,
-        2.38,
+        2.25,
         5.12,
-        2.12,
-        15,
+        2.62,
+        10.4,
         DARK,
         ORANGE,
-        8,
+        6,
     )
     add_box(slide, 1.05, 5.39, 11.20, 0.65, fill=TU_RED, line=TU_RED, radius=False)
-    add_text(slide, "CORE CONTRIBUTION", 1.30, 5.61, 1.75, 0.24, 10.5, WHITE, True)
+    add_text(slide, "CORE CONCLUSION", 1.30, 5.61, 1.75, 0.24, 10.5, WHITE, True)
     add_text(
         slide,
-        "Verifiability emerges from composing narrow, explicitly scoped evidence—not from trusting a single agent or service.",
+        "VITA-FL composes scoped evidence from decentralized model production to agent consumption—"
+        "a reproducible proof of concept, not a trustless or clinically validated platform.",
         3.12,
-        5.51,
+        5.48,
         8.78,
-        0.36,
-        14.5,
+        0.42,
+        10.8,
         WHITE,
         True,
         align=PP_ALIGN.CENTER,
         valign=MSO_ANCHOR.MIDDLE,
     )
-    add_text(slide, "Thank you · Questions?", 9.78, 6.89, 2.38, 0.22, 12, WHITE, True, align=PP_ALIGN.RIGHT)
+    add_text(slide, "Thank you · Questions?", 10.03, 6.15, 2.18, 0.22, 11, TU_RED, True, align=PP_ALIGN.RIGHT)
     add_note(
         slide,
-        "At prototype level, the research questions can be answered positively: a DFL model can be "
-        "integrated into an agent system without making the conversational model a root of trust, "
-        "provided that model selection, verification, inference, and receipt validation remain "
-        "deterministic. VITA-FL is deliberately trust-minimized rather than trustless. Its main "
-        "contribution is the composition of narrowly scoped evidence across system boundaries while "
-        "keeping the remaining hardware, policy, key-management, ledger, storage, and log assumptions explicit.",
+        "The conclusion is specific to the evaluated systems path. VITA-FL connects the ledger-selected "
+        "model, encrypted and signed handoff, TDX/AIR inference evidence, three receiver-signed tool "
+        "receipts, and SCITT recording without making the conversational model a root of trust. Exact "
+        "identities, freshness values, artifacts, inputs, and outputs are checked across component "
+        "boundaries and mismatches fail closed. The prioritized outlook follows Chapter 8. First, the "
+        "image digest needs a complete signed source-to-build-to-deployment chain through reproducible or "
+        "attestable builds, signed provenance, verified software bills of materials, image signatures, "
+        "vulnerability gates, and digest-pinned automation. Second, transparency should move to independent "
+        "operators with durable replication, witnessed or gossiped checkpoints, external anchoring, and "
+        "split-view testing. Third, assurance should expand to robust aggregation and poisoning tests, native "
+        "DICOM provenance, purpose-specific inference identities with attested key delegation, larger and "
+        "batched inference, and repeated failure-injection runs. These are future-work items, not demonstrated "
+        "properties. The result remains a reproducible proof of concept rather than a production-ready or "
+        "clinically validated platform.",
     )
 
 

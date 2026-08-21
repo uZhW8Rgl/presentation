@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 import re
+import xml.etree.ElementTree as ET
 from io import BytesIO
 from pathlib import Path
 
@@ -29,6 +30,10 @@ HEIGHT = 900
 FONT_REGULAR = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/dejavu/DejaVuSansMono.ttf"
+
+SVG_BLIP = "{http://schemas.microsoft.com/office/drawing/2016/SVG/main}svgBlip"
+REL_EMBED = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed"
+SVG_NUMBER = re.compile(r"[A-Za-z]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
 
 
 def rgb_tuple(value, fallback=(0, 0, 0)):
@@ -71,6 +76,175 @@ def text_color(run):
 
 def split_tokens(text):
     return [token for token in re.split(r"(\s+)", text) if token]
+
+
+def _svg_path_polygons(path_data, curve_steps=18):
+    """Approximate the common SVG path commands as filled polygons."""
+    tokens = SVG_NUMBER.findall(path_data.replace(",", " "))
+    index = 0
+    command = None
+    current = (0.0, 0.0)
+    start = current
+    previous_control = None
+    polygon = []
+    polygons = []
+
+    def is_command(token):
+        return len(token) == 1 and token.isalpha()
+
+    def take(count):
+        nonlocal index
+        if index + count > len(tokens) or any(is_command(token) for token in tokens[index:index + count]):
+            return None
+        values = [float(token) for token in tokens[index:index + count]]
+        index += count
+        return values
+
+    def absolute_pair(x, y, relative):
+        return (current[0] + x, current[1] + y) if relative else (x, y)
+
+    def finish_polygon():
+        nonlocal polygon
+        if len(polygon) >= 3:
+            polygons.append(polygon)
+        polygon = []
+
+    while index < len(tokens):
+        if is_command(tokens[index]):
+            command = tokens[index]
+            index += 1
+        if command is None:
+            break
+
+        relative = command.islower()
+        op = command.upper()
+        if op == "Z":
+            if polygon and polygon[-1] != start:
+                polygon.append(start)
+            current = start
+            finish_polygon()
+            previous_control = None
+            command = None
+            continue
+
+        if op == "M":
+            values = take(2)
+            if values is None:
+                command = None
+                continue
+            point = absolute_pair(values[0], values[1], relative)
+            if polygon:
+                finish_polygon()
+            polygon = [point]
+            current = start = point
+            previous_control = None
+            command = "l" if relative else "L"
+            continue
+
+        if op == "L":
+            values = take(2)
+            if values is None:
+                command = None
+                continue
+            current = absolute_pair(values[0], values[1], relative)
+            polygon.append(current)
+            previous_control = None
+            continue
+
+        if op == "H":
+            values = take(1)
+            if values is None:
+                command = None
+                continue
+            current = (current[0] + values[0] if relative else values[0], current[1])
+            polygon.append(current)
+            previous_control = None
+            continue
+
+        if op == "V":
+            values = take(1)
+            if values is None:
+                command = None
+                continue
+            current = (current[0], current[1] + values[0] if relative else values[0])
+            polygon.append(current)
+            previous_control = None
+            continue
+
+        if op in {"C", "S"}:
+            values = take(6 if op == "C" else 4)
+            if values is None:
+                command = None
+                continue
+            p0 = current
+            if op == "C":
+                p1 = absolute_pair(values[0], values[1], relative)
+                p2 = absolute_pair(values[2], values[3], relative)
+                p3 = absolute_pair(values[4], values[5], relative)
+            else:
+                p1 = (
+                    2 * p0[0] - previous_control[0],
+                    2 * p0[1] - previous_control[1],
+                ) if previous_control else p0
+                p2 = absolute_pair(values[0], values[1], relative)
+                p3 = absolute_pair(values[2], values[3], relative)
+            for step in range(1, curve_steps + 1):
+                t = step / curve_steps
+                u = 1 - t
+                polygon.append((
+                    u ** 3 * p0[0] + 3 * u ** 2 * t * p1[0] + 3 * u * t ** 2 * p2[0] + t ** 3 * p3[0],
+                    u ** 3 * p0[1] + 3 * u ** 2 * t * p1[1] + 3 * u * t ** 2 * p2[1] + t ** 3 * p3[1],
+                ))
+            current = p3
+            previous_control = p2
+            continue
+
+        # Unsupported commands are skipped safely instead of breaking all previews.
+        command = None
+
+    if polygon:
+        finish_polygon()
+    return polygons
+
+
+def _svg_picture(shape, width, height):
+    svg_blip = shape._element.find(f".//{SVG_BLIP}")
+    if svg_blip is None:
+        return None
+    relation_id = svg_blip.get(REL_EMBED)
+    if not relation_id:
+        return None
+    blob = shape.part.related_part(relation_id).blob
+    root = ET.fromstring(blob)
+    view_box = [float(value) for value in root.attrib.get("viewBox", "0 0 1 1").replace(",", " ").split()]
+    if len(view_box) != 4 or view_box[2] == 0 or view_box[3] == 0:
+        return None
+    vx, vy, vw, vh = view_box
+    antialias = 4
+    raster_width = max(1, width * antialias)
+    raster_height = max(1, height * antialias)
+    raster = Image.new("RGBA", (raster_width, raster_height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(raster)
+
+    for element in root.iter():
+        if not element.tag.endswith("path") or not element.get("d"):
+            continue
+        fill = element.get("fill", "#000000")
+        if fill == "none" or not fill.startswith("#"):
+            continue
+        if len(fill) == 4:
+            fill = "#" + "".join(character * 2 for character in fill[1:])
+        color = tuple(int(fill[offset:offset + 2], 16) for offset in (1, 3, 5)) + (255,)
+        for polygon in _svg_path_polygons(element.get("d")):
+            points = [
+                (
+                    round((x - vx) / vw * raster_width),
+                    round((y - vy) / vh * raster_height),
+                )
+                for x, y in polygon
+            ]
+            draw.polygon(points, fill=color)
+    return raster.resize((max(1, width), max(1, height)), Image.Resampling.LANCZOS)
 
 
 def paragraph_lines(draw, paragraph, max_width, scale):
@@ -177,9 +351,15 @@ def render_shape(canvas, shape, sx, sy):
         return
 
     if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        image = Image.open(BytesIO(shape.image.blob)).convert("RGBA")
-        image = image.resize((max(1, x1 - x0), max(1, y1 - y0)), Image.Resampling.LANCZOS)
-        layer.alpha_composite(image, (x0, y0))
+        target_width = max(1, x1 - x0)
+        target_height = max(1, y1 - y0)
+        try:
+            image = Image.open(BytesIO(shape.image.blob)).convert("RGBA")
+            image = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+        except ValueError:
+            image = _svg_picture(shape, target_width, target_height)
+        if image is not None:
+            layer.alpha_composite(image, (x0, y0))
 
     elif shape.shape_type == MSO_SHAPE_TYPE.LINE:
         transform = shape._element.spPr.xfrm
