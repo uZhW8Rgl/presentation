@@ -447,6 +447,8 @@ def render_slide(prs, slide):
 
 def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    for stale_preview in OUTPUT.glob("slide-[0-9][0-9].png"):
+        stale_preview.unlink()
     prs = Presentation(DECK)
     previews = []
     for index, slide in enumerate(prs.slides, 1):
