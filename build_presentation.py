@@ -238,6 +238,7 @@ def add_metric_chart(
     y_max,
     y_ticks,
     reference=None,
+    descriptor=None,
 ):
     add_box(slide, x, y, w, h, fill=WHITE, line=BORDER, line_width=1.0)
     add_text(
@@ -254,17 +255,33 @@ def add_metric_chart(
         valign=MSO_ANCHOR.MIDDLE,
     )
 
+    if descriptor:
+        add_text(
+            slide,
+            descriptor,
+            x + 0.16,
+            y + 0.35,
+            w - 0.32,
+            0.27,
+            7.2,
+            "686868",
+            True,
+            align=PP_ALIGN.CENTER,
+            valign=MSO_ANCHOR.MIDDLE,
+            margin=0,
+        )
+
     legend = [(10, BLUE), (50, TU_RED), (100, GREEN)]
     legend_width = min(2.92, w - 0.40)
     legend_x = x + (w - legend_width) / 2
     for index, (participants, color) in enumerate(legend):
         item_x = legend_x + index * (legend_width / 3)
-        add_line_segment(slide, item_x, y + 0.49, item_x + 0.24, y + 0.49, color, 2.0)
+        add_line_segment(slide, item_x, y + 0.72, item_x + 0.24, y + 0.72, color, 2.0)
         add_text(
             slide,
             f"N={participants}",
             item_x + 0.29,
-            y + 0.42,
+            y + 0.65,
             0.60,
             0.15,
             7.5,
@@ -275,9 +292,9 @@ def add_metric_chart(
         )
 
     plot_x = x + 0.52
-    plot_y = y + 0.73
+    plot_y = y + 0.94
     plot_w = w - 0.72
-    plot_h = h - 1.22
+    plot_h = h - 1.48
     x_ticks = (2, 10, 20, 30, 40, 50)
 
     for value, label in y_ticks:
@@ -296,6 +313,19 @@ def add_metric_chart(
             valign=MSO_ANCHOR.MIDDLE,
             margin=0,
         )
+    add_text(
+        slide,
+        "Round",
+        plot_x,
+        plot_y + plot_h + 0.23,
+        plot_w,
+        0.15,
+        7.2,
+        "686868",
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
+        margin=0,
+    )
     for round_number in x_ticks:
         px = plot_x + ((round_number - 2) / 48) * plot_w
         add_line_segment(slide, px, plot_y, px, plot_y + plot_h, "E8E8E8", 0.45)
@@ -2765,6 +2795,7 @@ def slide_learning_trajectories(prs):
         0.17,
         0.65,
         [(0.20, "0.20"), (0.30, "0.30"), (0.40, "0.40"), (0.50, "0.50"), (0.60, "0.60")],
+        descriptor="Lower is better · ideal 0 · here: imbalance-driven decline",
     )
     add_metric_chart(
         slide,
@@ -2778,11 +2809,12 @@ def slide_learning_trajectories(prs):
         0.0,
         56.0,
         [(0, "0"), (10, "10"), (20, "20"), (30, "30"), (40, "40"), (50, "50")],
+        descriptor="All 14 labels correct · ideal 100% · 53% ≈ all-negative baseline",
     )
     findings = [
-        ("LOSS", "≈ 0.62  →  ≈ 0.188", BLUE_TINT, BLUE),
-        ("EXACT MATCH", "≈ 0%  →  ≈ 53.16%", GREEN_TINT, GREEN),
-        ("OBSERVATION", "Nearly identical curves at all three tested scales", LIGHT, DARK),
+        ("LOSS ↓", "0.62 → 0.19; negative-label fit", BLUE_TINT, BLUE),
+        ("EXACT ↑", "53.16% ≈ 53.17% all-negative baseline", GREEN_TINT, GREEN),
+        ("JOINT VIEW", "Optimization ≠ useful learning", LIGHT, DARK),
     ]
     for index, (heading, body, fill, accent) in enumerate(findings):
         x = 0.65 + index * 4.15
@@ -2795,7 +2827,7 @@ def slide_learning_trajectories(prs):
             5.64,
             2.52,
             0.24,
-            9.8,
+            9.2,
             DARK,
             True,
             align=PP_ALIGN.CENTER,
@@ -2804,8 +2836,15 @@ def slide_learning_trajectories(prs):
     add_note(
         slide,
         "The three completed ChestMNIST runs each expose forty-nine learned global models from rounds "
-        "two through fifty; round one is the bootstrap state. Loss falls from approximately 0.62 to "
-        "0.188 and exact match rises to approximately fifty-three percent. The trajectories for ten, "
+        "two through fifty; round one is the bootstrap state. Binary cross-entropy is the mean "
+        "probabilistic error across the fourteen independent labels; lower is better and zero is the "
+        "theoretical optimum. Exact match counts a sample only when its complete fourteen-label vector "
+        "is correct; higher is better and one hundred percent is the optimum. Loss falls from "
+        "approximately 0.62 to 0.188 and exact match rises to approximately fifty-three percent. However, "
+        "53.1717 percent of the 22,433 test samples have a completely negative fourteen-label vector, so the "
+        "53.11 to 53.16 percent endpoint is effectively the all-negative baseline. The unweighted binary "
+        "cross-entropy objective makes this majority-negative shortcut attractive: falling loss confirms "
+        "optimization of the recorded objective, not useful positive-finding discrimination. The trajectories for ten, "
         "fifty, and one hundred participants almost overlap. This is an observed single run per scale, "
         "so it validates repeatable local protocol simulation but is not evidence of distributed scale, "
         "confidential-VM scalability, or statistical scale invariance.",
@@ -2833,6 +2872,7 @@ def slide_learning_quality(prs):
         0.515,
         [(0.49, "0.49"), (0.50, "0.50"), (0.51, "0.51")],
         reference=0.50,
+        descriptor="Ranking quality · ideal 1 · ≈0.5 = chance-level discrimination",
     )
     add_metric_chart(
         slide,
@@ -2846,6 +2886,7 @@ def slide_learning_quality(prs):
         0.0,
         0.11,
         [(0.00, "0.00"), (0.05, "0.05"), (0.10, "0.10")],
+        descriptor="Overall positive detection · ideal 1 · ≈0 = positives missed",
     )
     add_metric_chart(
         slide,
@@ -2859,27 +2900,35 @@ def slide_learning_quality(prs):
         0.0,
         0.11,
         [(0.00, "0.00"), (0.05, "0.05"), (0.10, "0.10")],
+        descriptor="Equal-weight label detection · ideal 1 · ≈0 = broad failure",
     )
-    add_box(slide, 1.00, 5.57, 11.33, 0.51, fill=TU_RED, line=TU_RED, radius=False)
-    add_text(
-        slide,
-        "The model converges toward majority-negative predictions: protocol execution succeeds, diagnostic learning quality does not.",
-        1.24,
-        5.68,
-        10.85,
-        0.27,
-        12.2,
-        WHITE,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
+    interpretations = [
+        (0.50, 3.92, "AUROC ≈ 0.50", "Little ranking signal", BLUE_TINT, BLUE),
+        (4.71, 3.92, "MICRO F1 ≈ 0", "Positive findings are missed", ORANGE_TINT, ORANGE),
+        (8.92, 3.92, "MACRO F1 ≈ 0", "Failure spans the labels", PURPLE_TINT, PURPLE),
+    ]
+    for x, width, heading, body, fill, accent in interpretations:
+        add_box(slide, x, 5.55, width, 0.56, fill=fill, line=accent)
+        add_text(slide, heading, x + 0.12, 5.63, width - 0.24, 0.17, 9.2, accent, True, align=PP_ALIGN.CENTER)
+        add_text(slide, body, x + 0.12, 5.84, width - 0.24, 0.16, 8.8, DARK, True, align=PP_ALIGN.CENTER)
     add_note(
         slide,
-        "The optimization curves must not be read as clinical success. At round fifty, macro AUROC is "
+        "Macro AUROC measures per-label ranking quality and then gives every label equal weight; one is "
+        "ideal and 0.5 is chance-level ranking. Micro F1 pools all positive-label decisions, so frequent "
+        "labels have more influence. Macro F1 first evaluates each label and then averages them equally, "
+        "making rare-label failure more visible. Both F1 scores have an optimum of one at the fixed 0.5 "
+        "decision threshold. An F1 value near zero alone could be caused by class imbalance or a poorly "
+        "calibrated threshold. Here, however, macro AUROC is also near its threshold-independent chance "
+        "level, which supplies additional evidence that the scores contain little useful ranking signal. "
+        "Across the recorded runs, the best macro AUROC is 0.508392 for one hundred "
+        "participants at round fifty. The largest micro and macro F1 values, 0.104170 and 0.078440, both "
+        "occur for one hundred participants at round two before the trajectories collapse. The optimization "
+        "curves must not be read as clinical success. At round fifty, macro AUROC is "
         "approximately 0.504, 0.507, and 0.508 for ten, fifty, and one hundred participants. Micro F1 "
         "falls to about 0.0001 and macro F1 to about 0.0005 to 0.001. Loss reduction and rising exact "
-        "match are therefore explained by majority-negative behavior under severe class imbalance. "
+        "match are therefore explained by a majority-negative shortcut favored by severe class imbalance "
+        "and the unweighted binary cross-entropy objective. The dataset makes this failure mode plausible, "
+        "but the result still means that these runs did not learn a useful multilabel classifier. "
         "These local runs validate protocol execution at the simulated logical participant counts, not "
         "distributed-system scalability or diagnostic utility.",
     )
