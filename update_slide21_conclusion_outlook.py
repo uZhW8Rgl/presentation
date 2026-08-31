@@ -82,8 +82,8 @@ def main():
     add_bullets(
         slide,
         [
-            "End-to-end chain: ledger-selected model → encrypted handoff → TDX/AIR result → three tool receipts → SCITT record",
-            "Deterministic trust path: selection, decryption, validation, and inference remain outside the language model",
+            "End-to-end chain: ledger-authoritative model → encrypted handoff → TDX/AIR result → three tool receipts → SCITT record",
+            "Deterministic trust path: FedAvg, finalization, decryption, validation, and inference remain outside the language model",
             "Fail-closed bindings: identities, freshness, artifacts, inputs, and outputs are checked across component boundaries",
         ],
         0.98,
@@ -138,7 +138,7 @@ def main():
 
     add_note(
         slide,
-        "The conclusion is specific to the evaluated systems path. VITA-FL connects the ledger-selected "
+        "The conclusion is specific to the evaluated systems path. VITA-FL connects the ledger-authoritative "
         "model, encrypted and signed handoff, TDX/AIR inference evidence, three receiver-signed tool "
         "receipts, and SCITT recording without making the conversational model a root of trust. Exact "
         "identities, freshness values, artifacts, inputs, and outputs are checked across component "

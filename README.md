@@ -19,7 +19,7 @@ official TU Berlin branding.
 - `assets/xray_concept.png`: realistic, anonymized chest-radiograph motif used on Page 3
 - `assets/physician-editorial-illustration-tablet.png`: illustrated physician used on Page 3
 - `assets/computer-scientist-editorial-illustration.png`: illustrated computer scientist used on Page 4
-- `data/evaluation/authoritative_phala_6w_24r*.{csv,json}`: the sole archived six-worker, 24-round Phala run, including simulated Anvil gas accounting, used by every evaluation slide; the generator records the run-specific Tier-1 allocation of six worker and two infrastructure TEE slots
+- `data/evaluation/authoritative_phala_6w_24r*.{csv,json}`: the sole archived six-worker, 24-round Phala run under a legacy experimental aggregation configuration, including simulated Anvil gas accounting, used by every evaluation slide; the generator records the run-specific Tier-1 allocation of six worker and two infrastructure TEE slots
 - `requirements.txt`: pinned Python dependencies
 
 Every page contains English speaker notes. The PNG renderer is intended only
@@ -44,8 +44,8 @@ Pages 23–39 are backup material and are not included in the timing below.
 | 9 | Intel-backed attestation and app-bound dstack keys | 0:55 |
 | 10 | Weighted aggregator selection | 0:40 |
 | 11 | Quorum recovery and aggregator replacement | 0:45 |
-| 12 | Freeze → Compare → Finalize | 0:50 |
-| 13 | Original Hybrid-R aggregate selection and VITA-FL parent fallback | 0:55 |
+| 12 | Freeze → FedAvg → Finalize | 0:50 |
+| 13 | Original Hybrid-R aggregate selection as related work | 0:55 |
 | 14 | Model handoff | 0:40 |
 | 15 | Sello proposal and the selectively adopted VITA-FL profile | 0:45 |
 | 16 | Agent-mediated attested inference | 0:55 |

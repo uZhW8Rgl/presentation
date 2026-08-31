@@ -315,7 +315,6 @@ def add_run_metric_chart(
     reference=None,
     reference_label=None,
     descriptor=None,
-    shade_plateau=True,
 ):
     add_box(slide, x, y, w, h, fill=WHITE, line=BORDER, line_width=1.0)
     add_text(
@@ -354,23 +353,6 @@ def add_run_metric_chart(
     plot_h = h - 1.31
     x_ticks = (2, 6, 11, 18, 25)
     x_min, x_max = 2, 25
-
-    plateau_bounds = None
-    if shade_plateau:
-        start_x = plot_x + ((18 - x_min) / (x_max - x_min)) * plot_w
-        end_x = plot_x + ((24 - x_min) / (x_max - x_min)) * plot_w
-        plateau_bounds = (start_x, end_x)
-        add_box(
-            slide,
-            start_x,
-            plot_y,
-            max(0.05, end_x - start_x),
-            plot_h,
-            fill=ORANGE_TINT,
-            line=ORANGE_TINT,
-            radius=False,
-            line_width=0.2,
-        )
 
     for value, label in y_ticks:
         py = plot_y + plot_h - ((value - y_min) / (y_max - y_min)) * plot_h
@@ -447,36 +429,6 @@ def add_run_metric_chart(
     for index in (0, len(points) - 1):
         px, py = points[index]
         add_oval(slide, px - 0.045, py - 0.045, 0.09, 0.09, color, color, 0.5)
-    if plateau_bounds:
-        start_x, end_x = plateau_bounds
-        label_w = max(0.30, end_x - start_x - 0.04)
-        add_box(
-            slide,
-            start_x + 0.02,
-            plot_y + 0.01,
-            label_w,
-            0.22,
-            fill=ORANGE_TINT,
-            line=ORANGE_TINT,
-            radius=False,
-            line_width=0.2,
-        )
-        add_text(
-            slide,
-            "PARENT FALLBACK",
-            start_x + 0.02,
-            plot_y + 0.035,
-            label_w,
-            0.16,
-            5.7,
-            ORANGE,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-            margin=0,
-        )
-
-
 def add_bezier_arrow(
     slide,
     start,
@@ -2209,209 +2161,141 @@ def slide_close_compare_commit(prs):
     slide = new_content_slide(
         prs,
         13,
-        "Freeze → Compare → Finalize",
-        "One frozen submission set · one policy decision · one finalized round",
+        "Freeze → FedAvg → Finalize",
+        "One frozen submission set · one deterministic mean · one finalized round",
     )
 
-    candidate_nodes = [
-        (3.28, 1.94, "MEAN", 8.7),
-        (3.28, 2.78, "MEDIAN", 8.3),
-        (3.28, 3.62, "TRIMMED", 7.8),
-        (3.28, 4.46, "MULTI-\nKRUM", 8.2),
+    stages = [
+        (0.62, 2.10, 2.34, 2.42, BLUE_TINT, BLUE, "1 · FREEZE", "accepted updates", "ordered commitments\nclosed root + count"),
+        (3.45, 1.72, 3.42, 3.18, GREEN_TINT, GREEN, "2 · AGGREGATE", "EQUAL-WEIGHT FEDAVG", "for every state-dict tensor:\narithmetic mean across all\naccepted client models"),
+        (7.36, 2.10, 2.34, 2.42, PURPLE_TINT, PURPLE, "3 · BIND", "signed statement", "round + policy\nroot + count + output"),
+        (10.18, 2.10, 2.52, 2.42, RED_TINT, TU_RED, "4 · FINALIZE", "authoritative model", "atomic publication\n+ round transition"),
     ]
+    for first, second in zip(stages, stages[1:]):
+        add_arrow(slide, first[0] + first[2] + 0.08, 3.31, second[0] - 0.08, 3.31, MID, 1.8)
+    for x, y, w, h, fill, line, step, heading, body in stages:
+        add_box(slide, x, y, w, h, fill=fill, line=line, radius=True, line_width=1.5)
+        add_text(slide, step, x + 0.16, y + 0.22, w - 0.32, 0.22, 9.4, line, True, align=PP_ALIGN.CENTER)
+        add_text(slide, heading, x + 0.16, y + 0.69, w - 0.32, 0.32, 12.0, DARK, True, align=PP_ALIGN.CENTER)
+        add_text(slide, body, x + 0.16, y + 1.30, w - 0.32, 0.74, 9.0, DARK, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE)
 
-    # Draw the fan-out/fan-in first so all native decision nodes remain in the foreground.
-    for _, y, _, _ in candidate_nodes:
-        add_bezier_arrow(slide, (2.31, 3.30), (2.70, y + 0.46), (3.16, y + 0.46), BLUE, 1.35, segments=10)
-        add_bezier_arrow(slide, (4.28, y + 0.46), (4.74, y + 0.46), (5.13, 3.30), ORANGE, 1.35, segments=10)
-    add_arrow(slide, 5.13, 3.30, 7.83, 3.30, TU_RED, 1.8)
-    add_bezier_arrow(slide, (9.51, 2.76), (9.72, 2.59), (9.88, 2.59), GREEN, 1.5, segments=10)
-    add_bezier_arrow(slide, (9.51, 3.85), (9.72, 4.01), (9.88, 4.01), ORANGE, 1.5, segments=10)
-    add_bezier_arrow(slide, (11.26, 2.59), (11.45, 2.59), (11.57, 2.93), GREEN, 1.5, segments=10)
-    add_bezier_arrow(slide, (11.26, 4.01), (11.45, 4.01), (11.57, 3.67), ORANGE, 1.5, segments=10)
-
-    add_auto_shape(slide, MSO_AUTO_SHAPE_TYPE.FLOWCHART_DATA, 0.62, 2.55, 1.58, 1.50, BLUE_TINT, BLUE, 1.5)
-    add_text(slide, "FREEZE", 0.86, 2.73, 1.10, 0.24, 13.0, BLUE, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "WORKER\nSUBMISSIONS", 0.78, 3.08, 1.27, 0.55, 11.5, DARK, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "ordered signed commitments\nroot rₙ · count n", 0.67, 4.20, 1.49, 0.45, 8.3, DARK, align=PP_ALIGN.CENTER)
-
-    add_text(slide, "CANDIDATE FAN-OUT", 2.72, 1.72, 2.15, 0.20, 9.4, ORANGE, True, align=PP_ALIGN.CENTER)
-    for x, y, label, size in candidate_nodes:
-        add_oval(slide, x, y, 0.96, 0.96, ORANGE_TINT, ORANGE, 1.2)
-        add_text(
-            slide,
-            label,
-            x + 0.08,
-            y + 0.28 if "\n" not in label else y + 0.20,
-            0.80,
-            0.40,
-            size,
-            ORANGE,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-            margin=0,
-        )
-    add_text(slide, "eligible variants · Multi-Krum requires ≥ 5 inputs", 2.24, 5.49, 3.02, 0.22, 8.2, DARK, align=PP_ALIGN.CENTER)
-
-    add_text(slide, "COMPARE VALIDATION LOSS", 5.40, 2.82, 2.16, 0.22, 9.4, TU_RED, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "same signed · hash-pinned set", 5.40, 3.47, 2.16, 0.20, 8.1, DARK, align=PP_ALIGN.CENTER)
-
-    add_auto_shape(slide, MSO_AUTO_SHAPE_TYPE.FLOWCHART_DECISION, 7.86, 2.39, 1.83, 1.83, ORANGE_TINT, ORANGE, 1.5)
-    add_text(slide, "L(best) ≤", 8.18, 2.79, 1.19, 0.21, 10.0, ORANGE, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "1.05 × L(parent)?", 8.10, 3.08, 1.35, 0.38, 9.2, DARK, True, align=PP_ALIGN.CENTER)
-
-    add_box(slide, 9.91, 2.25, 1.35, 0.68, fill=GREEN_TINT, line=GREEN, line_width=1.3)
-    add_text(slide, "YES", 10.08, 2.34, 1.01, 0.17, 8.4, GREEN, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "BEST CANDIDATE", 10.01, 2.57, 1.15, 0.18, 7.6, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 9.91, 3.67, 1.35, 0.68, fill=ORANGE_TINT, line=ORANGE, line_width=1.3)
-    add_text(slide, "NO", 10.08, 3.76, 1.01, 0.17, 8.4, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "PARENT MODEL", 10.01, 3.99, 1.15, 0.18, 7.6, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 11.58, 2.52, 1.20, 1.56, fill=LIGHT, line=TU_RED, line_width=1.5)
-    add_text(slide, "FINALIZE", 11.69, 2.80, 0.98, 0.22, 10.0, TU_RED, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "ROUND", 11.69, 3.12, 0.98, 0.27, 13.0, DARK, True, align=PP_ALIGN.CENTER)
+    add_box(slide, 2.05, 5.20, 9.24, 0.63, fill=LIGHT, line=BORDER, radius=True, line_width=1.0)
     add_text(
         slide,
-        "record the chosen\nmodel + evidence",
-        11.63,
-        3.50,
-        1.10,
-        0.38,
-        7.2,
-        DARK,
-        align=PP_ALIGN.CENTER,
-    )
-
-    add_note(
-        slide,
-        "This slide separates two decisions that are easy to conflate. The weighted draw selects which "
-        "authorized worker may act as aggregator. Once the accepted update set is closed, Hybrid-R-style "
-        "policy determines which aggregation result may be published. The ledger freezes the worker-submission "
-        "set as an ordered root "
-        "and explicit count; the measured aggregator must stage that same set. It computes every candidate "
-        "eligible for the participant count: arithmetic mean, coordinate median, symmetric trimmed means, "
-        "and Multi-Krum from five inputs onward. Candidates are evaluated on one separately signed and "
-        "hash-pinned validation artifact. The best finite candidate is retained only when its loss is at "
-        "most five percent above the parent loss; otherwise the unchanged parent is emitted. These are "
-        "mutually exclusive outcomes: the round records either the selected candidate or the retained parent. "
-        "One ledger transaction then binds the closed set, policy, evidence, output, encrypted publication references, "
-        "publisher authority, and round transition. In the sole end-to-end Phala run, the round-18 candidate "
-        "became the parent, the VITA-FL parent gate retained it for global rounds 19 through 24, and the round-25 "
-        "candidate narrowly passed the five-percent validation-loss gate. This evaluates selection and "
-        "fallback behavior under ordinary training; it is not a live poisoning campaign.",
-    )
-
-
-def slide_hybrid_r_code_sequence(prs):
-    slide = new_content_slide(
-        prs,
-        13,
-        "Hybrid-R-style: aggregate first, select once",
-        "Original Hybrid-R compares aggregate candidates · VITA-FL adds the parent-model gate",
-    )
-
-    # Background zones first, then connectors, then foreground content.
-    add_box(slide, 0.48, 1.38, 2.38, 4.26, fill=BLUE_TINT, line=BLUE, radius=True, line_width=1.2)
-    add_box(slide, 8.47, 1.38, 4.35, 4.26, fill=LIGHT, line=MID, radius=True, line_width=1.0)
-
-    # The selected aggregator receives the one shared update pool and runs every rule.
-    add_arrow(slide, 1.67, 2.55, 1.67, 3.16, BLUE, 1.8)
-    add_arrow(slide, 2.10, 3.56, 3.08, 3.56, DARK, 1.9)
-    add_line_segment(slide, 3.08, 1.85, 3.08, 5.16, color=MID, width=1.5)
-    for branch_y, branch_color in ((1.85, BLUE), (2.95, PURPLE), (4.05, ORANGE), (5.15, GREEN)):
-        add_arrow(slide, 3.08, branch_y, 3.34, branch_y, branch_color, 1.7)
-
-    # Four aggregation candidates flow into one simple round-level choice.
-    for source_y, source_color in ((1.85, BLUE), (2.95, PURPLE), (4.05, ORANGE), (5.15, GREEN)):
-        add_arrow(slide, 8.02, source_y, 8.72, 2.18, source_color, 1.5)
-    add_arrow(slide, 10.65, 2.48, 10.65, 2.69, PURPLE, 1.8)
-    add_arrow(slide, 10.65, 3.38, 10.65, 3.57, ORANGE, 1.8)
-    add_arrow(slide, 10.65, 4.27, 9.58, 4.61, GREEN, 1.8)
-    add_arrow(slide, 10.65, 4.27, 11.72, 4.61, BLUE, 1.8)
-
-    # Input pool: five learner updates; the aggregator is intentionally not a sixth update.
-    add_text(slide, "ROUND INPUT", 0.72, 1.62, 1.90, 0.22, 10.7, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "5 LEARNER UPDATES", 0.68, 1.95, 1.98, 0.20, 9.2, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-    for index in range(5):
-        chip_x = 0.71 + index * 0.39
-        add_oval(slide, chip_x, 2.22, 0.32, 0.32, fill=BLUE, line=WHITE, line_width=0.8)
-        add_text(slide, str(index + 1), chip_x, 2.28, 0.32, 0.14, 7.5, WHITE, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_oval(slide, 1.27, 3.16, 0.80, 0.80, fill=ORANGE_TINT, line=ORANGE, line_width=1.5)
-    add_text(slide, "Σ", 1.27, 3.30, 0.80, 0.34, 20.0, ORANGE, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
-    add_text(slide, "SELECTED AGGREGATOR", 0.72, 4.16, 1.90, 0.20, 9.0, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "combines the five updates\nno local update of its own", 0.72, 4.48, 1.90, 0.54, 9.0, DARK, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
-    add_text(slide, "NO PER-UPDATE BCE GATE", 0.67, 5.16, 2.00, 0.18, 7.8, TU_RED, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "same pool for every rule", 0.72, 5.37, 1.90, 0.18, 7.8, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
-
-    method_rows = (
-        (1.42, BLUE_TINT, BLUE, "5/5", "FEDAVG", "all five complete updates · equal mean"),
-        (2.52, PURPLE_TINT, PURPLE, "3RD / θ", "COORDINATE MEDIAN", "middle value per parameter · not one whole learner"),
-        (3.62, ORANGE_TINT, ORANGE, "q=1/2", "TRIMMED MEAN", "q=1: mean 3/5 · q=2: middle only (= median)"),
-        (4.72, GREEN_TINT, GREEN, "2/5", "MULTI-KRUM", "distance-score all 5 whole updates · average selected 2"),
-    )
-    for row_y, row_fill, row_line, badge, heading, explanation in method_rows:
-        add_box(slide, 3.34, row_y, 4.68, 0.86, fill=row_fill, line=row_line, radius=True, line_width=1.25)
-        add_oval(slide, 3.56, row_y + 0.17, 0.78, 0.52, fill=WHITE, line=row_line, line_width=1.1)
-        add_text(slide, badge, 3.56, row_y + 0.30, 0.78, 0.17, 9.0, row_line, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
-        add_text(slide, heading, 4.57, row_y + 0.13, 3.12, 0.20, 10.2, row_line, True, margin=0)
-        add_text(slide, explanation, 4.57, row_y + 0.43, 3.12, 0.27, 8.5, DARK, margin=0)
-
-    # Candidate selection deliberately omits signing and publication details.
-    add_text(slide, "WHICH AGGREGATE COUNTS?", 8.78, 1.52, 3.72, 0.22, 10.3, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-    for index, (label, color) in enumerate((("F", BLUE), ("M", PURPLE), ("T1", ORANGE), ("T2", ORANGE), ("K", GREEN))):
-        candidate_x = 9.24 + index * 0.53
-        add_oval(slide, candidate_x, 1.91, 0.34, 0.34, fill=color, line=WHITE, line_width=0.8)
-        add_text(slide, label, candidate_x, 1.98, 0.34, 0.14, 6.8, WHITE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "five aggregate candidates · one shared reference", 8.88, 2.32, 3.54, 0.18, 7.7, DARK, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 8.88, 2.70, 3.54, 0.68, fill=PURPLE_TINT, line=PURPLE, radius=True, line_width=1.25)
-    add_text(slide, "ORIGINAL HYBRID-R", 9.07, 2.79, 3.16, 0.16, 7.6, PURPLE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "lowest aggregate BCE = L(best)", 9.07, 3.05, 3.16, 0.18, 9.0, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 8.88, 3.58, 3.54, 0.69, fill=ORANGE_TINT, line=ORANGE, radius=True, line_width=1.25)
-    add_text(slide, "VITA-FL EXTENSION", 9.07, 3.67, 3.16, 0.16, 7.6, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "L(best) ≤ 1.05 × L(parent)?", 9.07, 3.94, 3.16, 0.18, 9.0, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 8.67, 4.62, 1.82, 0.76, fill=GREEN_TINT, line=GREEN, radius=True, line_width=1.35)
-    add_text(slide, "YES", 8.87, 4.72, 1.42, 0.16, 8.1, GREEN, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "best aggregate\nbecomes parent", 8.87, 4.94, 1.42, 0.34, 7.8, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_box(slide, 10.81, 4.62, 1.82, 0.76, fill=BLUE_TINT, line=BLUE, radius=True, line_width=1.35)
-    add_text(slide, "NO", 11.01, 4.72, 1.42, 0.16, 8.1, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
-    add_text(slide, "unchanged parent\nremains", 11.01, 4.94, 1.42, 0.34, 7.8, DARK, True, align=PP_ALIGN.CENTER, margin=0)
-
-    add_text(
-        slide,
-        "No worker is classified by BCE: each rule controls update influence; the parent gate limits visible regression.",
-        1.08,
-        5.88,
-        11.16,
-        0.28,
-        10.2,
+        "Policy: equal-weight FedAvg · validationDataHash = 0 · maxLossIncreaseBps = 0",
+        2.26,
+        5.39,
+        8.82,
+        0.24,
+        10.4,
         DARK,
         True,
         align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
         margin=0,
+    )
+    add_text(
+        slide,
+        "One selected aggregator executes one deterministic aggregation rule over the complete closed set.",
+        1.15,
+        6.00,
+        11.03,
+        0.25,
+        10.4,
+        TU_RED,
+        True,
+        align=PP_ALIGN.CENTER,
     )
 
     add_note(
         slide,
-        "Original Hybrid-R is a meta-selection over aggregate results, not a per-worker validation filter. Five "
-        "non-aggregator learners train in the round. The selected aggregator contributes no sixth update and runs "
-        "every rule over the same five-update pool. FedAvg averages all five complete updates. Coordinate median "
-        "chooses the middle value independently for each parameter. The q=1 trimmed mean removes the lowest and "
-        "highest value per parameter and averages the remaining three; q=2 keeps only the middle value and therefore "
-        "coincides with the coordinate median for five inputs. Multi-Krum distance-scores all five complete updates "
-        "and averages the two selected updates. The original Hybrid-R step chooses the aggregate with the lowest BCE "
-        "on the shared signed reference artifact and would publish that aggregate even if every candidate were worse "
-        "than the current parent. VITA-FL then adds its own parent-model gate: the aggregate replaces "
-        "the parent only when its loss is no more than five percent above the freshly evaluated parent loss. Otherwise "
-        "the unchanged parent remains. This is auditable defense in depth, not individual malicious-worker detection "
-        "or a universal Byzantine guarantee.",
+        "The weighted draw selects which authorized worker may act as aggregator; it does not select an "
+        "aggregation method. Once the ledger closes the accepted worker-submission set as an ordered root and "
+        "explicit count, the measured aggregator stages exactly those client models. It then executes one "
+        "deterministic rule: for every tensor in the model state dictionary, equal-weight FedAvg computes the "
+        "arithmetic mean of the corresponding tensors from all accepted client models. The active policy has "
+        "no validation reference or loss gate, so validationDataHash and maxLossIncreaseBps are both zero. The "
+        "signed aggregation statement binds the round, policy, closed root, input count, and output. One ledger "
+        "transaction then atomically binds that statement, the encrypted model references, publisher authority, "
+        "and the round transition. Equal-weight FedAvg is deterministic and auditable here, but it is not a "
+        "robust aggregation or Byzantine-tolerance claim.",
+    )
+
+
+def slide_original_hybrid_r(prs):
+    slide = new_content_slide(
+        prs,
+        13,
+        "Original Hybrid-R: several rules, one aggregate",
+        "Related work by Yue et al. · one central server, not several aggregator nodes",
+    )
+
+    add_box(slide, 0.55, 2.05, 2.18, 2.78, fill=BLUE_TINT, line=BLUE, radius=True, line_width=1.4)
+    add_text(slide, "ONE CENTRAL SERVER", 0.76, 2.33, 1.76, 0.25, 10.0, BLUE, True, align=PP_ALIGN.CENTER)
+    add_text(slide, "same client-update\ncollection", 0.76, 3.02, 1.76, 0.58, 13.0, DARK, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE)
+    add_text(slide, "every rule receives\nthe same inputs", 0.76, 4.08, 1.76, 0.42, 8.8, DARK, align=PP_ALIGN.CENTER)
+
+    add_arrow(slide, 2.84, 3.43, 3.24, 3.43, BLUE, 1.8)
+    add_arrow(slide, 8.35, 3.43, 8.76, 3.43, PURPLE, 1.8)
+
+    add_box(slide, 3.25, 1.42, 5.08, 4.45, fill=LIGHT, line=MID, radius=True, line_width=1.2)
+    add_text(slide, "PORTFOLIO OF SERVER-SIDE DEFENSE FUNCTIONS", 3.52, 1.69, 4.54, 0.25, 9.5, DARK, True, align=PP_ALIGN.CENTER)
+    methods = (
+        "BALANCE",
+        "CENTERED CLIPPING",
+        "FREQFED",
+        "SIGNGUARD",
+        "KRUM / MULTI-KRUM",
+        "DIVIDE-AND-CONQUER",
+        "TRIMMED MEAN",
+        "COORDINATE MEDIAN",
+    )
+    for index, label in enumerate(methods):
+        column = index % 2
+        row = index // 2
+        x = 3.55 + column * 2.26
+        y = 2.18 + row * 0.73
+        accent = (BLUE, PURPLE, ORANGE, GREEN)[row]
+        tint = (BLUE_TINT, PURPLE_TINT, ORANGE_TINT, GREEN_TINT)[row]
+        add_box(slide, x, y, 2.16, 0.54, fill=tint, line=accent, radius=True, line_width=1.0)
+        add_text(slide, label, x + 0.10, y + 0.16, 1.96, 0.20, 8.0, accent, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "each function produces one aggregate model", 3.62, 5.28, 4.34, 0.23, 9.2, DARK, True, align=PP_ALIGN.CENTER)
+
+    add_box(slide, 8.78, 1.42, 4.03, 4.45, fill=PURPLE_TINT, line=PURPLE, radius=True, line_width=1.3)
+    add_text(slide, "ONE CANDIDATE PER RULE", 9.03, 1.76, 3.53, 0.24, 10.0, PURPLE, True, align=PP_ALIGN.CENTER)
+    add_box(slide, 9.14, 2.34, 3.31, 0.74, fill=WHITE, line=PURPLE, radius=True, line_width=1.0)
+    add_text(slide, "evaluate every model on the\nsame reference dataset", 9.36, 2.50, 2.87, 0.42, 9.5, DARK, True, align=PP_ALIGN.CENTER)
+    add_arrow(slide, 10.80, 3.16, 10.80, 3.52, PURPLE, 1.6)
+    add_box(slide, 9.14, 3.58, 3.31, 0.74, fill=WHITE, line=TU_RED, radius=True, line_width=1.0)
+    add_text(slide, "compare one empirical-risk\nmeasure across all candidates", 9.36, 3.74, 2.87, 0.42, 9.2, DARK, True, align=PP_ALIGN.CENTER)
+    add_arrow(slide, 10.80, 4.40, 10.80, 4.76, TU_RED, 1.6)
+    add_box(slide, 9.14, 4.82, 3.31, 0.66, fill=GREEN_TINT, line=GREEN, radius=True, line_width=1.2)
+    add_text(slide, "ADOPT LOWEST-RISK MODEL", 9.36, 5.03, 2.87, 0.22, 9.3, GREEN, True, align=PP_ALIGN.CENTER)
+
+    add_text(
+        slide,
+        "“Hybrid” = several aggregation rules · “R” = reference data · not a multi-aggregator topology",
+        1.05,
+        6.04,
+        11.23,
+        0.25,
+        10.3,
+        TU_RED,
+        True,
+        align=PP_ALIGN.CENTER,
+    )
+
+    add_note(
+        slide,
+        "This slide describes the original Hybrid-R approach from Yue and co-authors as related work. One central "
+        "federated-learning server receives one collection of client updates and runs every defense function in its "
+        "portfolio over that same collection. The functions include Balance, Centered Clipping, FreqFed, SignGuard, "
+        "Krum and Multi-Krum, Divide-and-Conquer, Trimmed Mean, and coordinate-wise Median. Each function produces "
+        "a complete aggregate model. The server evaluates all resulting models with the same empirical-risk measure "
+        "on the same reference dataset and adopts the model with the lowest risk. Hybrid-R therefore selects among "
+        "aggregate results; it does not assign a different metric to each client update and does not require several "
+        "aggregator nodes. The rules could be executed in parallel, but that is only an implementation optimization. "
+        "This related-work mechanism is not the active VITA-FL aggregation path; VITA-FL uses the single equal-weight "
+        "FedAvg rule shown on the preceding slide.",
     )
 
 
@@ -2907,8 +2791,8 @@ def slide_evaluation(prs):
     slide = new_content_slide(
         prs,
         19,
-        "One authoritative end-to-end Phala run",
-        "Tier-1 capacity allocation · six worker TEEs · two infrastructure TEEs · 24 federated rounds",
+        "One archived end-to-end Phala run",
+        "Legacy aggregation configuration · six worker TEEs · two infrastructure TEEs · 24 federated rounds",
     )
 
     # A single horizontal protocol line makes the evaluated path explicit.
@@ -2963,7 +2847,9 @@ def slide_evaluation(prs):
         add_text(slide, body, x + 0.16, 5.72, 3.30, 0.20, 8.5, DARK, True, align=PP_ALIGN.CENTER)
     add_note(
         slide,
-        "This is the sole evaluation run reported by the thesis, journal, and presentation. Six Phala "
+        "This is the sole archived evaluation run reported by the thesis, journal, and presentation. It used "
+        "an earlier experimental aggregation configuration and is not an evaluation of the current equal-weight "
+        "FedAvg path. Six Phala "
         "tdx.small confidential VMs used fresh measured worker profiles: Worker 0 combined training and "
         "native inference, while Workers 1 through 5 were training-only. After one bootstrap completion, "
         "the evaluated Tier-1 account permitted at most eight concurrently active TEEs. Six slots were "
@@ -2991,7 +2877,7 @@ def slide_learning_trajectories(prs):
         prs,
         20,
         "What changed over the 24 federated rounds?",
-        "One Phala trajectory · five complementary views of model behavior",
+        "Archived legacy configuration · five complementary views of model behavior",
     )
     evidence = load_authoritative_evaluation()
     rows = evidence["rows"]
@@ -3085,12 +2971,10 @@ def slide_learning_trajectories(prs):
         "binary labels of a sample to be correct simultaneously; it ranges from 25.6586 to 31.9217 percent and "
         "ends at 29.7954 percent. Because only 5.2569 percent of label positions are positive, both accuracy "
         "curves are dominated by negatives and must be read with the all-negative baselines on the next slide, "
-        "not as headline measures of learning quality. The orange regions mark global rounds 18 through "
-        "24. The round-18 candidate became the parent; in global rounds 19 through 24 the VITA-FL gate retained that "
-        "parent because the candidate did not pass the validation-loss gate, so the test metrics form a real "
-        "plateau rather than missing telemetry. The global-round-25 candidate passed the five-percent validation "
-        "gate narrowly and was published. Its slightly higher test BCE is not contradictory because the gate "
-        "uses a separately signed validation artifact and never selects on the test split.",
+        "not as headline measures of learning quality. The archived CSV contains identical published checkpoints "
+        "from global rounds 18 through 24 because the run used an older experimental aggregation configuration. "
+        "Those rows remain unchanged for provenance. They support the recorded end-to-end execution and learning "
+        "trajectory, but they are not evaluation evidence for the current equal-weight FedAvg design.",
     )
 
 
@@ -3099,7 +2983,7 @@ def slide_learning_quality(prs):
         prs,
         21,
         "Why do the headline scores look modest?",
-        "ChestMNIST is strongly imbalanced; accuracy rewards negatives, AUROC and F1 expose learning quality",
+        "Archived legacy run · imbalance makes AUROC and F1 more informative than accuracy",
     )
     evidence = load_authoritative_evaluation()
     manifest = evidence["manifest"]
@@ -3179,14 +3063,14 @@ def slide_learning_quality(prs):
         "5.2569 percent. Therefore an all-negative classifier obtains 94.7431 percent label-wise accuracy "
         "and 53.1717 percent exact match, while its macro F1 is zero and its AUROC is 0.5. Those two raw "
         "accuracy measures are dominated by correct negatives and are not suitable headline success metrics. "
-        "The final VITA-FL model has lower label accuracy, 86.7275 percent, and lower exact match, 29.7954 "
+        "The archived run's final model has lower label accuracy, 86.7275 percent, and lower exact match, 29.7954 "
         "percent, because positive class weighting deliberately makes positive predictions instead of choosing "
         "the trivial all-negative shortcut. Its macro AUROC of 0.704166 demonstrates non-random per-label ranking. "
         "Its macro F1 of 0.184709 and micro F1 of 0.265532 are modest because rare labels are evaluated with one "
         "fixed 0.5 threshold after only two local epochs in a compact CNN. The next learning step is label-specific "
         "threshold calibration and repeated model-selection experiments. The current result supports the claim "
         "that the distributed and verifiable pipeline learned a measurable signal; it is not evidence of clinical "
-        "validity or diagnostic utility.",
+        "validity, diagnostic utility, or the current equal-weight FedAvg path.",
     )
 
 
@@ -3212,7 +3096,8 @@ def slide_results(prs):
             y + 0.37,
             0.98,
             0.30,
-+            accent,
+            16.0,
+            accent,
             True,
             align=PP_ALIGN.CENTER,
             valign=MSO_ANCHOR.MIDDLE,
@@ -3294,7 +3179,7 @@ def slide_conclusion(prs):
 
     left_milestones = [
         (1.45, "SIGNED INPUT", "independent provenance"),
-        (3.25, "DFL MODEL", "selection + atomic handoff"),
+        (3.25, "DFL MODEL", "closed set + atomic handoff"),
         (5.05, "ATTESTED USE", "TDX/AIR + receipts + SCITT"),
     ]
     right_milestones = [
@@ -3334,10 +3219,12 @@ def slide_conclusion(prs):
     add_text(slide, "Thank you · Questions?", 9.92, 5.93, 2.30, 0.22, 10.4, TU_RED, True, align=PP_ALIGN.RIGHT)
     add_note(
         slide,
-        "The conclusion is specific to the sole evaluated systems path: six admitted TDX workers completed "
+        "The conclusion is specific to the sole archived systems path: six admitted TDX workers completed "
         "all 24 requested rounds, the final model reached macro AUROC 0.704 and macro F1 0.185, and Worker 0 "
         "consumed that model through the measured inference path. The modest F1 reflects rare ChestMNIST "
-        "positives, one fixed 0.5 threshold, two local epochs, and the compact CNN. VITA-FL connects the ledger-selected "
+        "positives, one fixed 0.5 threshold, two local epochs, and the compact CNN. This archived run used a "
+        "legacy experimental aggregation configuration and does not evaluate the current equal-weight FedAvg path. "
+        "VITA-FL connects the ledger-authoritative "
         "model, encrypted and signed handoff, TDX/AIR inference evidence, three receiver-signed tool "
         "receipts, and SCITT recording without making the conversational model a root of trust. Exact "
         "identities, freshness values, artifacts, inputs, and outputs are checked across component "
@@ -3624,7 +3511,7 @@ def build():
     slide_aggregator_selection(prs)
     slide_aggregator_recovery(prs)
     slide_close_compare_commit(prs)
-    slide_hybrid_r_code_sequence(prs)
+    slide_original_hybrid_r(prs)
     slide_handoff(prs)
     slide_sello_protocol(prs)
     slide_agent(prs)
