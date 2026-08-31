@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from io import BytesIO
 from pathlib import Path
 from typing import Sequence
@@ -21,10 +22,17 @@ from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT
-ASSETS = OUT / "assets"
+SOURCE_ROOT = Path("/home/ramon/master/Master-Thesis/presentation")
+ASSETS = SOURCE_ROOT / "assets"
 THREAT_DIAGRAMS = ASSETS / "threat-diagrams"
-EVALUATION_DATA = ROOT / "data" / "evaluation"
-TEMPLATE = OUT / "TU_Berlin_Praesentation_Master_einfarbig_Rot.pptx"
+EVALUATION_DATA = SOURCE_ROOT / "data" / "evaluation"
+AUTHORITATIVE_RUN = EVALUATION_DATA / "authoritative_phala_6w_24r.csv"
+AUTHORITATIVE_SUMMARY = EVALUATION_DATA / "authoritative_phala_6w_24r_first_best_final.csv"
+AUTHORITATIVE_WORKERS = EVALUATION_DATA / "authoritative_phala_6w_24r_worker_activity.csv"
+AUTHORITATIVE_MANIFEST = EVALUATION_DATA / "authoritative_phala_6w_24r_manifest.json"
+EVALUATED_TIER1_ACTIVE_TEE_LIMIT = 8
+EVALUATED_NON_WORKER_CVMS = ("contract/control runtime", "Ollama")
+TEMPLATE = SOURCE_ROOT / "TU_Berlin_Praesentation_Master_einfarbig_Rot.pptx"
 DESTINATION = OUT / "VITA-FL_Thesis_Presentation_TU_Berlin.pptx"
 
 TU_RED = "C40D1E"
@@ -202,43 +210,112 @@ def add_line_segment(slide, x1, y1, x2, y2, color=DARK, width=1.8, arrow=False, 
     return connector
 
 
-def load_evaluation_runs():
-    runs = {}
-    for participants in (10, 50, 100):
-        path = EVALUATION_DATA / f"evaluation_run_{participants}.csv"
-        with path.open(newline="", encoding="utf-8") as handle:
-            rows = []
-            for row in csv.DictReader(handle):
-                rows.append(
-                    {
-                        "round": int(row["round"]),
-                        "loss": float(row["loss"]),
-                        "micro_f1": float(row["micro_f1"]),
-                        "macro_f1": float(row["macro_f1"]),
-                        "macro_auroc": float(row["macro_auroc"]),
-                        "exact_match": float(row["exact_match"]),
-                    }
-                )
-        if len(rows) != 49 or rows[0]["round"] != 2 or rows[-1]["round"] != 50:
-            raise ValueError(f"Unexpected evaluation trajectory in {path}")
-        runs[participants] = rows
-    return runs
+def load_authoritative_evaluation():
+    required = [
+        AUTHORITATIVE_RUN,
+        AUTHORITATIVE_SUMMARY,
+        AUTHORITATIVE_WORKERS,
+        AUTHORITATIVE_MANIFEST,
+    ]
+    for path in required:
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing authoritative evaluation input: {path}")
+
+    numeric_fields = {
+        "federated_round": int,
+        "global_model_round": int,
+        "timestamp_unix_ms": int,
+        "participant_count": int,
+        "aggregated_model_count": int,
+        "expected_models": int,
+        "accuracy_percent": float,
+        "exact_match_percent": float,
+        "loss": float,
+        "micro_f1": float,
+        "macro_f1": float,
+        "macro_auroc": float,
+    }
+    with AUTHORITATIVE_RUN.open(newline="", encoding="utf-8") as handle:
+        rows = []
+        for source in csv.DictReader(handle):
+            row = dict(source)
+            for field, conversion in numeric_fields.items():
+                row[field] = conversion(row[field])
+            row["gate_passed"] = row["gate_passed"].lower() == "true"
+            rows.append(row)
+
+    expected_federated_rounds = list(range(1, 25))
+    if [row["federated_round"] for row in rows] != expected_federated_rounds:
+        raise ValueError(f"Unexpected federated-round trajectory in {AUTHORITATIVE_RUN}")
+    if [row["global_model_round"] for row in rows] != list(range(2, 26)):
+        raise ValueError(f"Unexpected global-model trajectory in {AUTHORITATIVE_RUN}")
+    if any(
+        row["participant_count"] != 6
+        or row["aggregated_model_count"] != 5
+        or row["expected_models"] != 5
+        for row in rows
+    ):
+        raise ValueError(f"Unexpected worker/update count in {AUTHORITATIVE_RUN}")
+
+    with AUTHORITATIVE_SUMMARY.open(newline="", encoding="utf-8") as handle:
+        summary = {row["metric"]: row for row in csv.DictReader(handle)}
+    with AUTHORITATIVE_WORKERS.open(newline="", encoding="utf-8") as handle:
+        workers = []
+        for source in csv.DictReader(handle):
+            row = dict(source)
+            for field in (
+                "training_rounds",
+                "model_transfers",
+                "aggregator_rounds",
+                "selection_gap_recoveries",
+                "transactions",
+                "registration_gas",
+                "gas_used",
+            ):
+                row[field] = int(row[field])
+            workers.append(row)
+    with AUTHORITATIVE_MANIFEST.open(encoding="utf-8") as handle:
+        manifest = json.load(handle)
+
+    if manifest.get("evidence_policy") != "sole evaluation run used by thesis, journal, and presentation":
+        raise ValueError("The presentation only accepts the declared sole authoritative evaluation run")
+    training = manifest["training"]
+    if training["successful_federated_rounds"] != 24 or training["aborted_round_attempts"] != 0:
+        raise ValueError("The authoritative run must contain 24 successful rounds and zero aborts")
+    worker_count = manifest["runtime"]["worker_count"]
+    if worker_count != training["training_shards"]:
+        raise ValueError("The authoritative run must assign one training shard to every worker")
+    if training["training_samples"] != worker_count * training["samples_per_shard"]:
+        raise ValueError("The authoritative training samples must be fully represented by the six shards")
+    if worker_count + len(EVALUATED_NON_WORKER_CVMS) != EVALUATED_TIER1_ACTIVE_TEE_LIMIT:
+        raise ValueError("The evaluated Tier-1 capacity allocation must account for all eight TEE slots")
+    gas_accounting = manifest["gas_accounting"]
+    if len(workers) != worker_count or any(worker["registration_gas"] <= 0 for worker in workers):
+        raise ValueError("Every authoritative worker must have one reconciled RTMR3 registration receipt")
+    if sum(worker["registration_gas"] for worker in workers) != gas_accounting["registration"]["gas"]:
+        raise ValueError("Per-worker RTMR3 registration gas does not match the authoritative subtotal")
+    if sum(worker["gas_used"] for worker in workers) != gas_accounting["worker"]["gas"]:
+        raise ValueError("Per-worker gas does not match the authoritative worker total")
+    return {"rows": rows, "summary": summary, "workers": workers, "manifest": manifest}
 
 
-def add_metric_chart(
+def add_run_metric_chart(
     slide,
     x,
     y,
     w,
     h,
     title,
-    runs,
+    rows,
     metric,
     y_min,
     y_max,
     y_ticks,
+    color=BLUE,
     reference=None,
+    reference_label=None,
     descriptor=None,
+    shade_plateau=True,
 ):
     add_box(slide, x, y, w, h, fill=WHITE, line=BORDER, line_width=1.0)
     add_text(
@@ -271,31 +348,29 @@ def add_metric_chart(
             margin=0,
         )
 
-    legend = [(10, BLUE), (50, TU_RED), (100, GREEN)]
-    legend_width = min(2.92, w - 0.40)
-    legend_x = x + (w - legend_width) / 2
-    for index, (participants, color) in enumerate(legend):
-        item_x = legend_x + index * (legend_width / 3)
-        add_line_segment(slide, item_x, y + 0.72, item_x + 0.24, y + 0.72, color, 2.0)
-        add_text(
-            slide,
-            f"N={participants}",
-            item_x + 0.29,
-            y + 0.65,
-            0.60,
-            0.15,
-            7.5,
-            color,
-            True,
-            valign=MSO_ANCHOR.MIDDLE,
-            margin=0,
-        )
-
     plot_x = x + 0.52
-    plot_y = y + 0.94
+    plot_y = y + 0.77
     plot_w = w - 0.72
-    plot_h = h - 1.48
-    x_ticks = (2, 10, 20, 30, 40, 50)
+    plot_h = h - 1.31
+    x_ticks = (2, 6, 11, 18, 25)
+    x_min, x_max = 2, 25
+
+    plateau_bounds = None
+    if shade_plateau:
+        start_x = plot_x + ((18 - x_min) / (x_max - x_min)) * plot_w
+        end_x = plot_x + ((24 - x_min) / (x_max - x_min)) * plot_w
+        plateau_bounds = (start_x, end_x)
+        add_box(
+            slide,
+            start_x,
+            plot_y,
+            max(0.05, end_x - start_x),
+            plot_h,
+            fill=ORANGE_TINT,
+            line=ORANGE_TINT,
+            radius=False,
+            line_width=0.2,
+        )
 
     for value, label in y_ticks:
         py = plot_y + plot_h - ((value - y_min) / (y_max - y_min)) * plot_h
@@ -315,7 +390,7 @@ def add_metric_chart(
         )
     add_text(
         slide,
-        "Round",
+        "Global model round",
         plot_x,
         plot_y + plot_h + 0.23,
         plot_w,
@@ -327,7 +402,7 @@ def add_metric_chart(
         margin=0,
     )
     for round_number in x_ticks:
-        px = plot_x + ((round_number - 2) / 48) * plot_w
+        px = plot_x + ((round_number - x_min) / (x_max - x_min)) * plot_w
         add_line_segment(slide, px, plot_y, px, plot_y + plot_h, "E8E8E8", 0.45)
         add_text(
             slide,
@@ -350,7 +425,7 @@ def add_metric_chart(
         add_line_segment(slide, plot_x, py, plot_x + plot_w, py, MID, 1.0, dashed=True)
         add_text(
             slide,
-            "chance",
+            reference_label or "reference",
             plot_x + plot_w - 0.54,
             py - 0.18,
             0.50,
@@ -361,15 +436,45 @@ def add_metric_chart(
             margin=0,
         )
 
-    for participants, color in legend:
-        points = []
-        for row in runs[participants]:
-            px = plot_x + ((row["round"] - 2) / 48) * plot_w
-            value = max(y_min, min(y_max, row[metric]))
-            py = plot_y + plot_h - ((value - y_min) / (y_max - y_min)) * plot_h
-            points.append((px, py))
-        for first, second in zip(points, points[1:]):
-            add_line_segment(slide, first[0], first[1], second[0], second[1], color, 1.65)
+    points = []
+    for row in rows:
+        px = plot_x + ((row["global_model_round"] - x_min) / (x_max - x_min)) * plot_w
+        value = max(y_min, min(y_max, row[metric]))
+        py = plot_y + plot_h - ((value - y_min) / (y_max - y_min)) * plot_h
+        points.append((px, py))
+    for first, second in zip(points, points[1:]):
+        add_line_segment(slide, first[0], first[1], second[0], second[1], color, 1.9)
+    for index in (0, len(points) - 1):
+        px, py = points[index]
+        add_oval(slide, px - 0.045, py - 0.045, 0.09, 0.09, color, color, 0.5)
+    if plateau_bounds:
+        start_x, end_x = plateau_bounds
+        label_w = max(0.30, end_x - start_x - 0.04)
+        add_box(
+            slide,
+            start_x + 0.02,
+            plot_y + 0.01,
+            label_w,
+            0.22,
+            fill=ORANGE_TINT,
+            line=ORANGE_TINT,
+            radius=False,
+            line_width=0.2,
+        )
+        add_text(
+            slide,
+            "PARENT FALLBACK",
+            start_x + 0.02,
+            plot_y + 0.035,
+            label_w,
+            0.16,
+            5.7,
+            ORANGE,
+            True,
+            align=PP_ALIGN.CENTER,
+            valign=MSO_ANCHOR.MIDDLE,
+            margin=0,
+        )
 
 
 def add_bezier_arrow(
@@ -2192,9 +2297,121 @@ def slide_close_compare_commit(prs):
         "most five percent above the parent loss; otherwise the unchanged parent is emitted. These are "
         "mutually exclusive outcomes: the round records either the selected candidate or the retained parent. "
         "One ledger transaction then binds the closed set, policy, evidence, output, encrypted publication references, "
-        "publisher authority, and round transition. The end-to-end Phala run and the local 10, 50, and 100 "
-        "participant runs used arithmetic mean. Hybrid-R-style behavior was component-tested and was not "
-        "evaluated in a live poisoning campaign.",
+        "publisher authority, and round transition. In the sole end-to-end Phala run, the round-18 candidate "
+        "became the parent, the VITA-FL parent gate retained it for global rounds 19 through 24, and the round-25 "
+        "candidate narrowly passed the five-percent validation-loss gate. This evaluates selection and "
+        "fallback behavior under ordinary training; it is not a live poisoning campaign.",
+    )
+
+
+def slide_hybrid_r_code_sequence(prs):
+    slide = new_content_slide(
+        prs,
+        13,
+        "Hybrid-R-style: aggregate first, select once",
+        "Original Hybrid-R compares aggregate candidates · VITA-FL adds the parent-model gate",
+    )
+
+    # Background zones first, then connectors, then foreground content.
+    add_box(slide, 0.48, 1.38, 2.38, 4.26, fill=BLUE_TINT, line=BLUE, radius=True, line_width=1.2)
+    add_box(slide, 8.47, 1.38, 4.35, 4.26, fill=LIGHT, line=MID, radius=True, line_width=1.0)
+
+    # The selected aggregator receives the one shared update pool and runs every rule.
+    add_arrow(slide, 1.67, 2.55, 1.67, 3.16, BLUE, 1.8)
+    add_arrow(slide, 2.10, 3.56, 3.08, 3.56, DARK, 1.9)
+    add_line_segment(slide, 3.08, 1.85, 3.08, 5.16, color=MID, width=1.5)
+    for branch_y, branch_color in ((1.85, BLUE), (2.95, PURPLE), (4.05, ORANGE), (5.15, GREEN)):
+        add_arrow(slide, 3.08, branch_y, 3.34, branch_y, branch_color, 1.7)
+
+    # Four aggregation candidates flow into one simple round-level choice.
+    for source_y, source_color in ((1.85, BLUE), (2.95, PURPLE), (4.05, ORANGE), (5.15, GREEN)):
+        add_arrow(slide, 8.02, source_y, 8.72, 2.18, source_color, 1.5)
+    add_arrow(slide, 10.65, 2.48, 10.65, 2.69, PURPLE, 1.8)
+    add_arrow(slide, 10.65, 3.38, 10.65, 3.57, ORANGE, 1.8)
+    add_arrow(slide, 10.65, 4.27, 9.58, 4.61, GREEN, 1.8)
+    add_arrow(slide, 10.65, 4.27, 11.72, 4.61, BLUE, 1.8)
+
+    # Input pool: five learner updates; the aggregator is intentionally not a sixth update.
+    add_text(slide, "ROUND INPUT", 0.72, 1.62, 1.90, 0.22, 10.7, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "5 LEARNER UPDATES", 0.68, 1.95, 1.98, 0.20, 9.2, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+    for index in range(5):
+        chip_x = 0.71 + index * 0.39
+        add_oval(slide, chip_x, 2.22, 0.32, 0.32, fill=BLUE, line=WHITE, line_width=0.8)
+        add_text(slide, str(index + 1), chip_x, 2.28, 0.32, 0.14, 7.5, WHITE, True, align=PP_ALIGN.CENTER, margin=0)
+
+    add_oval(slide, 1.27, 3.16, 0.80, 0.80, fill=ORANGE_TINT, line=ORANGE, line_width=1.5)
+    add_text(slide, "Σ", 1.27, 3.30, 0.80, 0.34, 20.0, ORANGE, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+    add_text(slide, "SELECTED AGGREGATOR", 0.72, 4.16, 1.90, 0.20, 9.0, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "combines the five updates\nno local update of its own", 0.72, 4.48, 1.90, 0.54, 9.0, DARK, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+    add_text(slide, "NO PER-UPDATE BCE GATE", 0.67, 5.16, 2.00, 0.18, 7.8, TU_RED, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "same pool for every rule", 0.72, 5.37, 1.90, 0.18, 7.8, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
+
+    method_rows = (
+        (1.42, BLUE_TINT, BLUE, "5/5", "FEDAVG", "all five complete updates · equal mean"),
+        (2.52, PURPLE_TINT, PURPLE, "3RD / θ", "COORDINATE MEDIAN", "middle value per parameter · not one whole learner"),
+        (3.62, ORANGE_TINT, ORANGE, "q=1/2", "TRIMMED MEAN", "q=1: mean 3/5 · q=2: middle only (= median)"),
+        (4.72, GREEN_TINT, GREEN, "2/5", "MULTI-KRUM", "distance-score all 5 whole updates · average selected 2"),
+    )
+    for row_y, row_fill, row_line, badge, heading, explanation in method_rows:
+        add_box(slide, 3.34, row_y, 4.68, 0.86, fill=row_fill, line=row_line, radius=True, line_width=1.25)
+        add_oval(slide, 3.56, row_y + 0.17, 0.78, 0.52, fill=WHITE, line=row_line, line_width=1.1)
+        add_text(slide, badge, 3.56, row_y + 0.30, 0.78, 0.17, 9.0, row_line, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+        add_text(slide, heading, 4.57, row_y + 0.13, 3.12, 0.20, 10.2, row_line, True, margin=0)
+        add_text(slide, explanation, 4.57, row_y + 0.43, 3.12, 0.27, 8.5, DARK, margin=0)
+
+    # Candidate selection deliberately omits signing and publication details.
+    add_text(slide, "WHICH AGGREGATE COUNTS?", 8.78, 1.52, 3.72, 0.22, 10.3, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+    for index, (label, color) in enumerate((("F", BLUE), ("M", PURPLE), ("T1", ORANGE), ("T2", ORANGE), ("K", GREEN))):
+        candidate_x = 9.24 + index * 0.53
+        add_oval(slide, candidate_x, 1.91, 0.34, 0.34, fill=color, line=WHITE, line_width=0.8)
+        add_text(slide, label, candidate_x, 1.98, 0.34, 0.14, 6.8, WHITE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "five aggregate candidates · one shared reference", 8.88, 2.32, 3.54, 0.18, 7.7, DARK, align=PP_ALIGN.CENTER, margin=0)
+
+    add_box(slide, 8.88, 2.70, 3.54, 0.68, fill=PURPLE_TINT, line=PURPLE, radius=True, line_width=1.25)
+    add_text(slide, "ORIGINAL HYBRID-R", 9.07, 2.79, 3.16, 0.16, 7.6, PURPLE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "lowest aggregate BCE = L(best)", 9.07, 3.05, 3.16, 0.18, 9.0, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+
+    add_box(slide, 8.88, 3.58, 3.54, 0.69, fill=ORANGE_TINT, line=ORANGE, radius=True, line_width=1.25)
+    add_text(slide, "VITA-FL EXTENSION", 9.07, 3.67, 3.16, 0.16, 7.6, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "L(best) ≤ 1.05 × L(parent)?", 9.07, 3.94, 3.16, 0.18, 9.0, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+
+    add_box(slide, 8.67, 4.62, 1.82, 0.76, fill=GREEN_TINT, line=GREEN, radius=True, line_width=1.35)
+    add_text(slide, "YES", 8.87, 4.72, 1.42, 0.16, 8.1, GREEN, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "best aggregate\nbecomes parent", 8.87, 4.94, 1.42, 0.34, 7.8, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+
+    add_box(slide, 10.81, 4.62, 1.82, 0.76, fill=BLUE_TINT, line=BLUE, radius=True, line_width=1.35)
+    add_text(slide, "NO", 11.01, 4.72, 1.42, 0.16, 8.1, BLUE, True, align=PP_ALIGN.CENTER, margin=0)
+    add_text(slide, "unchanged parent\nremains", 11.01, 4.94, 1.42, 0.34, 7.8, DARK, True, align=PP_ALIGN.CENTER, margin=0)
+
+    add_text(
+        slide,
+        "No worker is classified by BCE: each rule controls update influence; the parent gate limits visible regression.",
+        1.08,
+        5.88,
+        11.16,
+        0.28,
+        10.2,
+        DARK,
+        True,
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
+        margin=0,
+    )
+
+    add_note(
+        slide,
+        "Original Hybrid-R is a meta-selection over aggregate results, not a per-worker validation filter. Five "
+        "non-aggregator learners train in the round. The selected aggregator contributes no sixth update and runs "
+        "every rule over the same five-update pool. FedAvg averages all five complete updates. Coordinate median "
+        "chooses the middle value independently for each parameter. The q=1 trimmed mean removes the lowest and "
+        "highest value per parameter and averages the remaining three; q=2 keeps only the middle value and therefore "
+        "coincides with the coordinate median for five inputs. Multi-Krum distance-scores all five complete updates "
+        "and averages the two selected updates. The original Hybrid-R step chooses the aggregate with the lowest BCE "
+        "on the shared signed reference artifact and would publish that aggregate even if every candidate were worse "
+        "than the current parent. VITA-FL then adds its own parent-model gate: the aggregate replaces "
+        "the parent only when its loss is no more than five percent above the freshly evaluated parent loss. Otherwise "
+        "the unchanged parent remains. This is auditable defense in depth, not individual malicious-worker detection "
+        "or a universal Byzantine guarantee.",
     )
 
 
@@ -2682,96 +2899,90 @@ def slide_cryptographic_chain(prs):
 
 
 def slide_evaluation(prs):
-    slide = new_content_slide(prs, 19, "Evaluation: what was actually tested?", "Three evidence levels—not one blanket success claim")
-    column_x = [2.52, 4.46, 6.40, 8.34, 10.28]
-    headers = ["ADMISSION", "ROUND PATH", "PARTICIPANTS", "AGGREGATION", "RECEIPTS / RECOVERY"]
-    for x, heading in zip(column_x, headers):
-        add_text(slide, heading, x, 1.56, 1.78, 0.34, 8.4, DARK, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE)
-    add_divider(slide, 0.58, 1.98, 11.88, TU_RED, 0.020)
-
-    rows = [
-        (
-            2.14,
-            "LIVE",
-            "PHALA INTEGRATION",
-            ["fresh\nquotes", "5 observed\nrounds", "3 TEE\nworkers", "Arithmetic\nMean", "all 3\nMCP ops"],
-            BLUE_TINT,
-            BLUE,
-        ),
-        (
-            3.26,
-            "SIMULATED",
-            "LOCAL DOCKER",
-            ["recorded quote\nreplay", "50\nrounds", "10 · 50 · 100\nlogical", "Arithmetic\nMean", "not part of\nscale run"],
-            GREEN_TINT,
-            GREEN,
-        ),
-        (
-            4.38,
-            "AUTOMATED",
-            "FAIL-CLOSED TESTS",
-            ["reject\nmismatch", "timeout +\nrecovery", "deterministic\nfixtures", "Hybrid-R\ncomponents", "verify +\nrecover"],
-            ORANGE_TINT,
-            ORANGE,
-        ),
-    ]
-    for y, status, label, values, fill, accent in rows:
-        add_box(slide, 0.58, y, 11.88, 0.91, fill=fill, line=BORDER, radius=False, line_width=0.7)
-        add_box(slide, 0.58, y, 1.70, 0.91, fill=accent, line=accent, radius=False)
-        add_text(slide, status, 0.72, y + 0.16, 1.42, 0.20, 9.3, WHITE, True, align=PP_ALIGN.CENTER)
-        add_text(slide, label, 0.70, y + 0.48, 1.46, 0.22, 7.7, WHITE, True, align=PP_ALIGN.CENTER)
-        for index, (x, value) in enumerate(zip(column_x, values)):
-            if index:
-                add_divider(slide, x - 0.15, y + 0.10, 0.012, BORDER, 0.70)
-            add_text(
-                slide,
-                value,
-                x,
-                y + 0.20,
-                1.78,
-                0.50,
-                10.3,
-                accent if value != "not part of\nscale run" else MID,
-                True,
-                align=PP_ALIGN.CENTER,
-                valign=MSO_ANCHOR.MIDDLE,
-            )
-    add_text(
-        slide,
-        "Evidence boundary: protocol observation—not fresh per-worker admission at scale, independent failure domains, or Phala/CVM scalability.",
-        1.0,
-        5.55,
-        11.32,
-        0.20,
-        9.4,
-        TU_RED,
-        True,
-        align=PP_ALIGN.CENTER,
+    evidence = load_authoritative_evaluation()
+    manifest = evidence["manifest"]
+    training = manifest["training"]
+    gas_accounting = manifest["gas_accounting"]["total"]
+    inference = manifest["tee_inference"]
+    slide = new_content_slide(
+        prs,
+        19,
+        "One authoritative end-to-end Phala run",
+        "Tier-1 capacity allocation · six worker TEEs · two infrastructure TEEs · 24 federated rounds",
     )
+
+    # A single horizontal protocol line makes the evaluated path explicit.
+    stages = [
+        (1.20, "6", "TEE WORKERS", BLUE, BLUE_TINT),
+        (3.40, "24/24", "ROUNDS", GREEN, GREEN_TINT),
+        (5.60, "5", "UPDATES / ROUND", ORANGE, ORANGE_TINT),
+        (7.80, "120", "TRAINS + TRANSFERS", PURPLE, PURPLE_TINT),
+        (10.00, "0", "ABORTED ATTEMPTS", TU_RED, RED_TINT),
+        (12.05, "1", "RECOVERED GAP", DARK, LIGHT),
+    ]
+    for first, second in zip(stages, stages[1:]):
+        add_arrow(slide, first[0] + 0.62, 2.35, second[0] - 0.62, 2.35, MID, 1.5)
+    for x, value, label, accent, fill in stages:
+        add_oval(slide, x - 0.56, 1.78, 1.12, 1.12, fill, accent, 1.8)
+        add_text(slide, value, x - 0.47, 2.08, 0.94, 0.35, 16.5 if len(value) < 4 else 12.0, accent, True, align=PP_ALIGN.CENTER, margin=0)
+        add_text(slide, label, x - 0.78, 3.02, 1.56, 0.34, 8.0, DARK, True, align=PP_ALIGN.CENTER)
+
+    add_box(slide, 0.68, 3.62, 3.78, 1.48, fill=BLUE_TINT, line=BLUE, line_width=1.3)
+    add_text(slide, "RUN CLOCK", 0.94, 3.86, 1.16, 0.22, 10.0, BLUE, True)
+    add_text(slide, "14 min 20.87 s", 0.94, 4.21, 2.98, 0.30, 18.0, DARK, True)
+    add_text(slide, f"{training['mean_evaluation_interval_seconds']:.2f} s mean evaluation interval", 0.94, 4.65, 3.10, 0.22, 9.2, DARK)
+
+    add_box(slide, 4.78, 3.62, 3.78, 1.48, fill=PURPLE_TINT, line=PURPLE, line_width=1.3)
+    add_text(slide, "ROUND-25 TEE INFERENCE", 5.04, 3.86, 2.88, 0.22, 10.0, PURPLE, True)
+    add_text(slide, f"{inference['duration_microseconds'] / 1000:.3f} ms", 5.04, 4.21, 1.54, 0.30, 18.0, DARK, True)
+    add_text(slide, f"{inference['quote_bytes']:,} B quote · {inference['rtmr3_event_count']} RTMR3 events", 5.04, 4.65, 3.14, 0.22, 9.2, DARK)
+
+    add_box(slide, 8.88, 3.62, 3.78, 1.48, fill=ORANGE_TINT, line=ORANGE, line_width=1.3)
+    add_text(slide, "ANVIL GAS ACCOUNTING", 9.14, 3.86, 3.04, 0.22, 9.6, ORANGE, True)
+    add_text(slide, f"{gas_accounting['gas']:,} gas", 9.14, 4.18, 3.10, 0.32, 17.0, DARK, True)
+    registration = manifest["gas_accounting"]["registration"]
     add_text(
         slide,
-        "Data evidence: DICOM-inspired synthetic byte streams with experimental self-signed identities—not native clinical DICOM.",
-        1.0,
-        5.89,
-        11.32,
-        0.18,
+        f"{registration['transactions']}/6 registrations · {registration['gas']:,} gas",
+        9.14,
+        4.65,
+        3.14,
+        0.22,
         8.8,
         DARK,
-        True,
-        align=PP_ALIGN.CENTER,
     )
+
+    capacity_cards = [
+        (0.68, "RUN CAPACITY", f"Tier 1: at most {EVALUATED_TIER1_ACTIVE_TEE_LIMIT} active TEEs", TU_RED, RED_TINT),
+        (4.54, "TRAINING", "6 workers · 6 × 13,078 = 78,468 samples", GREEN, GREEN_TINT),
+        (8.40, "INFRASTRUCTURE", "2 CVMs · contract/control runtime + Ollama", PURPLE, PURPLE_TINT),
+    ]
+    for x, heading, body, accent, fill in capacity_cards:
+        add_box(slide, x, 5.34, 3.62, 0.72, fill=fill, line=accent, line_width=1.2)
+        add_text(slide, heading, x + 0.16, 5.47, 3.30, 0.18, 8.5, accent, True, align=PP_ALIGN.CENTER)
+        add_text(slide, body, x + 0.16, 5.72, 3.30, 0.20, 8.5, DARK, True, align=PP_ALIGN.CENTER)
     add_note(
         slide,
-        "The evaluation distinguishes live integration, local participant-scale simulation, and automated "
-        "negative tests. The Phala run used three separately admitted worker confidential VMs with fresh "
-        "TDX/DCAP quotes, exercised arithmetic-mean training for five observed rounds, all three MCP "
-        "operations, and attested inference. The 10, 50, and 100 participant experiments instead ran on a "
-        "single local Docker host and replayed one recorded TEE quote; they reached round 50 but do not "
-        "evaluate fresh per-worker admission, independent failure domains, a distributed network, or Phala "
-        "confidential-VM scalability. Hybrid-R-style candidates and the five-percent parent gate were "
-        "component-tested with limited deterministic fixtures, not in a live poisoning campaign. Signed "
-        "input provenance used DICOM-inspired synthetic byte streams and experimental self-signed identities, "
-        "not native clinical DICOM objects.",
+        "This is the sole evaluation run reported by the thesis, journal, and presentation. Six Phala "
+        "tdx.small confidential VMs used fresh measured worker profiles: Worker 0 combined training and "
+        "native inference, while Workers 1 through 5 were training-only. After one bootstrap completion, "
+        "the evaluated Tier-1 account permitted at most eight concurrently active TEEs. Six slots were "
+        "therefore assigned to workers, while the other two ran the contract/control runtime and the Ollama "
+        "service. The 78,468 ChestMNIST training samples were split evenly across the six workers, producing "
+        "six shards of 13,078 samples. This is a run-specific capacity decision rather than a protocol limit "
+        "or a scalability claim. All 24 requested federated rounds succeeded. Every round received all five expected client "
+        "updates, giving 120 local training completions and 120 transfers, with no aborted round attempt. "
+        "One aggregator-selection gap was recovered. The 24 recorded model evaluations span 860.87 seconds, "
+        "or 37.43 seconds between evaluations on average. The final round-25 model was then consumed through "
+        "the measured TEE inference path in 5.218 milliseconds; its evidence contains a 5,010-byte quote and "
+        "ten RTMR3 events and was bound to receiver receipts and a transparency record. The verifier scope "
+        "covered the AIR signature, REPORTDATA, RTMR3 replay, measured Compose, pinned image, contract endpoint, "
+        "and trust-root policy; quote collateral was not independently marked as verified in this record. "
+        "Receipt-level reconciliation across the immutable worker logs accounts for all six registrations. "
+        "The original live dashboard snapshot had lost eight early telemetry events because it reset its "
+        "in-memory buffer after worker deployment began; the on-chain roster and six receipt records show "
+        "that no registration itself failed. The corrected 329 transactions and 617,350,840 gas quantify "
+        "the simulated Anvil EVM protocol execution, including 472,618,555 gas for RTMR3 registration.",
     )
 
 
@@ -2779,75 +2990,107 @@ def slide_learning_trajectories(prs):
     slide = new_content_slide(
         prs,
         20,
-        "Observed optimization trajectories overlap across scale",
-        "Single-host Docker · recorded quote replay · one run per logical participant count",
+        "What changed over the 24 federated rounds?",
+        "One Phala trajectory · five complementary views of model behavior",
     )
-    runs = load_evaluation_runs()
-    add_metric_chart(
+    evidence = load_authoritative_evaluation()
+    rows = evidence["rows"]
+    add_run_metric_chart(
         slide,
-        0.55,
-        1.50,
-        6.05,
-        3.85,
-        "Binary cross-entropy loss",
-        runs,
+        0.45,
+        1.43,
+        4.05,
+        2.10,
+        "Unweighted test BCE",
+        rows,
         "loss",
-        0.17,
-        0.65,
-        [(0.20, "0.20"), (0.30, "0.30"), (0.40, "0.40"), (0.50, "0.50"), (0.60, "0.60")],
-        descriptor="Lower is better · ideal 0 · here: imbalance-driven decline",
+        0.30,
+        0.41,
+        [(0.30, "0.30"), (0.33, "0.33"), (0.36, "0.36"), (0.39, "0.39")],
+        color=BLUE,
+        descriptor="Lower is better · best 0.313 at global round 18",
     )
-    add_metric_chart(
+    add_run_metric_chart(
         slide,
-        6.73,
-        1.50,
-        6.05,
-        3.85,
-        "Exact match (%)",
-        runs,
-        "exact_match",
-        0.0,
-        56.0,
-        [(0, "0"), (10, "10"), (20, "20"), (30, "30"), (40, "40"), (50, "50")],
-        descriptor="All 14 labels correct · ideal 100% · 53% ≈ all-negative baseline",
+        4.64,
+        1.43,
+        4.05,
+        2.10,
+        "Macro AUROC",
+        rows,
+        "macro_auroc",
+        0.48,
+        0.73,
+        [(0.50, "0.50"), (0.60, "0.60"), (0.65, "0.65"), (0.70, "0.70")],
+        color=GREEN,
+        reference=0.50,
+        reference_label="chance",
+        descriptor="Higher is better · best 0.710 at global round 11",
     )
-    findings = [
-        ("LOSS ↓", "0.62 → 0.19; negative-label fit", BLUE_TINT, BLUE),
-        ("EXACT ↑", "53.16% ≈ 53.17% all-negative baseline", GREEN_TINT, GREEN),
-        ("JOINT VIEW", "Optimization ≠ useful learning", LIGHT, DARK),
-    ]
-    for index, (heading, body, fill, accent) in enumerate(findings):
-        x = 0.65 + index * 4.15
-        add_box(slide, x, 5.55, 3.88, 0.52, fill=fill, line=accent)
-        add_text(slide, heading, x + 0.14, 5.66, 1.12, 0.20, 8.8, accent, True)
-        add_text(
-            slide,
-            body,
-            x + 1.18,
-            5.64,
-            2.52,
-            0.24,
-            9.2,
-            DARK,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
+    add_run_metric_chart(
+        slide,
+        8.83,
+        1.43,
+        4.05,
+        2.10,
+        "Macro F1",
+        rows,
+        "macro_f1",
+        0.14,
+        0.20,
+        [(0.15, "0.15"), (0.17, "0.17"), (0.19, "0.19")],
+        color=ORANGE,
+        descriptor="Higher is better · best 0.187 at global round 18",
+    )
+    add_run_metric_chart(
+        slide,
+        1.55,
+        3.77,
+        5.10,
+        2.14,
+        "Label-wise accuracy",
+        rows,
+        "accuracy_percent",
+        85.5,
+        90.0,
+        [(86.0, "86%"), (87.0, "87%"), (88.0, "88%"), (89.0, "89%")],
+        color=PURPLE,
+        descriptor="Negative-dominated · final 86.73% · interpret with the baseline",
+    )
+    add_run_metric_chart(
+        slide,
+        6.78,
+        3.77,
+        5.10,
+        2.14,
+        "Exact match",
+        rows,
+        "exact_match_percent",
+        24.0,
+        33.0,
+        [(25.0, "25%"), (27.0, "27%"), (30.0, "30%"), (32.0, "32%")],
+        color=TU_RED,
+        descriptor="All 14 labels must match · best 31.92% · final 29.80%",
+    )
     add_note(
         slide,
-        "The three completed ChestMNIST runs each expose forty-nine learned global models from rounds "
-        "two through fifty; round one is the bootstrap state. Binary cross-entropy is the mean "
-        "probabilistic error across the fourteen independent labels; lower is better and zero is the "
-        "theoretical optimum. Exact match counts a sample only when its complete fourteen-label vector "
-        "is correct; higher is better and one hundred percent is the optimum. Loss falls from "
-        "approximately 0.62 to 0.188 and exact match rises to approximately fifty-three percent. However, "
-        "53.1717 percent of the 22,433 test samples have a completely negative fourteen-label vector, so the "
-        "53.11 to 53.16 percent endpoint is effectively the all-negative baseline. The unweighted binary "
-        "cross-entropy objective makes this majority-negative shortcut attractive: falling loss confirms "
-        "optimization of the recorded objective, not useful positive-finding discrimination. The trajectories for ten, "
-        "fifty, and one hundred participants almost overlap. This is an observed single run per scale, "
-        "so it validates repeatable local protocol simulation but is not evidence of distributed scale, "
-        "confidential-VM scalability, or statistical scale invariance.",
+        "The plots show every learned global model from the sole Phala run: federated rounds 1 through 24 "
+        "produce global-model rounds 2 through 25. Binary cross-entropy is the mean probabilistic error over "
+        "fourteen independent labels, so lower is better. It falls from 0.395955 to its minimum of 0.312939 "
+        "at global round 18 and ends at 0.328310. Macro AUROC evaluates per-label ranking and weights every "
+        "label equally; 0.5 is chance and 1 is ideal. It rises from 0.649090 to 0.710026 at round 11 and ends "
+        "at 0.704166, providing non-random ranking evidence. Macro F1 is the per-label harmonic mean of "
+        "precision and recall; it reaches 0.186731 at global round 18 and ends at 0.184709. Label-wise accuracy "
+        "moves between 86.2059 and 89.1611 percent and ends at 86.7275 percent. Exact match requires all fourteen "
+        "binary labels of a sample to be correct simultaneously; it ranges from 25.6586 to 31.9217 percent and "
+        "ends at 29.7954 percent. Because only 5.2569 percent of label positions are positive, both accuracy "
+        "curves are dominated by negatives and must be read with the all-negative baselines on the next slide, "
+        "not as headline measures of learning quality. The orange regions mark global rounds 18 through "
+        "24. The round-18 candidate became the parent; in global rounds 19 through 24 the VITA-FL gate retained that "
+        "parent because the candidate did not pass the validation-loss gate, so the test metrics form a real "
+        "plateau rather than missing telemetry. The global-round-25 candidate passed the five-percent validation "
+        "gate narrowly and was published. Its slightly higher test BCE is not contradictory because the gate "
+        "uses a separately signed validation artifact and never selects on the test split.",
     )
 
 
@@ -2855,82 +3098,95 @@ def slide_learning_quality(prs):
     slide = new_content_slide(
         prs,
         21,
-        "Optimization does not imply useful discrimination",
-        "AUROC remains near chance while both F1 scores collapse",
+        "Why do the headline scores look modest?",
+        "ChestMNIST is strongly imbalanced; accuracy rewards negatives, AUROC and F1 expose learning quality",
     )
-    runs = load_evaluation_runs()
-    add_metric_chart(
+    evidence = load_authoritative_evaluation()
+    manifest = evidence["manifest"]
+    final = manifest["learning"]["final"]
+    imbalance = manifest["imbalance_baselines"]
+
+    add_text(slide, "TEST LABEL POSITIONS", 0.72, 1.51, 3.28, 0.22, 10.0, TU_RED, True)
+    add_box(slide, 0.72, 1.92, 3.28, 0.54, fill=LIGHT, line=BORDER, radius=False)
+    positive_w = 3.28 * imbalance["positive_label_rate"]
+    add_box(slide, 0.72, 1.92, positive_w, 0.54, fill=TU_RED, line=TU_RED, radius=False)
+    add_text(slide, "5.26% positive", 0.74, 2.62, 1.55, 0.22, 11.2, TU_RED, True)
+    add_text(slide, "94.74% negative", 2.20, 2.62, 1.80, 0.22, 11.2, DARK, True, align=PP_ALIGN.RIGHT)
+    add_text(
         slide,
-        0.42,
-        1.50,
-        4.08,
-        3.86,
-        "Macro AUROC",
-        runs,
-        "macro_auroc",
-        0.485,
-        0.515,
-        [(0.49, "0.49"), (0.50, "0.50"), (0.51, "0.51")],
-        reference=0.50,
-        descriptor="Ranking quality · ideal 1 · ≈0.5 = chance-level discrimination",
+        "A classifier that always predicts 'negative' already scores 94.74% label accuracy.",
+        0.72,
+        3.08,
+        3.28,
+        0.78,
+        12.2,
+        DARK,
+        True,
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
     )
-    add_metric_chart(
-        slide,
-        4.63,
-        1.50,
-        4.08,
-        3.86,
-        "Micro F1",
-        runs,
-        "micro_f1",
-        0.0,
-        0.11,
-        [(0.00, "0.00"), (0.05, "0.05"), (0.10, "0.10")],
-        descriptor="Overall positive detection · ideal 1 · ≈0 = positives missed",
-    )
-    add_metric_chart(
-        slide,
-        8.84,
-        1.50,
-        4.08,
-        3.86,
-        "Macro F1",
-        runs,
-        "macro_f1",
-        0.0,
-        0.11,
-        [(0.00, "0.00"), (0.05, "0.05"), (0.10, "0.10")],
-        descriptor="Equal-weight label detection · ideal 1 · ≈0 = broad failure",
-    )
-    interpretations = [
-        (0.50, 3.92, "AUROC ≈ 0.50", "Little ranking signal", BLUE_TINT, BLUE),
-        (4.71, 3.92, "MICRO F1 ≈ 0", "Positive findings are missed", ORANGE_TINT, ORANGE),
-        (8.92, 3.92, "MACRO F1 ≈ 0", "Failure spans the labels", PURPLE_TINT, PURPLE),
+
+    add_text(slide, "BASELINE VS FINAL MODEL", 4.42, 1.51, 4.45, 0.22, 10.0, TU_RED, True, align=PP_ALIGN.CENTER)
+    headers = ["", "ALL-NEGATIVE", "VITA-FL r25"]
+    for index, header in enumerate(headers):
+        add_text(slide, header, 4.42 + index * 1.48, 1.91, 1.42, 0.28, 8.4, TU_RED if index == 2 else DARK, True, align=PP_ALIGN.CENTER)
+    comparison = [
+        ("LABEL ACC.", f"{imbalance['all_negative_label_accuracy_percent']:.2f}%", f"{final['accuracy_percent']:.2f}%"),
+        ("EXACT MATCH", f"{imbalance['all_negative_exact_match_percent']:.2f}%", f"{final['exact_match_percent']:.2f}%"),
+        ("MACRO F1", "0.000", f"{final['macro_f1']:.3f}"),
+        ("MACRO AUROC", "0.500", f"{final['macro_auroc']:.3f}"),
     ]
-    for x, width, heading, body, fill, accent in interpretations:
-        add_box(slide, x, 5.55, width, 0.56, fill=fill, line=accent)
-        add_text(slide, heading, x + 0.12, 5.63, width - 0.24, 0.17, 9.2, accent, True, align=PP_ALIGN.CENTER)
-        add_text(slide, body, x + 0.12, 5.84, width - 0.24, 0.16, 8.8, DARK, True, align=PP_ALIGN.CENTER)
+    for row_index, row in enumerate(comparison):
+        y = 2.31 + row_index * 0.53
+        fill = LIGHT if row_index % 2 == 0 else WHITE
+        add_box(slide, 4.42, y, 4.45, 0.47, fill=fill, line=BORDER, radius=False, line_width=0.5)
+        for col_index, value in enumerate(row):
+            add_text(slide, value, 4.53 + col_index * 1.44, y + 0.12, 1.26, 0.19, 9.0, GREEN if col_index == 2 and row_index >= 2 else DARK, col_index != 1, align=PP_ALIGN.CENTER)
+
+    add_box(slide, 9.25, 1.51, 3.36, 2.90, fill=ORANGE_TINT, line=ORANGE, line_width=1.3)
+    add_text(slide, "WHY F1 REMAINS LOW", 9.52, 1.77, 2.82, 0.22, 10.2, ORANGE, True, align=PP_ALIGN.CENTER)
+    reasons = [
+        "rare positive labels",
+        "one fixed 0.5 threshold",
+        "two local epochs",
+        "compact two-convolution CNN",
+    ]
+    for index, reason in enumerate(reasons):
+        y = 2.27 + index * 0.48
+        add_oval(slide, 9.54, y, 0.25, 0.25, WHITE, ORANGE, 1.2)
+        add_text(slide, "•", 9.60, y + 0.025, 0.13, 0.12, 8.5, ORANGE, True, align=PP_ALIGN.CENTER, margin=0)
+        add_text(slide, reason, 9.93, y - 0.01, 2.25, 0.25, 9.7, DARK, True)
+
+    add_box(slide, 0.78, 4.75, 11.78, 0.58, fill=GREEN_TINT, line=GREEN, line_width=1.2)
+    add_text(
+        slide,
+        "Interpretation: lower raw accuracy is compatible with learning positives; AUROC 0.704 shows ranking signal, while F1 0.185 calls for label-specific threshold calibration.",
+        1.05,
+        4.90,
+        11.24,
+        0.29,
+        10.8,
+        DARK,
+        True,
+        align=PP_ALIGN.CENTER,
+        valign=MSO_ANCHOR.MIDDLE,
+    )
+    add_box(slide, 1.36, 5.64, 10.62, 0.43, fill=TU_RED, line=TU_RED, radius=False)
+    add_text(slide, "Functional distributed-learning evidence — not a clinical validation.", 1.62, 5.76, 10.10, 0.20, 11.4, WHITE, True, align=PP_ALIGN.CENTER)
     add_note(
         slide,
-        "Macro AUROC measures per-label ranking quality and then gives every label equal weight; one is "
-        "ideal and 0.5 is chance-level ranking. Micro F1 pools all positive-label decisions, so frequent "
-        "labels have more influence. Macro F1 first evaluates each label and then averages them equally, "
-        "making rare-label failure more visible. Both F1 scores have an optimum of one at the fixed 0.5 "
-        "decision threshold. An F1 value near zero alone could be caused by class imbalance or a poorly "
-        "calibrated threshold. Here, however, macro AUROC is also near its threshold-independent chance "
-        "level, which supplies additional evidence that the scores contain little useful ranking signal. "
-        "Across the recorded runs, the best macro AUROC is 0.508392 for one hundred "
-        "participants at round fifty. The largest micro and macro F1 values, 0.104170 and 0.078440, both "
-        "occur for one hundred participants at round two before the trajectories collapse. The optimization "
-        "curves must not be read as clinical success. At round fifty, macro AUROC is "
-        "approximately 0.504, 0.507, and 0.508 for ten, fifty, and one hundred participants. Micro F1 "
-        "falls to about 0.0001 and macro F1 to about 0.0005 to 0.001. Loss reduction and rising exact "
-        "match are therefore explained by a majority-negative shortcut favored by severe class imbalance "
-        "and the unweighted binary cross-entropy objective. The dataset makes this failure mode plausible, "
-        "but the result still means that these runs did not learn a useful multilabel classifier. "
-        "These local runs validate protocol execution at the simulated logical participant counts, not "
-        "distributed-system scalability or diagnostic utility.",
+        "Only 16,510 of 314,062 label positions in the ChestMNIST test split are positive, a rate of "
+        "5.2569 percent. Therefore an all-negative classifier obtains 94.7431 percent label-wise accuracy "
+        "and 53.1717 percent exact match, while its macro F1 is zero and its AUROC is 0.5. Those two raw "
+        "accuracy measures are dominated by correct negatives and are not suitable headline success metrics. "
+        "The final VITA-FL model has lower label accuracy, 86.7275 percent, and lower exact match, 29.7954 "
+        "percent, because positive class weighting deliberately makes positive predictions instead of choosing "
+        "the trivial all-negative shortcut. Its macro AUROC of 0.704166 demonstrates non-random per-label ranking. "
+        "Its macro F1 of 0.184709 and micro F1 of 0.265532 are modest because rare labels are evaluated with one "
+        "fixed 0.5 threshold after only two local epochs in a compact CNN. The next learning step is label-specific "
+        "threshold calibration and repeated model-selection experiments. The current result supports the claim "
+        "that the distributed and verifiable pipeline learned a measurable signal; it is not evidence of clinical "
+        "validity or diagnostic utility.",
     )
 
 
@@ -2943,9 +3199,9 @@ def slide_results(prs):
 
     add_line_segment(slide, 1.49, 2.24, 1.49, 4.88, GREEN, 2.4)
     evidence = [
-        (2.02, "3 + 1", "transparency records", "three tool receipts + one complete inference bundle", PURPLE),
-        (3.19, "78,468", "signed training samples", "DICOM-inspired fixture tampering rejected", GREEN),
-        (4.36, "10 / 50 / 100", "logical participants", "local Docker simulations reached round 50", BLUE),
+        (2.02, "24/24", "federated rounds", "all five expected updates received per round", BLUE),
+        (3.19, "6", "admitted TDX workers", "Worker 0 combined training and inference", GREEN),
+        (4.36, "3 + 1", "transparency records", "three tool receipts + one inference bundle", PURPLE),
     ]
     for y, value, label, detail, accent in evidence:
         add_oval(slide, 0.91, y, 1.16, 1.16, WHITE, accent, 2.2)
@@ -2956,8 +3212,7 @@ def slide_results(prs):
             y + 0.37,
             0.98,
             0.30,
-            12.5 if value != "10 / 50 / 100" else 8.8,
-            accent,
++            accent,
             True,
             align=PP_ALIGN.CENTER,
             valign=MSO_ANCHOR.MIDDLE,
@@ -2968,11 +3223,11 @@ def slide_results(prs):
 
     add_oval(slide, 8.59, 2.00, 2.28, 2.28, ORANGE_TINT, ORANGE, 2.4)
     add_oval(slide, 8.82, 2.23, 1.82, 1.82, WHITE, WHITE, 0.5)
-    add_text(slide, "≈ 0.50", 8.99, 2.80, 1.48, 0.40, 23, ORANGE, True, align=PP_ALIGN.CENTER)
+    add_text(slide, "0.704", 8.99, 2.80, 1.48, 0.40, 23, GREEN, True, align=PP_ALIGN.CENTER)
     add_text(slide, "macro AUROC", 9.05, 3.28, 1.36, 0.25, 10.3, DARK, True, align=PP_ALIGN.CENTER)
     add_arrow(slide, 11.39, 2.21, 11.39, 4.16, ORANGE, 2.2)
     add_text(slide, "F1", 11.05, 2.43, 0.68, 0.28, 16, ORANGE, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "→ 0", 10.96, 3.65, 0.86, 0.34, 18, DARK, True, align=PP_ALIGN.CENTER)
+    add_text(slide, "0.185", 10.96, 3.65, 0.86, 0.34, 18, DARK, True, align=PP_ALIGN.CENTER)
     add_text(slide, "NOT DEMONSTRATED", 7.45, 4.53, 2.34, 0.25, 10.0, ORANGE, True)
     add_text(slide, "Clinical validity · diagnostic utility", 7.45, 4.88, 4.86, 0.30, 13.0, DARK, True)
     add_box(slide, 1.12, 5.57, 11.10, 0.50, fill=TU_RED, line=TU_RED, radius=False)
@@ -2990,13 +3245,12 @@ def slide_results(prs):
     )
     add_note(
         slide,
-        "The complete inference path produced three receiver-signed tool receipts and one complete "
-        "evidence-bundle record. The provenance evaluation accepted all 78,468 prepared training samples "
-        "and rejected targeted changes to pixels, labels, and signer policy in DICOM-inspired synthetic "
-        "fixtures. The single-host Docker simulations for 10, 50, and 100 logical participants replayed "
-        "one recorded quote and reached round 50. However, macro AUROC remained close to 0.50 and the F1 scores "
-        "approached zero. These results demonstrate protocol execution and evidence binding, not useful "
-        "diagnostic performance.",
+        "The sole Phala run completed all 24 requested federated rounds with six admitted TDX workers and "
+        "all five expected client updates in every round. Worker 0 then served the final round-25 model "
+        "through the attested inference path. That path produced three receiver-signed tool receipts and one "
+        "complete inference-evidence record. The final macro AUROC of 0.704 demonstrates ranking signal, while "
+        "macro F1 of 0.185 remains limited by rare labels, a fixed 0.5 threshold, two local epochs, and the "
+        "compact CNN. These results demonstrate protocol execution and measurable learning, not diagnostic utility.",
     )
 
 
@@ -3033,7 +3287,6 @@ def slide_conclusion(prs):
         True,
         align=PP_ALIGN.CENTER,
     )
-
     add_text(slide, "DEMONSTRATED", 0.86, 2.91, 2.12, 0.24, 10.5, GREEN, True)
     add_text(slide, "NEXT", 8.10, 2.91, 1.22, 0.24, 10.5, ORANGE, True)
     add_line_segment(slide, 1.22, 3.63, 6.05, 3.63, GREEN, 3.0)
@@ -3081,7 +3334,10 @@ def slide_conclusion(prs):
     add_text(slide, "Thank you · Questions?", 9.92, 5.93, 2.30, 0.22, 10.4, TU_RED, True, align=PP_ALIGN.RIGHT)
     add_note(
         slide,
-        "The conclusion is specific to the evaluated systems path. VITA-FL connects the ledger-selected "
+        "The conclusion is specific to the sole evaluated systems path: six admitted TDX workers completed "
+        "all 24 requested rounds, the final model reached macro AUROC 0.704 and macro F1 0.185, and Worker 0 "
+        "consumed that model through the measured inference path. The modest F1 reflects rare ChestMNIST "
+        "positives, one fixed 0.5 threshold, two local epochs, and the compact CNN. VITA-FL connects the ledger-selected "
         "model, encrypted and signed handoff, TDX/AIR inference evidence, three receiver-signed tool "
         "receipts, and SCITT recording without making the conversational model a root of trust. Exact "
         "identities, freshness values, artifacts, inputs, and outputs are checked across component "
@@ -3141,7 +3397,7 @@ def slide_worker_roles_backup(prs):
     roles = [
         (
             0.66,
-            "WORKERS 1 AND 2",
+            "WORKERS 1–5",
             "TRAINING-ONLY PROFILE",
             [
                 "TEE_INFERENCE_ENABLED = 0",
@@ -3218,10 +3474,10 @@ def slide_worker_roles_backup(prs):
     )
     add_note(
         slide,
-        "All three live workers used the same digest-pinned dfl-worker OCI image, and that image packaged "
+        "All six live workers used the same digest-pinned dfl-worker OCI image, and that image packaged "
         "both the decentralized-training implementation and the native inference code. Role activation is "
         "separate from image contents. Worker 0 used the combined start profile and enabled the receiver; "
-        "Workers 1 and 2 used the training-only profile and did not start that process. Each worker submitted "
+        "Workers 1 through 5 used the training-only profile and did not start that process. Each worker submitted "
         "its own canonical Compose preimage, ordered event log, fresh quote, and final RTMR3 value. The verifier "
         "replays each event log only against RTMR3 in its associated quote; it does not require one global final "
         "RTMR3. Replay establishes internal measurement consistency. A separate policy check authorizes the "
@@ -3368,6 +3624,7 @@ def build():
     slide_aggregator_selection(prs)
     slide_aggregator_recovery(prs)
     slide_close_compare_commit(prs)
+    slide_hybrid_r_code_sequence(prs)
     slide_handoff(prs)
     slide_sello_protocol(prs)
     slide_agent(prs)
@@ -3380,9 +3637,9 @@ def build():
     slide_worker_roles_backup(prs)
     slide_threats_dfl(prs)
     slide_threats_agent(prs)
-    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=25):
+    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=26):
         slide_threat_detail(prs, number, *threat)
-    assert len(prs.slides) == 38
+    assert len(prs.slides) == 39
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()

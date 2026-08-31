@@ -1,10 +1,10 @@
 # VITA-FL — Master's Thesis Presentation
 
 This repository contains the English presentation for the VITA-FL master's
-thesis. It comprises twenty-one talk pages, three compact backup and overview
+thesis. It comprises twenty-two talk pages, three compact backup and overview
 pages (one worker-role overview and two threat overviews), and fourteen
-full-size use/misuse-case backup pages, for a total of thirty-eight pages. The complete
-timed talk is approximately sixteen minutes. The deck is built directly from
+full-size use/misuse-case backup pages, for a total of thirty-nine pages. The complete
+timed talk is approximately seventeen minutes. The deck is built directly from
 the official TU Berlin PowerPoint template, and its title page preserves the
 official TU Berlin branding.
 
@@ -12,14 +12,14 @@ official TU Berlin branding.
 
 - `TU_Berlin_Praesentation_Master_einfarbig_Rot.pptx`: unchanged TU Berlin source template
 - `VITA-FL_Thesis_Presentation_TU_Berlin.pptx`: editable 16:9 presentation
-- `preview/contact-sheet.png`: preview of all thirty-eight pages
+- `preview/contact-sheet.png`: preview of all thirty-nine pages
 - `build_presentation.py`: reproducible deck generator
 - `render_preview.py`: lightweight local QA renderer
 - `assets/threat-diagrams/T1.png` … `T14.png`: use/misuse-case source diagrams
 - `assets/xray_concept.png`: realistic, anonymized chest-radiograph motif used on Page 3
 - `assets/physician-editorial-illustration-tablet.png`: illustrated physician used on Page 3
 - `assets/computer-scientist-editorial-illustration.png`: illustrated computer scientist used on Page 4
-- `data/evaluation/evaluation_run_{10,50,100}.csv`: source data for the editable learning-result plots
+- `data/evaluation/authoritative_phala_6w_24r*.{csv,json}`: the sole archived six-worker, 24-round Phala run, including simulated Anvil gas accounting, used by every evaluation slide; the generator records the run-specific Tier-1 allocation of six worker and two infrastructure TEE slots
 - `requirements.txt`: pinned Python dependencies
 
 Every page contains English speaker notes. The PNG renderer is intended only
@@ -27,7 +27,7 @@ for layout inspection; PowerPoint remains authoritative for exact font metrics
 and line wrapping. Preview rendering expects the DejaVu Sans fonts at their
 standard Linux paths.
 
-Pages 22–38 are backup material and are not included in the timing below.
+Pages 23–39 are backup material and are not included in the timing below.
 
 ## Suggested timing
 
@@ -45,18 +45,19 @@ Pages 22–38 are backup material and are not included in the timing below.
 | 10 | Weighted aggregator selection | 0:40 |
 | 11 | Quorum recovery and aggregator replacement | 0:45 |
 | 12 | Freeze → Compare → Finalize | 0:50 |
-| 13 | Model handoff | 0:40 |
-| 14 | Sello proposal and the selectively adopted VITA-FL profile | 0:45 |
-| 15 | Agent-mediated attested inference | 0:55 |
-| 16 | Independent audit | 0:50 |
-| 17 | Cryptographic chain of custody | 0:55 |
-| 18 | Evaluation design | 0:45 |
-| 19 | Optimization trajectories across participant counts | 0:45 |
-| 20 | Learning-quality limitations | 0:45 |
-| 21 | Conclusion and outlook | 0:40 |
+| 13 | Original Hybrid-R aggregate selection and VITA-FL parent fallback | 0:55 |
+| 14 | Model handoff | 0:40 |
+| 15 | Sello proposal and the selectively adopted VITA-FL profile | 0:45 |
+| 16 | Agent-mediated attested inference | 0:55 |
+| 17 | Independent audit | 0:50 |
+| 18 | Cryptographic chain of custody | 0:55 |
+| 19 | Sole-run protocol, Tier-1 capacity allocation, and workload summary | 0:45 |
+| 20 | BCE, macro-AUROC, macro-F1, accuracy, and exact match across all 24 rounds | 0:50 |
+| 21 | Dataset imbalance and metric interpretation | 0:45 |
+| 22 | Conclusion and outlook | 0:40 |
 
-Total: approximately sixteen minutes, including brief transitions between the
-timed pages. For a shorter slot, Pages 9–11 and 17
+Total: approximately seventeen minutes, including brief transitions between the
+timed pages. For a shorter slot, Pages 9–11 and 18
 can be treated as technical detail pages without breaking the main narrative.
 
 ## Regeneration

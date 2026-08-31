@@ -413,6 +413,16 @@ def render_shape(canvas, shape, sx, sy):
             kind = None
         if kind == MSO_AUTO_SHAPE_TYPE.OVAL:
             draw.ellipse((x0, y0, x1, y1), fill=fill, outline=outline, width=line_width)
+        elif kind in {MSO_AUTO_SHAPE_TYPE.DIAMOND, MSO_AUTO_SHAPE_TYPE.FLOWCHART_DECISION}:
+            points = [
+                ((x0 + x1) // 2, y0),
+                (x1, (y0 + y1) // 2),
+                ((x0 + x1) // 2, y1),
+                (x0, (y0 + y1) // 2),
+            ]
+            draw.polygon(points, fill=fill)
+            if outline:
+                draw.line(points + [points[0]], fill=outline, width=line_width, joint="curve")
         elif kind == MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE:
             radius = max(4, round(min(x1 - x0, y1 - y0) * 0.12))
             draw.rounded_rectangle((x0, y0, x1, y1), radius=radius, fill=fill, outline=outline, width=line_width)
