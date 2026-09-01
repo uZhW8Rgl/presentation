@@ -241,7 +241,6 @@ def load_authoritative_evaluation():
             row = dict(source)
             for field, conversion in numeric_fields.items():
                 row[field] = conversion(row[field])
-            row["gate_passed"] = row["gate_passed"].lower() == "true"
             rows.append(row)
 
     expected_federated_rounds = list(range(1, 25))
@@ -2791,8 +2790,8 @@ def slide_evaluation(prs):
     slide = new_content_slide(
         prs,
         19,
-        "One archived end-to-end Phala run",
-        "Legacy aggregation configuration · six worker TEEs · two infrastructure TEEs · 24 federated rounds",
+        "One end-to-end Phala FedAvg run",
+        "Current equal-weight FedAvg path · six worker TEEs · two infrastructure TEEs · 24 federated rounds",
     )
 
     # A single horizontal protocol line makes the evaluated path explicit.
@@ -2802,7 +2801,7 @@ def slide_evaluation(prs):
         (5.60, "5", "UPDATES / ROUND", ORANGE, ORANGE_TINT),
         (7.80, "120", "TRAINS + TRANSFERS", PURPLE, PURPLE_TINT),
         (10.00, "0", "ABORTED ATTEMPTS", TU_RED, RED_TINT),
-        (12.05, "1", "RECOVERED GAP", DARK, LIGHT),
+        (12.05, "0", "GAP RECOVERIES", DARK, LIGHT),
     ]
     for first, second in zip(stages, stages[1:]):
         add_arrow(slide, first[0] + 0.62, 2.35, second[0] - 0.62, 2.35, MID, 1.5)
@@ -2813,7 +2812,7 @@ def slide_evaluation(prs):
 
     add_box(slide, 0.68, 3.62, 3.78, 1.48, fill=BLUE_TINT, line=BLUE, line_width=1.3)
     add_text(slide, "RUN CLOCK", 0.94, 3.86, 1.16, 0.22, 10.0, BLUE, True)
-    add_text(slide, "14 min 20.87 s", 0.94, 4.21, 2.98, 0.30, 18.0, DARK, True)
+    add_text(slide, f"{training['first_to_last_evaluation_seconds'] / 60:.2f} min", 0.94, 4.21, 2.98, 0.30, 18.0, DARK, True)
     add_text(slide, f"{training['mean_evaluation_interval_seconds']:.2f} s mean evaluation interval", 0.94, 4.65, 3.10, 0.22, 9.2, DARK)
 
     add_box(slide, 4.78, 3.62, 3.78, 1.48, fill=PURPLE_TINT, line=PURPLE, line_width=1.3)
@@ -2847,9 +2846,8 @@ def slide_evaluation(prs):
         add_text(slide, body, x + 0.16, 5.72, 3.30, 0.20, 8.5, DARK, True, align=PP_ALIGN.CENTER)
     add_note(
         slide,
-        "This is the sole archived evaluation run reported by the thesis, journal, and presentation. It used "
-        "an earlier experimental aggregation configuration and is not an evaluation of the current equal-weight "
-        "FedAvg path. Six Phala "
+        "This is the sole evaluation run reported by the thesis, journal, and presentation. It executed the "
+        "current deterministic equal-weight FedAvg path. Six Phala "
         "tdx.small confidential VMs used fresh measured worker profiles: Worker 0 combined training and "
         "native inference, while Workers 1 through 5 were training-only. After one bootstrap completion, "
         "the evaluated Tier-1 account permitted at most eight concurrently active TEEs. Six slots were "
@@ -2858,17 +2856,15 @@ def slide_evaluation(prs):
         "six shards of 13,078 samples. This is a run-specific capacity decision rather than a protocol limit "
         "or a scalability claim. All 24 requested federated rounds succeeded. Every round received all five expected client "
         "updates, giving 120 local training completions and 120 transfers, with no aborted round attempt. "
-        "One aggregator-selection gap was recovered. The 24 recorded model evaluations span 860.87 seconds, "
-        "or 37.43 seconds between evaluations on average. The final round-25 model was then consumed through "
-        "the measured TEE inference path in 5.218 milliseconds; its evidence contains a 5,010-byte quote and "
+        "The run recorded no aborted attempt or selection-gap recovery. The 24 model evaluations span 689.22 seconds, "
+        "or 29.97 seconds between evaluations on average. The final round-25 model was then consumed through "
+        "the measured TEE inference path in 2.839 milliseconds; its evidence contains a 5,010-byte quote and "
         "ten RTMR3 events and was bound to receiver receipts and a transparency record. The verifier scope "
         "covered the AIR signature, REPORTDATA, RTMR3 replay, measured Compose, pinned image, contract endpoint, "
         "and trust-root policy; quote collateral was not independently marked as verified in this record. "
-        "Receipt-level reconciliation across the immutable worker logs accounts for all six registrations. "
-        "The original live dashboard snapshot had lost eight early telemetry events because it reset its "
-        "in-memory buffer after worker deployment began; the on-chain roster and six receipt records show "
-        "that no registration itself failed. The corrected 329 transactions and 617,350,840 gas quantify "
-        "the simulated Anvil EVM protocol execution, including 472,618,555 gas for RTMR3 registration.",
+        "Receipt-level reconciliation in the observability export accounts for all six registrations. "
+        "The 329 unique transactions and 616,141,147 gas quantify the simulated Anvil EVM protocol execution, "
+        "including 472,240,960 gas for RTMR3 registration.",
     )
 
 
@@ -2877,10 +2873,12 @@ def slide_learning_trajectories(prs):
         prs,
         20,
         "What changed over the 24 federated rounds?",
-        "Archived legacy configuration · five complementary views of model behavior",
+        "Equal-weight FedAvg · five complementary views of model behavior",
     )
     evidence = load_authoritative_evaluation()
     rows = evidence["rows"]
+    learning = evidence["manifest"]["learning"]
+    final = learning["final"]
     add_run_metric_chart(
         slide,
         0.45,
@@ -2891,10 +2889,10 @@ def slide_learning_trajectories(prs):
         rows,
         "loss",
         0.30,
-        0.41,
-        [(0.30, "0.30"), (0.33, "0.33"), (0.36, "0.36"), (0.39, "0.39")],
+        0.42,
+        [(0.30, "0.30"), (0.33, "0.33"), (0.36, "0.36"), (0.39, "0.39"), (0.42, "0.42")],
         color=BLUE,
-        descriptor="Lower is better · best 0.313 at global round 18",
+        descriptor=f"Lower is better · best {learning['best_test_bce']:.3f} at global round {learning['best_test_bce_round']}",
     )
     add_run_metric_chart(
         slide,
@@ -2911,7 +2909,7 @@ def slide_learning_trajectories(prs):
         color=GREEN,
         reference=0.50,
         reference_label="chance",
-        descriptor="Higher is better · best 0.710 at global round 11",
+        descriptor=f"Higher is better · best {learning['best_macro_auroc']:.3f} at global round {learning['best_macro_auroc_round']}",
     )
     add_run_metric_chart(
         slide,
@@ -2926,7 +2924,7 @@ def slide_learning_trajectories(prs):
         0.20,
         [(0.15, "0.15"), (0.17, "0.17"), (0.19, "0.19")],
         color=ORANGE,
-        descriptor="Higher is better · best 0.187 at global round 18",
+        descriptor=f"Higher is better · best {learning['best_macro_f1']:.3f} at global round {learning['best_macro_f1_round']}",
     )
     add_run_metric_chart(
         slide,
@@ -2941,7 +2939,7 @@ def slide_learning_trajectories(prs):
         90.0,
         [(86.0, "86%"), (87.0, "87%"), (88.0, "88%"), (89.0, "89%")],
         color=PURPLE,
-        descriptor="Negative-dominated · final 86.73% · interpret with the baseline",
+        descriptor=f"Negative-dominated · final {final['accuracy_percent']:.2f}% · interpret with the baseline",
     )
     add_run_metric_chart(
         slide,
@@ -2953,28 +2951,25 @@ def slide_learning_trajectories(prs):
         rows,
         "exact_match_percent",
         24.0,
-        33.0,
+        34.0,
         [(25.0, "25%"), (27.0, "27%"), (30.0, "30%"), (32.0, "32%")],
         color=TU_RED,
-        descriptor="All 14 labels must match · best 31.92% · final 29.80%",
+        descriptor=f"All 14 labels must match · best 32.75% · final {final['exact_match_percent']:.2f}%",
     )
     add_note(
         slide,
         "The plots show every learned global model from the sole Phala run: federated rounds 1 through 24 "
         "produce global-model rounds 2 through 25. Binary cross-entropy is the mean probabilistic error over "
-        "fourteen independent labels, so lower is better. It falls from 0.395955 to its minimum of 0.312939 "
-        "at global round 18 and ends at 0.328310. Macro AUROC evaluates per-label ranking and weights every "
-        "label equally; 0.5 is chance and 1 is ideal. It rises from 0.649090 to 0.710026 at round 11 and ends "
-        "at 0.704166, providing non-random ranking evidence. Macro F1 is the per-label harmonic mean of "
-        "precision and recall; it reaches 0.186731 at global round 18 and ends at 0.184709. Label-wise accuracy "
-        "moves between 86.2059 and 89.1611 percent and ends at 86.7275 percent. Exact match requires all fourteen "
-        "binary labels of a sample to be correct simultaneously; it ranges from 25.6586 to 31.9217 percent and "
-        "ends at 29.7954 percent. Because only 5.2569 percent of label positions are positive, both accuracy "
-        "curves are dominated by negatives and must be read with the all-negative baselines on the next slide, "
-        "not as headline measures of learning quality. The archived CSV contains identical published checkpoints "
-        "from global rounds 18 through 24 because the run used an older experimental aggregation configuration. "
-        "Those rows remain unchanged for provenance. They support the recorded end-to-end execution and learning "
-        "trajectory, but they are not evaluation evidence for the current equal-weight FedAvg design.",
+        "fourteen independent labels, so lower is better. It falls from 0.414148 to its minimum of 0.329733 "
+        "at global round 24 and ends at 0.332544. Macro AUROC evaluates per-label ranking and weights every "
+        "label equally; 0.5 is chance and 1 is ideal. It rises from 0.655573 to 0.720301 at round 13 and ends "
+        "at 0.711352, providing non-random ranking evidence. Macro F1 is the per-label harmonic mean of "
+        "precision and recall; it reaches 0.195377 at global round 8 and ends at 0.177471. Label-wise accuracy "
+        "starts at 88.6936 percent and ends at 85.8592 percent. Exact match requires all fourteen binary labels "
+        "of a sample to be correct simultaneously; it peaks at 32.7509 percent and ends at 26.0242 percent. "
+        "Because only 5.2569 percent of label positions are positive, both accuracy curves are dominated by "
+        "negatives and must be read with the all-negative baselines on the next slide. Every point belongs to "
+        "the same current equal-weight FedAvg model lineage.",
     )
 
 
@@ -2983,7 +2978,7 @@ def slide_learning_quality(prs):
         prs,
         21,
         "Why do the headline scores look modest?",
-        "Archived legacy run · imbalance makes AUROC and F1 more informative than accuracy",
+        "Current FedAvg run · imbalance makes AUROC and F1 more informative than accuracy",
     )
     evidence = load_authoritative_evaluation()
     manifest = evidence["manifest"]
@@ -3044,7 +3039,7 @@ def slide_learning_quality(prs):
     add_box(slide, 0.78, 4.75, 11.78, 0.58, fill=GREEN_TINT, line=GREEN, line_width=1.2)
     add_text(
         slide,
-        "Interpretation: lower raw accuracy is compatible with learning positives; AUROC 0.704 shows ranking signal, while F1 0.185 calls for label-specific threshold calibration.",
+        "Interpretation: lower raw accuracy is compatible with learning positives; AUROC 0.711 shows ranking signal, while F1 0.177 calls for label-specific threshold calibration.",
         1.05,
         4.90,
         11.24,
@@ -3063,14 +3058,14 @@ def slide_learning_quality(prs):
         "5.2569 percent. Therefore an all-negative classifier obtains 94.7431 percent label-wise accuracy "
         "and 53.1717 percent exact match, while its macro F1 is zero and its AUROC is 0.5. Those two raw "
         "accuracy measures are dominated by correct negatives and are not suitable headline success metrics. "
-        "The archived run's final model has lower label accuracy, 86.7275 percent, and lower exact match, 29.7954 "
+        "The final model has lower label accuracy, 85.8592 percent, and lower exact match, 26.0242 "
         "percent, because positive class weighting deliberately makes positive predictions instead of choosing "
-        "the trivial all-negative shortcut. Its macro AUROC of 0.704166 demonstrates non-random per-label ranking. "
-        "Its macro F1 of 0.184709 and micro F1 of 0.265532 are modest because rare labels are evaluated with one "
+        "the trivial all-negative shortcut. Its macro AUROC of 0.711352 demonstrates non-random per-label ranking. "
+        "Its macro F1 of 0.177471 and micro F1 of 0.262582 are modest because rare labels are evaluated with one "
         "fixed 0.5 threshold after only two local epochs in a compact CNN. The next learning step is label-specific "
         "threshold calibration and repeated model-selection experiments. The current result supports the claim "
         "that the distributed and verifiable pipeline learned a measurable signal; it is not evidence of clinical "
-        "validity, diagnostic utility, or the current equal-weight FedAvg path.",
+        "validity or diagnostic utility.",
     )
 
 
@@ -3219,11 +3214,10 @@ def slide_conclusion(prs):
     add_text(slide, "Thank you · Questions?", 9.92, 5.93, 2.30, 0.22, 10.4, TU_RED, True, align=PP_ALIGN.RIGHT)
     add_note(
         slide,
-        "The conclusion is specific to the sole archived systems path: six admitted TDX workers completed "
-        "all 24 requested rounds, the final model reached macro AUROC 0.704 and macro F1 0.185, and Worker 0 "
+        "The conclusion is specific to the sole evaluated systems path: six admitted TDX workers completed "
+        "all 24 requested FedAvg rounds, the final model reached macro AUROC 0.711 and macro F1 0.177, and Worker 0 "
         "consumed that model through the measured inference path. The modest F1 reflects rare ChestMNIST "
-        "positives, one fixed 0.5 threshold, two local epochs, and the compact CNN. This archived run used a "
-        "legacy experimental aggregation configuration and does not evaluate the current equal-weight FedAvg path. "
+        "positives, one fixed 0.5 threshold, two local epochs, and the compact CNN. "
         "VITA-FL connects the ledger-authoritative "
         "model, encrypted and signed handoff, TDX/AIR inference evidence, three receiver-signed tool "
         "receipts, and SCITT recording without making the conversational model a root of trust. Exact "
