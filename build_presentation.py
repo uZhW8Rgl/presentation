@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from typing import Sequence
@@ -18,6 +20,13 @@ from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_CONNECTOR
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.xmlchemy import OxmlElement
 from pptx.util import Inches, Pt
+
+from technology_icons import (
+    add_icon,
+    add_architecture_technology_icons,
+    add_project_technology_icons,
+    add_research_gap_sequence,
+)
 
 
 ROOT = Path(__file__).resolve().parent
@@ -606,6 +615,51 @@ def add_content_title(slide, title: str, kicker: str, slide_number: int):
     )
 
 
+def add_domain_navigation(slide, page_number: int, *, active_domains: set[str] | None = None):
+    """Show the active DFL/agent responsibilities after the introductory slides."""
+    prefix = "Domain navigation: "
+    for shape in list(slide.shapes):
+        if shape.name.startswith(prefix):
+            remove_shape(shape)
+    if page_number <= 6:
+        return
+
+    # Literature, FL/DFL foundations, and lifecycle precede the detailed architecture.
+    dfl_pages = {7, 8, 9} | {page + 4 for page in {*range(6, 13), *range(17, 24), *range(25, 32), *range(36, 39)}}
+    agent_pages = {7, 9} | {page + 4 for page in {6, *range(13, 19), 21, 22, 24, *range(32, 38)}}
+    # Provision the shared worker-image policy before the attestation details.
+    dfl_pages = {page + (page >= 13) for page in dfl_pages} | {13}
+    agent_pages = {page + (page >= 13) for page in agent_pages} | {13}
+    # Separate on-chain verification (14) from shared dstack-derived keys (15).
+    dfl_pages = {page + (page >= 15) for page in dfl_pages} | {15}
+    agent_pages = {page + (page >= 15) for page in agent_pages} | {15}
+    x, y, height = 10.40, .55, .25
+    gap, padding = 8 / 120, 4 / 120
+    domains = (
+        ("DFL", .45, "207548", page_number in dfl_pages if active_domains is None else "DFL" in active_domains),
+        ("Agent", .55, "1764A1", page_number in agent_pages if active_domains is None else "Agent" in active_domains),
+    )
+    background = add_box(
+        slide, x - padding, y - padding, .45 + gap + .55 + 2 * padding,
+        height + 2 * padding, fill=WHITE, line=WHITE, radius=False, line_width=0,
+    )
+    background.name = prefix + "background"
+    for label, width, color, active in domains:
+        badge = add_box(
+            slide, x, y, width, height,
+            fill=color if active else "F5F6F7",
+            line=color if active else "D7DEE3", radius=False, line_width=.55,
+        )
+        badge.name = prefix + label + " badge"
+        caption = add_text(
+            slide, label, x, y, width, height, 8.4,
+            WHITE if active else "5D6973", True,
+            align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0,
+        )
+        caption.name = prefix + label + " label"
+        x += width + gap
+
+
 def add_note(slide, text: str):
     notes = slide.notes_slide.notes_text_frame
     notes.text = text
@@ -683,7 +737,7 @@ def build_assets():
         ASSETS / "xray_concept.png",
         ASSETS / "physician-editorial-illustration-tablet.png",
         ASSETS / "computer-scientist-editorial-illustration.png",
-        ASSETS / "ramon-mehrpoya-portrait-cutout.png",
+        ASSETS / "ramon-mehrpoya-portrait-2026-09-08.jpg",
     ]
     for asset in required_assets:
         if not asset.is_file():
@@ -741,6 +795,7 @@ def new_content_slide(prs, _declared_number, title, kicker):
     # Derive the visible page number from the actual deck order so removing or
     # inserting a slide cannot leave stale footer numbers behind.
     add_content_title(slide, title, kicker, len(prs.slides))
+    add_domain_navigation(slide, len(prs.slides))
     return slide
 
 
@@ -783,6 +838,77 @@ def slide_title(prs):
     )
 
 
+def slide_hospital_motivation(prs):
+    """Introduce the hospital scenario after the research questions."""
+    slide = new_content_slide(
+        prs,
+        3,
+        "Several hospitals. One shared model.",
+        "Motivation · Learning together, keeping patient data local",
+    )
+
+    add_box(slide, 0.78, 1.85, 4.20, 3.05, fill=GREEN_TINT, line=GREEN, line_width=1.0)
+    add_text(slide, "Hospital consortium", 1.02, 2.04, 3.72, 0.35, 17, DARK, True, align=PP_ALIGN.CENTER)
+    for label, cx in zip(("A", "B", "C"), (1.59, 2.88, 4.17)):
+        add_hospital_campus_icon(slide, cx, 3.06, GREEN, 1.75)
+        add_text(slide, f"Hospital {label}", cx - 0.53, 3.57, 1.06, 0.25, 11, DARK, True, align=PP_ALIGN.CENTER)
+    add_text(
+        slide, "Complementary datasets\nPatient data stay local",
+        1.04, 4.08, 3.68, 0.58, 14, DARK, align=PP_ALIGN.CENTER,
+    )
+
+    add_arrow(slide, 5.12, 3.17, 5.60, 3.17, GREEN, 2.0)
+    add_box(slide, 5.74, 1.85, 3.05, 3.05, fill=LIGHT, line=BORDER, line_width=1.0)
+    add_text(slide, "Jointly trained", 5.95, 2.04, 2.63, 0.35, 17, DARK, True, align=PP_ALIGN.CENTER)
+    layers = (
+        ((6.43, 2.74), (6.43, 3.10), (6.43, 3.46)),
+        ((7.27, 2.62), (7.27, 3.10), (7.27, 3.58)),
+        ((8.09, 2.90), (8.09, 3.30)),
+    )
+    for first, second in zip(layers, layers[1:]):
+        for x1, y1 in first:
+            for x2, y2 in second:
+                add_line_segment(slide, x1, y1, x2, y2, MID, 0.9)
+    for layer in layers:
+        for cx, cy in layer:
+            add_oval(slide, cx - 0.09, cy - 0.09, 0.18, 0.18, TU_RED, TU_RED, 0.7)
+    add_text(
+        slide, "Custom-trained model\nfor chest X-rays",
+        5.96, 4.08, 2.61, 0.58, 14, DARK, align=PP_ALIGN.CENTER,
+    )
+
+    add_arrow(slide, 8.93, 3.17, 9.41, 3.17, BLUE, 2.0)
+    add_box(slide, 9.55, 1.85, 3.03, 3.05, fill=BLUE_TINT, line=BLUE, line_width=1.0)
+    add_text(slide, "Later use", 9.77, 2.04, 2.59, 0.35, 17, DARK, True, align=PP_ALIGN.CENTER)
+    add_icon(slide, "agent", 10.57, 2.60, 0.98, BLUE, BLUE_TINT, prefix="Hospital motivation: ")
+    add_text(
+        slide, "Physician accesses the model\nthrough an AI assistant",
+        9.72, 4.06, 2.70, 0.65, 12.5, DARK, align=PP_ALIGN.CENTER,
+    )
+
+    add_box(slide, 0.80, 5.30, 11.77, 0.72, fill=WHITE, line=BORDER, radius=False, line_width=0.7)
+    add_box(slide, 0.80, 5.30, 0.075, 0.72, fill=TU_RED, line=TU_RED, radius=False, line_width=0)
+    add_text(
+        slide, "Shared control during training. Evidence for each prediction.",
+        1.04, 5.49, 11.18, 0.32, 17, DARK, True, align=PP_ALIGN.CENTER,
+    )
+    add_note(
+        slide,
+        "Imagine a hospital consortium developing a chest X-ray model together. Each institution "
+        "contributes experience from its own patient population while keeping the underlying records "
+        "local. The three hospitals illustrate a wider consortium; they are not the participant count "
+        "of the prototype evaluation. The hospitals also want shared control over participation and "
+        "model development, confidence that contributions are processed correctly, and a way to "
+        "continue if the participant coordinating training becomes unavailable. Later, a physician "
+        "accesses this custom-trained specialist model through an AI assistant. The value of joint "
+        "training depends on being able to establish that this model processed the submitted image "
+        "and produced the reported result. The arrows summarize model development and later use; "
+        "they do not depict patient-data transfers or an implementation architecture. This is the "
+        "motivating scenario from Chapter 1, not a claim of clinical validation.",
+    )
+    return slide
+
+
 def slide_about(prs):
     slide = new_content_slide(
         prs,
@@ -791,15 +917,19 @@ def slide_about(prs):
         "Academic background · project experience · Master's thesis",
     )
 
-    portrait = image_fit(
-        slide,
-        ASSETS / "ramon-mehrpoya-portrait-cutout.png",
-        0.72,
-        1.51,
-        3.92,
-        4.40,
+    portrait_path = ASSETS / "ramon-mehrpoya-portrait-2026-09-08.jpg"
+    portrait = slide.shapes.add_picture(
+        str(portrait_path),
+        Inches(0.67),
+        Inches(1.49),
+        Inches(4.08),
+        Inches(4.44),
     )
-    portrait.name = "Page 2 Ramon Mehrpoya portrait cutout"
+    # Fill the existing frame, removing excess wall above the portrait.
+    with Image.open(portrait_path) as photo:
+        portrait.crop_top = 1 - (photo.width / photo.height) / (4.08 / 4.44)
+    portrait.auto_shape_type = MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE
+    portrait.name = "Page 2 Ramon Mehrpoya portrait"
     portrait_frame = slide.shapes.add_shape(
         MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
         Inches(0.67),
@@ -874,11 +1004,11 @@ def slide_about(prs):
         valign=MSO_ANCHOR.MIDDLE,
     )
     projects = [
-        (5.42, "GAIA-X 4 PLC-AAD", "Blockchain &\nencryption", GREEN_TINT, GREEN),
-        (7.63, "ZOKRATES PLUS", "ZK · TEE · remote\nattestation · DFL", BLUE_TINT, BLUE),
-        (9.83, "ZODIAC", "AI agents &\nMCP tools", ORANGE_TINT, ORANGE),
+        (5.42, "GAIA-X 4 PLC-AAD", GREEN_TINT, GREEN),
+        (7.63, "ZOKRATES PLUS", BLUE_TINT, BLUE),
+        (9.83, "ZODIAC", ORANGE_TINT, ORANGE),
     ]
-    for x, project, focus, fill, accent in projects:
+    for x, project, fill, accent in projects:
         add_box(slide, x, 3.75, 2.13, 0.89, fill=fill, line=accent, line_width=1.2)
         add_text(
             slide,
@@ -893,20 +1023,9 @@ def slide_about(prs):
             align=PP_ALIGN.CENTER,
             valign=MSO_ANCHOR.MIDDLE,
         )
-        add_text(
-            slide,
-            focus,
-            x + 0.10,
-            4.22,
-            1.93,
-            0.35,
-            8.4,
-            DARK,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
         add_arrow(slide, x + 1.065, 4.65, x + 1.065, 5.00, TU_RED, 1.8)
+
+    add_project_technology_icons(slide)
 
     add_box(slide, 5.42, 5.02, 6.54, 0.86, fill=RED_TINT, line=TU_RED, line_width=1.4)
     add_text(
@@ -971,8 +1090,8 @@ def slide_problem(prs):
         4.56,
     )
     physician_picture.name = "Page 3 physician illustration with tablet"
-    add_box(slide, 4.47, 1.88, 3.52, 2.51, fill=WHITE, line=TU_RED, line_width=1.5)
-    add_box(slide, 4.47, 1.88, 0.10, 2.51, fill=TU_RED, line=TU_RED, radius=False)
+    add_box(slide, 4.47, 1.88, 3.52, 1.90, fill=WHITE, line=TU_RED, line_width=1.5)
+    add_box(slide, 4.47, 1.88, 0.10, 1.90, fill=TU_RED, line=TU_RED, radius=False)
     add_text(slide, "THE TEMPTING SHORTCUT", 4.87, 2.22, 2.72, 0.20, 9.5, TU_RED, True)
     add_text(
         slide,
@@ -983,18 +1102,6 @@ def slide_problem(prs):
         0.91,
         25,
         DARK,
-        True,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_text(
-        slide,
-        "But is it suitable\nfor clinical use?",
-        4.87,
-        3.93,
-        2.78,
-        0.43,
-        10.5,
-        "686868",
         True,
         valign=MSO_ANCHOR.MIDDLE,
     )
@@ -1025,8 +1132,8 @@ def slide_engineering_response(prs):
     )
     scientist_picture.name = "Page 4 computer scientist illustration with tablet"
 
-    add_box(slide, 5.35, 1.88, 3.52, 2.51, fill=WHITE, line=TU_RED, line_width=1.5)
-    add_box(slide, 8.77, 1.88, 0.10, 2.51, fill=TU_RED, line=TU_RED, radius=False)
+    add_box(slide, 5.35, 1.88, 3.52, 1.90, fill=WHITE, line=TU_RED, line_width=1.5)
+    add_box(slide, 8.77, 1.88, 0.10, 1.90, fill=TU_RED, line=TU_RED, radius=False)
     add_text(slide, "THE ENGINEERING RESPONSE", 5.68, 2.22, 2.78, 0.20, 9.5, TU_RED, True)
     add_text(
         slide,
@@ -1039,17 +1146,6 @@ def slide_engineering_response(prs):
         DARK,
         True,
         valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_text(
-        slide,
-        "Training, execution, and publication\nmust form one inspectable path.",
-        5.55,
-        3.80,
-        3.02,
-        0.43,
-        9.7,
-        "686868",
-        True,
     )
 
     add_box(slide, 9.58, 1.55, 3.09, 4.31, fill=DARK, line=DARK)
@@ -1065,58 +1161,7 @@ def slide_engineering_response(prs):
         True,
         align=PP_ALIGN.CENTER,
     )
-    architecture_stages = [
-        ("SIGNED MEDICAL DATA", GREEN),
-        ("ATTESTED DFL", BLUE),
-        ("VERIFIED MODEL STATE", PURPLE),
-        ("AGENT + INFERENCE TEE", ORANGE),
-        ("TRANSPARENCY LOG", TU_RED),
-    ]
-    row_tops = [2.10, 2.72, 3.33, 3.95, 4.57]
-    for index, ((label, accent), top) in enumerate(zip(architecture_stages, row_tops), start=1):
-        add_box(slide, 9.82, top, 2.61, 0.40, fill="505050", line="717171", line_width=0.8)
-        add_oval(slide, 9.93, top + 0.08, 0.24, 0.24, accent)
-        add_text(
-            slide,
-            str(index),
-            9.96,
-            top + 0.11,
-            0.18,
-            0.16,
-            7.0,
-            WHITE,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-            margin=0,
-        )
-        add_text(
-            slide,
-            label,
-            10.27,
-            top + 0.12,
-            2.02,
-            0.17,
-            7.5,
-            WHITE,
-            True,
-            valign=MSO_ANCHOR.MIDDLE,
-            margin=0,
-        )
-        if index < len(architecture_stages):
-            add_arrow(slide, 11.12, top + 0.42, 11.12, row_tops[index] - 0.03, MID, 1.3)
-    add_text(
-        slide,
-        "Evidence follows every result.",
-        9.86,
-        5.48,
-        2.53,
-        0.20,
-        7.8,
-        WHITE,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
+    add_architecture_technology_icons(slide)
     add_note(
         slide,
         "The computer scientist's response is that a plausible model output is not enough. Trust must "
@@ -1129,7 +1174,7 @@ def slide_engineering_response(prs):
 
 
 def slide_gap(prs):
-    slide = new_content_slide(prs, 5, "Research gap and research questions", "The missing composition")
+    slide = new_content_slide(prs, 6, "Research gap and research questions", "Research positioning")
     areas = [
         ("DFL", "Model production", GREEN_TINT, GREEN),
         ("AGENT", "Tool orchestration", ORANGE_TINT, ORANGE),
@@ -1180,7 +1225,7 @@ def slide_gap(prs):
     add_box(slide, 0.72, 2.88, 11.89, 0.64, fill=TU_RED, line=TU_RED, radius=False)
     add_text(
         slide,
-        "Gap: no inspectable path from decentralized training to verified inference.",
+        "Focus: attestation-based DFL → inference → verifiable agent use.",
         0.95,
         3.02,
         11.43,
@@ -1191,34 +1236,35 @@ def slide_gap(prs):
         align=PP_ALIGN.CENTER,
         valign=MSO_ANCHOR.MIDDLE,
     )
+    add_research_gap_sequence(slide)
     questions = [
         (
             "RQ 1:",
-            "How can DFL models be integrated into AI agent-based system architectures while ensuring trustworthiness across the entire training and inference pipeline?",
+            "Trustworthy integration",
             GREEN_TINT,
             GREEN,
         ),
         (
             "RQ 1.1:",
-            "How can verifiable DFL guarantee integrity and availability during model training?",
+            "Integrity & availability",
             BLUE_TINT,
             BLUE,
         ),
         (
             "RQ 1.2:",
-            "How can ML inference be made verifiable, such that the integrity of model predictions can be guaranteed, for example through cryptographic proofs of execution?",
+            "Verifiable inference",
             PURPLE_TINT,
             PURPLE,
         ),
     ]
     for index, (label, body, fill, accent) in enumerate(questions):
         x = 0.68 + index * 4.07
-        add_box(slide, x, 3.70, 3.83, 2.24, fill=fill, line=accent)
+        add_box(slide, x, 4.82, 3.83, 1.12, fill=fill, line=accent)
         add_text(
             slide,
             label,
             x + 0.24,
-            3.95,
+            4.94,
             1.15,
             0.34,
             15,
@@ -1230,12 +1276,12 @@ def slide_gap(prs):
             slide,
             body,
             x + 0.24,
-            4.38,
+            5.42,
             3.35,
-            1.43,
-            11.8,
+            0.36,
+            17,
             DARK,
-            False,
+            True,
             valign=MSO_ANCHOR.MIDDLE,
         )
     add_note(
@@ -1244,99 +1290,534 @@ def slide_gap(prs):
         "architectures while preserving trustworthiness across the complete training and inference "
         "pipeline. The first sub-question focuses on integrity and availability during verifiable DFL "
         "training. The second asks how inference and model predictions can be made verifiable, for "
-        "example through cryptographic proofs of execution.",
+        "example through cryptographic proofs of execution. Existing work already connects lifecycle "
+        "stages, as shown on the following comparison slide. The thesis studies a concrete "
+        "attestation-based implementation and its trust assumptions; it does not claim to be the "
+        "first end-to-end verifiable AI system.",
     )
+
+
+def slide_literature_comparison(prs):
+    """Source-linked comparison of system coverage and verification mechanisms."""
+    slide = new_content_slide(
+        prs, 7, "Prior work: system coverage and verification",
+        "Existing lifecycle links · Different evidence and trust assumptions",
+    )
+
+    # These are representative scopes, not an exhaustive feature/quality ranking.
+    stage_x = (3.35, 4.55, 5.83, 6.89)
+    stage_w = (1.02, 1.10, .88, 1.33)
+    stage_colors = (GREEN, BLUE, ORANGE, PURPLE)
+    mechanism_x = (8.77, 9.49, 10.61, 12.00)
+    add_text(slide, "WORK", .82, 1.51, 2.4, .27, 12, DARK, True)
+    add_text(slide, "SYSTEM COVERAGE", 3.35, 1.51, 4.87, .27, 12, DARK, True, align=PP_ALIGN.CENTER)
+    add_text(slide, "VERIFICATION MECHANISMS", 8.34, 1.51, 4.24, .27, 12, DARK, True, align=PP_ALIGN.CENTER)
+    for x, w, label, accent in zip(stage_x, stage_w, ("DFL", "Inference", "Agent", "Transparency\nLog"), stage_colors):
+        add_text(slide, label, x - .055, 2.07, w + .11, .44, 11.5, accent, True,
+                 align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+    add_text(slide, "Remote attestation", 9.98, 1.78, 2.63, .27, 11.5, DARK, True, align=PP_ALIGN.CENTER)
+    add_line_segment(slide, 10.12, 2.06, 12.46, 2.06, BORDER, 1.0)
+    for x in (10.12, 12.46):
+        add_line_segment(slide, x, 2.06, x, 2.13, BORDER, 1.0)
+    for x, label, w in zip(mechanism_x, ("ZKP", "TEE", "Quote\nverification", "RTMR3\nreplay"), (.62, .61, 1.22, 1.08)):
+        add_text(slide, label, x - w / 2, 2.12, w, .42, 11.3, DARK, True,
+                 align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+
+    # (label, source, stage labels/status, mechanisms). Status 2: implemented;
+    # 1: discussed/framework; 0: not described in the checked system/paper.
+    rows = (
+        ("Lee, Heiss et al. · 2024", "https://arxiv.org/abs/2404.12623",
+         (("DFL", 2), None, None, None), (2, 0, 0, 0)),
+        ("Ebrahimi et al. · 2024", "https://doi.org/10.1109/Blockchain62396.2024.00017",
+         (("DFL", 2), None, None, None), (2, 0, 0, 0)),
+        ("Voltran · 2024", "https://arxiv.org/abs/2408.06885",
+         (("Aggregate", 2), None, None, None), (0, 2, "SGX RA", 0)),
+        ("Hartmann · 2024", None,
+         (("DFL", 2), None, None, None), (2, 2, "Simulated", 0)),
+        ("ZKML · 2024", "https://doi.org/10.1145/3627703.3650088",
+         (None, ("Inference", 2), None, None), (2, 0, 0, 0)),
+        ("ZkAudit · 2024", "https://proceedings.mlr.press/v235/waiwitlikhit24a.html",
+         (None, ("Audits", 2), None, None), (2, 0, 0, 0)),
+        ("Balan et al. · 2025", "https://arxiv.org/abs/2503.22573",
+         (("DFL", 1), ("Inference", 1), None, None), (1, 1, 0, 0)),
+        ("AIR-02 · draft + demo", "https://www.ietf.org/archive/id/draft-tsyrulnikov-rats-attested-inference-receipt-02.html",
+         (None, ("Receipts", 2), None, None), (0, 2, "Platform RA", 0)),
+        ("VET · 2025", "https://arxiv.org/abs/2512.15892",
+         (None, ("API trace", 2), ("Agent", 2), None), (2, 2, 0, 0)),
+        ("Sello · 2026", "https://arxiv.org/abs/2606.04193",
+         (None, None, ("Tools", 2), ("Receipts", 2)), (0, 0, 0, 0)),
+        ("VITA-FL · this thesis", None,
+         (("DFL", 2), ("Inference", 2), ("Agent", 2), ("Receipts", 2)), (0, 2, 2, 2)),
+    )
+
+    def marker(cx, cy, status, accent=DARK):
+        if status:
+            add_oval(slide, cx - .082, cy - .082, .164, .164,
+                     accent if status == 2 else WHITE, accent, 1.5)
+        else:
+            add_line_segment(slide, cx - .07, cy, cx + .07, cy, MID, 1.4)
+
+    for index, (label, url, stages, mechanisms) in enumerate(rows):
+        y = 2.59 + index * .295
+        cy = y + .14
+        own = index == len(rows) - 1
+        row_fill = RED_TINT if own else (LIGHT if index % 2 == 0 else WHITE)
+        add_box(slide, .70, y, 11.94, .28, fill=row_fill, line=row_fill, radius=False, line_width=0)
+        if own:
+            add_box(slide, .70, y, .045, .28, fill=TU_RED, line=TU_RED, radius=False, line_width=0)
+        name = add_text(slide, label, .83, y + .005, 2.43, .27, 11.4, TU_RED if own else DARK, own,
+                        valign=MSO_ANCHOR.MIDDLE, margin=0)
+        if url:
+            name.text_frame.paragraphs[0].runs[0].hyperlink.address = url
+        for i in range(3):
+            if stages[i] and stages[i + 1]:
+                add_arrow(slide, stage_x[i] + stage_w[i] + .015, cy,
+                          stage_x[i + 1] - .015, cy,
+                          TU_RED if own else DARK, 1.2, dashed=min(stages[i][1], stages[i + 1][1]) == 1)
+        for i, stage in enumerate(stages):
+            if stage is None:
+                marker(stage_x[i] + stage_w[i] / 2, cy, 0)
+                continue
+            text, status = stage
+            accent = TU_RED if own else stage_colors[i]
+            chip = add_box(slide, stage_x[i], y + .0125, stage_w[i], .255,
+                           fill=accent if status == 2 else WHITE, line=accent, line_width=1.1)
+            chip.name = f"Literature: {label}: {text}"
+            add_text(slide, text, stage_x[i], y + .0125, stage_w[i], .255,
+                     10.8, WHITE if status == 2 else accent, True,
+                     align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+        for x, status in zip(mechanism_x, mechanisms):
+            if isinstance(status, str):
+                add_text(slide, status, x - .59, y + .005, 1.18, .27, 10.8, DARK,
+                         align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+            else:
+                marker(x, cy, status, TU_RED if own else DARK)
+
+    # A single readable legend keeps qualifications out of the table cells.
+    for x, status, caption, width in (
+        (2.48, 2, "Implemented", 1.45),
+        (5.11, 1, "Discussed / framework", 2.65),
+        (8.92, 0, "Not described", 1.75),
+    ):
+        marker(x, 6.07, status)
+        add_text(slide, caption, x + .18, 5.92, width, .30, 11.5, DARK, valign=MSO_ANCHOR.MIDDLE, margin=0)
+
+    add_note(slide,
+        "Reading this slide: System coverage distinguishes DFL, inference, agents, and a "
+        "transparency log. General training proofs do not automatically count as DFL; "
+        "an execution transcript, provenance database, or model ledger does not automatically "
+        "count as a transparency log for inference/tool statements. The columns are not an "
+        "exhaustive capability list. Filled blocks/dots mean implemented or "
+        "evaluated in the described prototype. Outlines mean discussed, proposed, or framework "
+        "options. A dash means not described as a mechanism of the checked work, not proof of "
+        "absence from every related implementation. ZKP includes the zero-knowledge proofs "
+        "used by each system, including certificate or transcript proofs; it is not limited "
+        "to ML computation. Proof scope remains specific to each row. "
+        "Paper names link to primary sources. The representative selection is not a systematic "
+        "literature review or a security ranking. Quote verification and RTMR3 replay are "
+        "grouped under remote attestation as two selected checks, not an exhaustive definition "
+        "of attestation. RTMR3 is specific to the TDX measurement path.\n\n"
+        "Lee, Heiss et al., End-to-End Verifiable Decentralized Federated Learning (ICBC 2024), "
+        "https://arxiv.org/html/2404.12623v1, sections V–VII: Groth16 zkSNARKs with ZoKrates cover "
+        "registration and per-round signed-data provenance, device binding, and local update "
+        "computation. A smart contract verifies local updates and performs aggregation. Their "
+        "device attestation is not TEE remote attestation. End-to-end refers to the learning "
+        "workflow; downstream inference and agent execution are not described.\n\n"
+        "Ebrahimi, Sober, Hoang, Ileri, Sanders and Schulte, Blockchain-Based Federated Learning "
+        "Utilizing Zero-Knowledge Proofs for Verifiable Training and Aggregation (IEEE Blockchain "
+        "2024), pp. 54–63, https://doi.org/10.1109/Blockchain62396.2024.00017. The author's "
+        "companion implementation, https://github.com/ElmiraEbrahimi/Veriblock-FL, supplies "
+        "separate ZoKrates zk-SNARK circuits for local training and global aggregation, with "
+        "Solidity proof verification. Model parameters remain off chain; the ledger holds "
+        "hashes and global-model IPFS references. FederatedModel.sol, "
+        "getStakeWinnersAndSelectedAggregatorIndex, and devices/middleware/aggregator_selection.py "
+        "implement changing off-chain aggregators. Hence DFL and ZKP are filled as implemented. "
+        "The checked implementation does not describe a served inference/agent lifecycle, "
+        "a tool/inference-receipt transparency log, TEEs, quote verification or RTMR3 replay. "
+        "A model ledger is not the receipt transparency log meant by this slide. Both training "
+        "and aggregation are already verifiable here; VITA-FL's distinction is its TEE/remote-"
+        "attestation mechanism and its continuation to inference, agent use and receipts. "
+        "The classification was checked against the public companion implementation; the "
+        "publisher full text was inaccessible, so no paper section numbers or exact historical "
+        "code correspondence are asserted.\n\n"
+        "Voltran (2024), https://arxiv.org/html/2408.06885v1, sections III-C, IV, VII: Intel SGX "
+        "aggregation with remote attestation and encrypted channels; enclave-result signatures "
+        "are checked on chain. A trusted committee provisions signing keys. The focus is "
+        "confidential distributed aggregation within FL, not later inference or agent use. "
+        "On-chain result-signature checks are not on-chain RA. The Quote verification cell "
+        "reads SGX RA because RA is used and evaluated (Appendix D-C), but concrete quote fields, "
+        "certificate/collateral checks, and verifier implementation are not specified. This "
+        "is not a claim that Voltran omits quote verification. Its model ledger is not a "
+        "separate tool/inference-receipt transparency log. No TDX/RTMR3 replay is described.\n\n"
+        "Hartmann (2024), Advancing the Efficiency of Verifiable Decentralized Federated Learning, "
+        "TU Berlin master's thesis: the original implementation is present in the vita-fl Git "
+        "history at 3362a185929b355b69099f2819b8b42638055957 (Johann Hartmann, 5 October 2024). "
+        "Worker training and aggregation use TEEs with smart-contract coordination. RISC Zero "
+        "proves certificate-signature verification in the simulated attestation path, not ML "
+        "training or aggregation; the filled ZKP marker refers to that certificate proof. "
+        "In remote_attestation/methods/guest/src/bin/verify_ar.rs, "
+        "lines 74–142 parse CA/VCEK certificates, verify an RSA-PSS/SHA-384 signature, and "
+        "commit a Boolean result; the guest does not consume a hardware report or app measurements. "
+        "remote_attestation/apps/src/bin/publisher.rs, lines 167–174, selects Groth16 proving. "
+        "The Simulated cell distinguishes this registration design from authenticated production "
+        "hardware quotes. cloud_setup/terraform/main.tf configures an AMD SEV-SNP VM. No "
+        "downstream inference/agent/transparency-log path or RTMR3 replay is described in the "
+        "examined predecessor. The original thesis PDF and a public publication URL were not "
+        "available locally; the bibliography entry is hartmann2024dfl.\n\n"
+        "ZKML (EuroSys 2024), https://ddkang.github.io/papers/2024/zkml-eurosys.pdf, sections 2–4 "
+        "and 8–9: implemented halo2-based compiler and inference-proof optimizations. Table 2 also "
+        "lists CNN training as supported; section 4.4 explicitly makes training proofs a "
+        "non-focus. Thus the single inference stage on this slide does not mean training is "
+        "impossible. Attested sensors are mentioned as a combinable input source, not a deployed "
+        "TEE/TDX inference attestation mechanism.\n\n"
+        "ZkAudit, Trustless Audits without Revealing Data or Models (ICML 2024), "
+        "https://proceedings.mlr.press/v235/waiwitlikhit24a.html and "
+        "https://arxiv.org/html/2404.04500v1, sections 3–6: ZkAudit-T proves training with "
+        "committed data/weights; ZkAudit-I proves later audit functions using the same bindings, "
+        "including inference in the implemented audits. This is an implemented training-to-audit "
+        "lifecycle link, although generic training is not a column in this version of the slide. "
+        "There is no agent or DFL coordination protocol. The Inference cell reads Audits to "
+        "distinguish this application from a served native inference API. Published commitments "
+        "do not themselves establish a transparency log.\n\n"
+        "Balan et al., A Framework for Cryptographic Verifiability of End-to-End AI Pipelines "
+        "(2025), https://arxiv.org/html/2503.22573v1, sections 3–5: conceptual linkage of data, "
+        "training, evaluation, inference, and unlearning through signatures, commitments, and "
+        "ZKPs. Section 4.2.2 explicitly discusses decentralized FL approaches, including PTDFL; "
+        "the outlined DFL cell refers to this discussion, not an own implemented DFL protocol. "
+        "The slide shows selected parts of that broader lifecycle. This is a framework and "
+        "tooling analysis, not a new fully implemented pipeline. The outlined ZKP marker "
+        "denotes the framework's discussion and mapping of existing ZKP approaches. The outlined "
+        "TEE marker refers only to related verifiable-database techniques discussed in section "
+        "5.1; no own remote-attestation or image-measurement verification pipeline is specified. "
+        "The discussed DECORAIT blockchain metadata registry is not a specified transparency "
+        "service with verified inclusion receipts in this framework.\n\n"
+        "AIR revision 02, Attested Inference Receipt: A COSE/CWT Profile for Confidential AI "
+        "Inference, https://www.ietf.org/archive/id/"
+        "draft-tsyrulnikov-rats-attested-inference-receipt-02.html, sections 7.2–7.3 and 14: "
+        "an Internet-Draft with a demonstration implementation, EphemeralML. Filled cells refer "
+        "to the reported receipt emission/verification and TEE execution, not to a finalized "
+        "standard. The Platform RA cell summarizes platform-specific attestation: full "
+        "single-document AIR provenance is implemented for Nitro; TDX/GCP evidence remains "
+        "split across boot-time and transport/platform verification paths. Full single-document "
+        "TDX validation is future work. The profile explicitly specifies TDX/DCAP quote checks, "
+        "and can carry RTMR3 measurements, but does not specify replay of a dstack application "
+        "event log. An external transparency log is outside the current profile (section 11.4). "
+        "No DFL or agent workflow is established by the receipt format.\n\n"
+        "VET Your Agent (2025 preprint), https://arxiv.org/html/2512.15892v1, sections 6–10 and "
+        "Appendix A: framework plus evaluated implementation. TLSNotary/Web Proofs bind API "
+        "transcripts; VeriTrade combines a Claude API trace with a TEE proxy. A self-hosted "
+        "Intel TDX notary is evaluated. The filled ZKP marker refers to interactive ZK proofs "
+        "inside TLSNotary/MPC-TLS for TLS records and plaintext, confirmed in the pinned "
+        "alpha.12 verifier: https://github.com/tlsnotary/tlsn/blob/v0.1.0-alpha.12/"
+        "crates/verifier/src/lib.rs#L253. Exported Web Proofs rely on the notary; they do not "
+        "prove LLM inference arithmetic. SNARK/STARK computation proofs remain framework "
+        "options. RA is discussed, but concrete quote/certificate/app-policy verification and "
+        "RTMR3/dstack replay are not specified. This does not mean VET never uses attestation. "
+        "Locally collected traces are not an append-only transparency log with inclusion "
+        "proofs; selective-disclosure and freshness limitations remain.\n\n"
+        "Sello / Figuera (2026), Notarized Agents: Receiver-Attested Confidential Receipts for "
+        "AI Agent Actions, https://arxiv.org/html/2606.04193v1, sections 4, 6–7: the receiving "
+        "service signs owner-encrypted tool receipts and publishes them to a transparency log. "
+        "The reference implementation and cryptographic microbenchmarks use a local mock log; "
+        "hosted-log submission latency is not measured first-party. Filled cells describe this "
+        "implemented receipt lifecycle, not a production deployment or proof of all agent "
+        "reasoning. Receiver-attested means service signatures, not TEE remote attestation. "
+        "Suppression before a call reaches the receiver and receiver collusion remain outside "
+        "the guarantee. The protocol does not by itself verify ML inference arithmetic.\n\n"
+        "VITA-FL: native training, aggregation, and inference use TEEs and bound evidence "
+        "rather than ZK proofs of those ML computations. The evaluated runtime also uses no "
+        "ZK proof for admission: AutomataDcapTdxV4Attestation.sol rejects "
+        "verifyAndAttestWithZKProof with ZK_Verification_Not_Supported, and DeviceRegistry.sol "
+        "calls verifyAndAttestOnChainWithRtmr3EventLog. The ZKP dash concerns this operational "
+        "prototype, not the thesis's discussion of explored alternatives. Full TDX/DCAP quote-signature, "
+        "certificate, QE, and TCB verification occurs at admission. The image policy parses "
+        "the exact app_compose preimage, derives its compose hash and immutable image digest, "
+        "checks the approved image/base-runtime policy, and replays the ordered RTMR3 event "
+        "chain against the authenticated quote. RTMR3 alone does not identify an image, and "
+        "replay alone does not authenticate a quote. This dstack/TDX-specific mechanism is "
+        "an implementation distinction, not a general security advantage over SGX or ZKPs. "
+        "See https://docs.phala.com/phala-cloud/attestation/verify-your-application. "
+        "For each inference the agent verifies signed AIR bindings and RTMR3 consistency, "
+        "but does not authenticate the quote signature or validate the DCAP certificate/"
+        "collateral chain: "
+        "dcap_collateral_verified is false. It relies on prior receiver admission and the "
+        "registered receipt key. The Agent stage means authenticated tool receipts, deterministic "
+        "model resolution, and recorded inference evidence, not a proof of all LLM reasoning. "
+        "The Transparency Log cell refers to receiver-published Sello-style tool receipts "
+        "and inclusion checks, not the training ledger alone. This part builds on existing "
+        "work: Sello, https://arxiv.org/abs/2606.04193, and the SCITT architecture, "
+        "https://www.rfc-editor.org/rfc/rfc9943.html. "
+        "Local code references: "
+        "vita-fl/smart_contracts/src/attestation/AutomataDcapTdxV4Attestation.sol and "
+        "vita-fl/agent/tee_inference_client.py.\n\n"
+        "Technical background references: SCITT / RFC 9943, "
+        "https://www.rfc-editor.org/rfc/rfc9943.html, defines signed statements, registration "
+        "policy, verifiable data structures, and inclusion receipts. It is a transparency "
+        "architecture rather than a DFL/agent system. Phala/dstack application verification, "
+        "https://docs.phala.com/phala-cloud/attestation/verify-your-application, supplies the "
+        "technical precedent for quote authentication, manifest/digest policy, and RTMR3 replay. "
+        "VITA-FL applies those mechanisms; it does not introduce RTMR3 image binding.\n\n"
+        "Takeaway: lifecycle connections already exist. VITA-FL studies an attestation-based "
+        "DFL-to-inference integration with agent evidence and concrete image-policy checks. "
+        "No first-system claim, no exhaustive research-gap proof, and no measured TEE-vs-ZKP "
+        "performance advantage follow from this comparison. Sources checked 20 September 2026."
+    )
+    return slide
+
+
+def slide_fl_dfl_roles(prs):
+    """Compare coordinator placement and introduce the two training roles."""
+    slide = new_content_slide(
+        prs,
+        7,
+        "FL and DFL: who trains, who coordinates?",
+        "Federated learning · Decentralized coordination · Roles and responsibilities",
+    )
+
+    for x, heading, subtitle in (
+        (0.76, "Centrally coordinated FL", "Permanent central coordinator"),
+        (6.89, "DFL used in VITA-FL", "Each participant can take the aggregator role"),
+    ):
+        add_box(slide, x, 1.53, 5.68, 2.80, fill=WHITE, line=BORDER, line_width=0.8)
+        add_text(slide, heading, x + 0.19, 1.69, 5.30, 0.29, 16, DARK, True, align=PP_ALIGN.CENTER)
+        add_text(slide, subtitle, x + 0.19, 2.08, 5.30, 0.24, 12.5 if x > 6 else 11.5, DARK, bold=x > 6, align=PP_ALIGN.CENTER)
+
+    def role_node(x, y, w, text, aggregator=False):
+        accent, fill = (TU_RED, RED_TINT) if aggregator else (GREEN, GREEN_TINT)
+        add_box(slide, x, y, w, 0.52, fill=fill, line=accent, line_width=1.05)
+        add_text(slide, text, x + 0.06, y + 0.035, w - 0.12, 0.43, 11, accent, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+
+    def model_exchange(worker_x, worker_y, aggregator_x, aggregator_y):
+        dx, dy = aggregator_x - worker_x, aggregator_y - worker_y
+        length = (dx * dx + dy * dy) ** 0.5
+        ox, oy = -dy / length * 0.045, dx / length * 0.045
+        add_arrow(slide, worker_x + ox, worker_y + oy, aggregator_x + ox, aggregator_y + oy, DARK, 1.0)
+        add_arrow(slide, aggregator_x - ox, aggregator_y - oy, worker_x - ox, worker_y - oy, DARK, 1.0)
+
+    # The fixed server is separate from the three local-training participants.
+    for worker_x in (1.66, 3.60, 5.54):
+        model_exchange(worker_x, 3.50, 3.60, 2.98)
+    role_node(2.65, 2.46, 1.90, "Fixed server\nAggregator", aggregator=True)
+    for letter, worker_x in zip(("A", "B", "C"), (1.66, 3.60, 5.54)):
+        role_node(worker_x - 0.64, 3.50, 1.28, f"Worker {letter}")
+
+    # Keep participants in the same positions; the red role moves each round.
+    for round_number, (cx, aggregator) in enumerate(zip((7.96, 9.73, 11.50), "ABC"), start=1):
+        add_text(slide, f"Round {round_number}", cx - 0.73, 2.53, 1.46, 0.25, 12.5, DARK, True, align=PP_ALIGN.CENTER)
+        participants = {"A": (cx, 3.07), "B": (cx - 0.40, 3.65), "C": (cx + 0.40, 3.65)}
+        ax, ay = participants[aggregator]
+        for label, (px, py) in participants.items():
+            if label != aggregator:
+                add_line_segment(slide, ax, ay, px, py, MID, 1.4)
+        for label, (px, py) in participants.items():
+            active = label == aggregator
+            accent, fill = (TU_RED, TU_RED) if active else (GREEN, GREEN_TINT)
+            add_oval(slide, px - 0.23, py - 0.23, 0.46, 0.46, fill, accent, 1.4)
+            add_text(slide, label, px - 0.23, py - 0.23, 0.46, 0.46, 14, WHITE if active else GREEN, True, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE, margin=0)
+        add_text(slide, f"{aggregator} aggregates", cx - 0.77, 4.02, 1.54, 0.24, 12, TU_RED, True, align=PP_ALIGN.CENTER, margin=0)
+        if round_number < 3:
+            add_arrow(slide, cx + 0.69, 3.30, cx + 1.07, 3.30, DARK, 1.6)
+
+    add_text(
+        slide, "Both keep training records local and exchange model parameters.",
+        0.91, 4.47, 11.55, 0.28, 13, DARK, True, align=PP_ALIGN.CENTER,
+    )
+
+    roles = (
+        (0.76, "WORKER · LOCAL TRAINING", GREEN, GREEN_TINT, (
+            "Start from the shared global model.",
+            "Train on local data → local model.",
+            "Submit the local model / parameter update.",
+        )),
+        (6.89, "AGGREGATOR · SHARED MODEL", TU_RED, RED_TINT, (
+            "Collect and check contributions.",
+            "Combine the accepted local models.",
+            "Publish the next global model.",
+        )),
+    )
+    for x, heading, accent, fill, tasks in roles:
+        add_box(slide, x, 4.91, 5.68, 1.14, fill=fill, line=accent, line_width=0.8)
+        add_text(slide, heading, x + 0.19, 5.03, 5.29, 0.21, 11.5, accent, True)
+        for index, task in enumerate(tasks, start=1):
+            add_text(slide, f"{index}. {task}", x + 0.19, 5.29 + (index - 1) * 0.22, 5.29, 0.21, 11.5, DARK)
+    add_note(
+        slide,
+        "Federated learning lets participants train a model together while retaining their records "
+        "locally. DFL is a decentralized form of FL; the left diagram specifically shows centrally "
+        "coordinated FL. A global model is the shared starting model of a round. A worker is the "
+        "computing process at a participant, for example a hospital. It starts from that model, trains "
+        "on local records, and submits its local parameter set or update. The aggregator collects and "
+        "checks contributions, combines accepted local models, and publishes the next global model. "
+        "The arrows on the left represent model exchange, never raw patient records. A permanent "
+        "central server holds the coordination role; continued progress depends on it or an explicit "
+        "replacement mechanism. On the right, the same participants A, B, and C appear in three "
+        "successive rounds. Red identifies the aggregator: first A, then B, then C. The other participants "
+        "perform local training. The horizontal arrows indicate progression between rounds. This is an "
+        "illustrative assignment sequence, not a mandatory round-robin schedule. Weighted selection can "
+        "also choose the same aggregator in consecutive rounds. Each eligible participant "
+        "can assume the role under VITA-FL's shared contract rules. A stalled aggregator "
+        "can be replaced through the recovery protocol. Rotation alone does not establish availability: "
+        "decentralization requires agreement and recovery rules and retains infrastructure dependencies. "
+        "Other DFL designs use peer-to-peer mixing instead of a single rotating aggregator. In the "
+        "prototype, the current aggregator does not train during its aggregation round: six participants "
+        "therefore provide five local models. Contribution checks enforce protocol rules; they do not "
+        "establish that training data are benign. Sources: thesis Chapter 2, Section 2.1; McMahan et al., "
+        "AISTATS 2017, https://arxiv.org/abs/1602.05629; Martínez Beltrán et al., IEEE Communications "
+        "Surveys & Tutorials 2023, https://doi.org/10.1109/COMST.2023.3315746.",
+    )
+    return slide
+
+
+def slide_lifecycle(prs):
+    """Place the approved F3 native shapes under the main deck's title/footer."""
+    approved = Presentation(ASSETS / "lifecycle-f3.pptx")
+    assert len(approved.slides) == 1
+    slide = new_content_slide(prs, 9, "VITA-FL: from training to verifiable use", "")
+    for shape in approved.slides[0].shapes:
+        # The approved asset includes its proposal title/footer. Copy only the
+        # editable diagram so numbering, date, and domain chips remain standard.
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.28):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Lifecycle diagram must contain only self-contained native shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(
+        slide,
+        "Lifecycle overview before the detailed architecture. Workers train locally and "
+        "send encrypted local updates directly to the current aggregator over authenticated "
+        "HTTPS. The aggregator combines the updates, stores the encrypted global-model "
+        "bundle in IPFS, and finalizes its references on blockchain. Workers resolve the "
+        "finalized reference and load the model from IPFS for the next training round. "
+        "The Global model segment therefore represents both publication and retrieval. "
+        "The blockchain also coordinates rounds and records accepted submission commitments; "
+        "those interactions are abstracted here. Aggregation is an assigned participant role, "
+        "and selection can choose the same participant in successive rounds.\n\n"
+        "A finalized model can also be used for inference. The Published model arrow "
+        "summarizes the receiver resolving its authoritative blockchain reference and "
+        "retrieving the corresponding IPFS bundle. The agent invokes the attested inference "
+        "service through MCP and receives its result. The receiver publishes the tool "
+        "receipt to the separate transparency log. Domain evidence binds the model, "
+        "inference input, and output; log inclusion alone does not verify computation. "
+        "Admission and retained signing identities underpin execution; this overview "
+        "does not imply a fresh full DCAP check for every call. No inference-to-training "
+        "feedback is implied. The circle groups functions, not a shared TEE or trust boundary.\n\n"
+        "Prototype references: vita-fl/dfl/node_server/src/server.ts:463-533,672-702,"
+        "2110-2180,2313-2330; vita-fl/dfl/node_server/src/ipfs.ts:315-346,380-435; "
+        "vita-fl/smart_contracts/src/core/GMStorage.sol:180-248; "
+        "vita-fl/smart_contracts/src/core/AggregatorSelection.sol:171-195.",
+    )
+    return slide
+
+
+def slide_image_policy(prs):
+    """Use the approved editable CI/CD diagram independently of its concept folder."""
+    approved = Presentation(ASSETS / "ci-cd-image-policy.pptx")
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    slide = new_content_slide(prs, 13, "From worker image to on-chain policy", "")
+    for shape in source.shapes:
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.28):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Image-policy diagram must contain only self-contained native shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
 
 
 def slide_architecture(prs):
+    """Draw the approved architecture with shared blockchain/IPFS infrastructure."""
+    green, purple, blue = "207548", "7446A6", "1764A1"
+    tints = {green: "EDF6F0", purple: "F3EEF8", blue: "EDF4FA"}
+
+    def text(value, x, y, w, h, size=12, color=DARK, bold=False, center=False):
+        return add_text(
+            slide, value, x, y, w, h, size, color, bold,
+            align=PP_ALIGN.CENTER if center else PP_ALIGN.LEFT,
+            valign=MSO_ANCHOR.MIDDLE, margin=0,
+        )
+
+    def panel(x, y, w, h, color):
+        return add_box(slide, x, y, w, h, fill=tints[color], line=color, line_width=1.1)
+
+    def card(name, heading, detail, x, y, w, h, color, heading_size=12):
+        shape = add_box(slide, x, y, w, h, fill=WHITE, line=color, line_width=1.2)
+        shape.name = name
+        text(heading, x + .10, y + .10, w - .20, .30, heading_size, color, True, True)
+        text(detail, x + .10, y + .51, w - .20, h - .60, 10.5, DARK, False, True)
+        return shape
+
+    def route(name, points, color, width=1.8):
+        for index, (start, end) in enumerate(zip(points, points[1:]), start=1):
+            shape = add_line_segment(
+                slide, *start, *end, color, width, arrow=index == len(points) - 1,
+            )
+            shape.name = f"{name} / {index}"
+
     slide = new_content_slide(prs, 6, "VITA-FL: two responsibility blocks", "")
-    add_box(slide, 0.63, 1.51, 5.98, 4.41, fill=GREEN_TINT, line=GREEN)
-    add_box(slide, 6.73, 1.51, 5.97, 4.41, fill=BLUE_TINT, line=BLUE)
-    add_text(slide, "DFL BLOCK", 0.88, 1.73, 1.8, 0.3, 14, GREEN, True)
-    add_text(slide, "AGENT AND INFERENCE BLOCK", 6.98, 1.73, 3.4, 0.3, 14, BLUE, True)
-    left_nodes = [
-        (0.92, "DATA", "Signed medical\ninput", GREEN),
-        (2.55, "WORKER TEE", "Attested\ntraining", GREEN),
-        (4.28, "LEDGER", "Coordination\nand publication", GREEN),
-    ]
-    right_nodes = [
-        (7.28, "RECEIVER TEE", "Independent resolution\nand inference", BLUE),
-        (9.48, "MCP", "Three bounded\ntools", BLUE),
-        (11.04, "LOG", "Receipts and\nevidence", PURPLE),
-    ]
-    for x, label, body, accent in left_nodes + right_nodes:
-        width = 1.42 if x < 6 else 1.78 if x == 7.28 else 1.28
-        add_box(slide, x, 2.32, width, 1.36, fill=WHITE, line=accent)
-        add_text(
-            slide,
-            label,
-            x + 0.06,
-            2.49,
-            width - 0.12,
-            0.32,
-            11.5,
-            accent,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
-        add_text(
-            slide,
-            body,
-            x + 0.06,
-            2.89,
-            width - 0.12,
-            0.62,
-            10,
-            DARK,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
-    add_arrow(slide, 2.34, 3.01, 2.51, 3.01, MID, 1.3)
-    add_arrow(slide, 3.97, 3.01, 4.24, 3.01, MID, 1.3)
-    add_arrow(slide, 9.06, 3.01, 9.44, 3.01, MID, 1.3)
-    add_arrow(slide, 10.76, 3.01, 11.00, 3.01, MID, 1.3)
-    add_box(slide, 5.56, 3.94, 2.28, 0.97, fill=PURPLE_TINT, line=PURPLE)
-    add_text(slide, "IPFS", 5.70, 4.11, 2.0, 0.26, 14, PURPLE, True, align=PP_ALIGN.CENTER)
-    add_text(slide, "Signed, encrypted model", 5.72, 4.49, 1.96, 0.24, 10.5, DARK, True, align=PP_ALIGN.CENTER)
-    add_arrow(slide, 5.70, 3.60, 6.16, 3.93, PURPLE, 1.7)
-    add_arrow(slide, 7.20, 3.93, 7.70, 3.60, PURPLE, 1.7)
-    add_text(
-        slide,
-        "The DFL block produces the authoritative model state.",
-        1.02,
-        4.29,
-        4.30,
-        0.62,
-        16.5,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_text(
-        slide,
-        "The agent orchestrates the deterministic components.",
-        7.82,
-        4.29,
-        4.38,
-        0.62,
-        16.5,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
+
+    panel(.63, 1.65, 3.40, 3.50, green)
+    panel(4.25, 1.65, 2.66, 3.95, purple)
+    panel(7.13, 1.65, 5.57, 3.50, blue)
+
+    # The overlapping frames include shared infrastructure in both functional
+    # groups; they do not represent deployment or attestation boundaries.
+    for name, x1, y1, x2, y2 in (
+        ("DFL and infrastructure", .48, 1.51, 6.99, 5.74),
+        ("Infrastructure and agent", 4.14, 1.42, 12.86, 5.88),
+    ):
+        corners = [(x1, y1), (x2, y1), (x2, y2), (x1, y2), (x1, y1)]
+        for index, (start, end) in enumerate(zip(corners, corners[1:]), start=1):
+            line = add_line_segment(slide, *start, *end, "000000", 1.1, dashed=True)
+            line.name = f"Shared group frame: {name} / {index}"
+
+    text("DFL BLOCK", .87, 1.88, 2.90, .30, 13.5, green, True)
+    text("BLOCKCHAIN / IPFS", 4.45, 1.88, 2.26, .30, 11.5, purple, True, True)
+    text("AGENT AND INFERENCE BLOCK", 7.36, 1.88, 5.10, .30, 13.5, blue, True)
+
+    card("Data", "DATA", "Signed\ninput", .87, 2.56, 1.24, 1.15, green)
+    card("Worker", "WORKER TEE", "Attested\ntraining", 2.37, 2.56, 1.39, 1.15, green, heading_size=10.5)
+    card("Ledger", "LEDGER", "Finalized\nmodel reference", 4.48, 2.56, 2.20, 1.15, purple)
+    card("IPFS", "IPFS", "Signed, encrypted\nmodel bundle", 4.48, 4.03, 2.20, 1.20, purple)
+    card("Receiver", "RECEIVER TEE", "Resolve\nand infer", 7.41, 2.56, 2.11, 1.15, blue)
+    card("MCP", "MCP", "Bounded\ntools", 9.82, 2.56, 1.14, 1.15, blue)
+    card("Log", "LOG", "Receipts /\nevidence", 11.25, 2.56, 1.18, 1.15, blue)
+
+    route("Data to worker", [(2.14, 3.135), (2.34, 3.135)], green, 1.4)
+    route("Publish reference", [(3.79, 3.135), (4.44, 3.135)], green)
+    route("Publish artifacts", [(3.065, 3.75), (3.065, 4.63), (4.44, 4.63)], green)
+    route("Ledger to receiver", [(6.71, 3.135), (7.37, 3.135)], purple, 2.2)
+    route("IPFS to receiver", [(6.71, 4.63), (7.06, 4.63), (7.06, 3.46), (7.37, 3.46)], purple, 2.2)
+    route("Receiver to MCP", [(9.55, 3.135), (9.78, 3.135)], blue, 1.4)
+    route("MCP to log", [(10.99, 3.135), (11.21, 3.135)], blue, 1.4)
+
+    text("Produces the model", .87, 5.32, 2.90, .27, 11.5, green, True, True)
+    text("The agent orchestrates tools and evidence.", 7.44, 5.31, 4.96, .30, 12, blue, True, True)
     add_note(
         slide,
-        "VITA-FL separates two responsibilities. The DFL block admits measured workers, consumes "
-        "attributable medical inputs, coordinates rounds, and publishes an encrypted and signed model. "
-        "The agent and inference block independently resolves that publication and performs inference "
-        "in a measured receiver workload. The language-model agent can initiate the workflow, but it "
-        "cannot choose a local model, override a failed check, or convert missing evidence into a "
-        "successful result.",
+        "Green denotes model production; purple denotes blockchain and IPFS; "
+        "blue denotes agent orchestration, inference and evidence logging. "
+        "The DFL and agent/inference responsibilities remain separate; shared infrastructure "
+        "is not a third execution responsibility. These boxes are functional groups, not "
+        "deployment or attestation boundaries.\n\n"
+        "Ledger -> Receiver TEE supplies the finalized model reference: CIDs, round and "
+        "publisher key. IPFS -> Receiver TEE supplies the signed, encrypted model bundle "
+        "and associated artifacts. The receiver independently resolves, retrieves and verifies "
+        "them. Purple arrowheads depict incoming information; the receiver initiates retrieval. "
+        "The ledger does not upload model bytes to IPFS. DFL publication arrows summarize "
+        "the active aggregator publishing artifacts and their references.\n\n"
+        "Local code references: vita-fl/tee_inference/service/model_source.py:218; "
+        "vita-fl/agent/blockchain_source.py:354,544. "
+        "The MCP/log chain is the existing slide's compact view of tools and evidence, "
+        "not a detailed call-sequence diagram.",
     )
+    return slide
 
 
 def slide_dfl_hospitals(prs):
@@ -1677,251 +2158,28 @@ def slide_tee_vs_zk(prs):
     )
 
 
-def slide_phala_attestation_keys(prs):
-    slide = new_content_slide(
-        prs,
-        10,
-        "From Intel-backed evidence to app-bound secrets",
-        "Live Phala path · independent quote verification · path-separated dstack keys",
-    )
+def slide_phala_attestation(prs):
+    from attestation_slides import verification
+    return verification(prs, sys.modules[__name__])
 
-    # Left: evidence creation and certificate/collateral verification.
-    add_box(slide, 0.48, 1.48, 7.16, 4.36, fill=ORANGE_TINT, line=ORANGE, line_width=1.2)
-    add_text(slide, "A · VERIFY THE TDX EVIDENCE", 0.76, 1.68, 2.55, 0.25, 12.5, ORANGE, True)
 
-    add_box(slide, 3.02, 1.62, 4.22, 0.60, fill=WHITE, line=ORANGE, line_width=1.0)
-    add_text(
-        slide,
-        "INTEL PCS / PCCS COLLATERAL",
-        3.18,
-        1.72,
-        3.90,
-        0.18,
-        9.5,
-        ORANGE,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_text(
-        slide,
-        "PCK chain + validity · CRLs · QE identity · TCB info",
-        3.18,
-        1.95,
-        3.90,
-        0.15,
-        8.0,
-        DARK,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    add_box(slide, 0.76, 2.48, 1.78, 1.42, fill=BLUE_TINT, line=BLUE, line_width=1.1)
-    add_text(slide, "MEASURED CVM", 0.91, 2.69, 1.48, 0.25, 11.5, BLUE, True, align=PP_ALIGN.CENTER)
-    add_text(
-        slide,
-        "MRTD + RTMR0–2\nRTMR3 event log\nREPORTDATA",
-        0.91,
-        3.04,
-        1.48,
-        0.66,
-        9.6,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    add_box(slide, 2.84, 2.48, 1.66, 1.42, fill=RED_TINT, line=TU_RED, line_width=1.1)
-    add_text(slide, "TDX QUOTE V4", 2.98, 2.69, 1.38, 0.25, 11.5, TU_RED, True, align=PP_ALIGN.CENTER)
-    add_text(
-        slide,
-        "Quoting Enclave signature\nPCK certificate",
-        2.98,
-        3.12,
-        1.38,
-        0.46,
-        9.2,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    add_box(slide, 4.82, 2.36, 2.40, 1.68, fill=WHITE, line=ORANGE, line_width=1.4)
-    add_text(slide, "DCAP VERIFIER", 5.04, 2.57, 1.96, 0.25, 12.0, ORANGE, True, align=PP_ALIGN.CENTER)
-    add_text(
-        slide,
-        "Intel-rooted signatures\nRevocation + TCB status\nMeasurements + challenge",
-        5.04,
-        2.98,
-        1.96,
-        0.75,
-        9.6,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    add_arrow(slide, 2.55, 3.19, 2.79, 3.19, BLUE, 1.6)
-    add_arrow(slide, 4.51, 3.19, 4.76, 3.19, TU_RED, 1.6)
-    add_arrow(slide, 5.98, 2.23, 5.98, 2.33, ORANGE, 1.4)
-
-    add_box(slide, 4.99, 4.26, 2.06, 0.55, fill=GREEN_TINT, line=GREEN, line_width=1.1)
-    add_text(
-        slide,
-        "VERIFIED APP IDENTITY",
-        5.12,
-        4.42,
-        1.80,
-        0.22,
-        10.4,
-        GREEN,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_arrow(slide, 6.02, 4.05, 6.02, 4.23, GREEN, 1.5)
-
-    add_box(slide, 0.78, 4.30, 3.72, 1.10, fill=PURPLE_TINT, line=PURPLE, line_width=1.0)
-    add_text(slide, "VITA-FL ON-CHAIN ADMISSION", 1.00, 4.50, 3.28, 0.22, 10.6, PURPLE, True)
-    add_text(
-        slide,
-        "Independently checks the pinned base tuple, replays RTMR3, and binds workload, participant, action key, and nonce.",
-        1.00,
-        4.82,
-        3.28,
-        0.43,
-        8.7,
-        DARK,
-        True,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_arrow(slide, 3.67, 3.92, 3.67, 4.27, PURPLE, 1.4, dashed=True)
-
-    # Right: the attested KMS provisions deterministic material through dstack.sock.
-    add_box(slide, 7.82, 1.48, 5.02, 4.36, fill=BLUE_TINT, line=BLUE, line_width=1.2)
-    add_text(slide, "B · DERIVE APP-BOUND SECRETS", 8.08, 1.68, 4.42, 0.25, 11.8, BLUE, True)
-
-    add_box(slide, 8.10, 2.08, 4.47, 1.02, fill=GREEN_TINT, line=GREEN, line_width=1.2)
-    # Editable key glyph.
-    add_oval(slide, 8.35, 2.39, 0.34, 0.34, WHITE, line=GREEN, line_width=1.4)
-    add_line_segment(slide, 8.67, 2.56, 9.03, 2.56, GREEN, 2.0)
-    add_line_segment(slide, 8.91, 2.56, 8.91, 2.72, GREEN, 2.0)
-    add_line_segment(slide, 9.02, 2.56, 9.02, 2.67, GREEN, 2.0)
-    add_text(slide, "ATTESTED DSTACK KMS", 9.18, 2.29, 3.08, 0.24, 12.2, GREEN, True, align=PP_ALIGN.CENTER)
-    add_text(
-        slide,
-        "Verifies quote + policy · protects the KMS root secret",
-        9.18,
-        2.63,
-        3.08,
-        0.23,
-        9.2,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
-    add_arrow(slide, 7.08, 4.53, 8.04, 2.72, GREEN, 1.6, dashed=True)
-
-    add_box(slide, 8.58, 3.34, 3.42, 0.47, fill=WHITE, line=BLUE, line_width=1.0)
-    add_text(
-        slide,
-        "GetKey(app ID, path) via dstack.sock",
-        8.72,
-        3.46,
-        3.14,
-        0.22,
-        10.1,
-        BLUE,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_arrow(slide, 10.29, 3.11, 10.29, 3.31, GREEN, 1.4)
-
-    key_outputs = [
-        (8.06, "ACTION", "HMAC →\nsecp256k1", BLUE_TINT, BLUE),
-        (9.62, "RSA CUSTODY", "HKDF →\nAES-GCM wrap", ORANGE_TINT, ORANGE),
-        (11.18, "AIR RECEIPT", "Ed25519\nsigning key", PURPLE_TINT, PURPLE),
-    ]
-    for x, heading, body, fill, accent in key_outputs:
-        add_box(slide, x, 4.08, 1.40, 1.08, fill=fill, line=accent, line_width=1.0)
-        add_text(slide, heading, x + 0.08, 4.25, 1.24, 0.20, 8.6, accent, True, align=PP_ALIGN.CENTER)
-        add_text(
-            slide,
-            body,
-            x + 0.08,
-            4.57,
-            1.24,
-            0.38,
-            8.7,
-            DARK,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
-    add_arrow(slide, 10.29, 3.82, 10.29, 4.02, BLUE, 1.4)
-    add_text(
-        slide,
-        "Same app + path ⇒ same key\nDifferent app or path ⇒ different key",
-        8.08,
-        5.26,
-        4.50,
-        0.32,
-        8.1,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_text(
-        slide,
-        "App-bound ≠ non-exportable: protect returned material.",
-        8.08,
-        5.62,
-        4.50,
-        0.14,
-        7.4,
-        TU_RED,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-        margin=0,
-    )
-
-    add_box(slide, 0.72, 5.94, 11.91, 0.30, fill=RED_TINT, line=TU_RED, radius=False, line_width=0.8)
-    add_text(
-        slide,
-        "Attestation authenticates measured identity—not bug-free code; Intel TDX and the KMS TEE remain trust anchors.",
-        0.92,
-        6.01,
-        11.51,
-        0.16,
-        9.6,
-        TU_RED,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-        margin=0,
-    )
-    add_note(
-        slide,
-        "The workload does not validate its own claim. The measured Phala CVM asks the Intel TDX "
-        "Quoting Enclave to turn its TD report into Quote V4 evidence. A verifier validates the "
-        "Intel-rooted PCK chain, certificate validity and revocation information, Quoting Enclave "
-        "identity, platform TCB status, measurements, and REPORTDATA. In dstack, the separately "
-        "attested KMS verifies quote and policy before deriving deterministic 32-byte material bound "
-        "to the application identity and requested path. The application receives it through "
-        "/var/run/dstack.sock. VITA-FL uses separate paths to derive the secp256k1 action authority, "
-        "an AES-256-GCM wrapping key for a random RSA-3072 participant key, and the Ed25519 AIR key. "
-        "The VITA-FL registry independently verifies the live quote on chain, including the pinned "
-        "dstack base tuple, replayed RTMR3 event log, workload policy, REPORTDATA, and enrollment "
-        "binding. Official references: https://github.com/Dstack-TEE/dstack, "
-        "https://docs.phala.com/phala-cloud/key-management/get-a-key, and "
-        "https://cc-enabling.trustedservices.intel.com/intel-tdx-enabling-guide/02/infrastructure_setup/.",
-    )
+def slide_dstack_keys(prs):
+    """Place the approved D actor map using its independent editable asset."""
+    approved = Presentation(ASSETS / "dstack-key-usage-d.pptx")
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    slide = new_content_slide(prs, 15, "Key use at the system interfaces", "")
+    for shape in source.shapes:
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.28):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Key-use diagram must contain only self-contained native shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
 
 
 def slide_aggregator_selection(prs):
@@ -2157,67 +2415,22 @@ def slide_aggregator_recovery(prs):
 
 
 def slide_close_compare_commit(prs):
-    slide = new_content_slide(
-        prs,
-        13,
-        "Freeze → FedAvg → Finalize",
-        "One frozen submission set · one deterministic mean · one finalized round",
-    )
-
-    stages = [
-        (0.62, 2.10, 2.34, 2.42, BLUE_TINT, BLUE, "1 · FREEZE", "accepted updates", "ordered commitments\nclosed root + count"),
-        (3.45, 1.72, 3.42, 3.18, GREEN_TINT, GREEN, "2 · AGGREGATE", "EQUAL-WEIGHT FEDAVG", "for every state-dict tensor:\narithmetic mean across all\naccepted client models"),
-        (7.36, 2.10, 2.34, 2.42, PURPLE_TINT, PURPLE, "3 · BIND", "signed statement", "round + policy\nroot + count + output"),
-        (10.18, 2.10, 2.52, 2.42, RED_TINT, TU_RED, "4 · FINALIZE", "authoritative model", "atomic publication\n+ round transition"),
-    ]
-    for first, second in zip(stages, stages[1:]):
-        add_arrow(slide, first[0] + first[2] + 0.08, 3.31, second[0] - 0.08, 3.31, MID, 1.8)
-    for x, y, w, h, fill, line, step, heading, body in stages:
-        add_box(slide, x, y, w, h, fill=fill, line=line, radius=True, line_width=1.5)
-        add_text(slide, step, x + 0.16, y + 0.22, w - 0.32, 0.22, 9.4, line, True, align=PP_ALIGN.CENTER)
-        add_text(slide, heading, x + 0.16, y + 0.69, w - 0.32, 0.32, 12.0, DARK, True, align=PP_ALIGN.CENTER)
-        add_text(slide, body, x + 0.16, y + 1.30, w - 0.32, 0.74, 9.0, DARK, align=PP_ALIGN.CENTER, valign=MSO_ANCHOR.MIDDLE)
-
-    add_box(slide, 2.05, 5.20, 9.24, 0.63, fill=LIGHT, line=BORDER, radius=True, line_width=1.0)
-    add_text(
-        slide,
-        "Policy: equal-weight FedAvg · validationDataHash = 0 · maxLossIncreaseBps = 0",
-        2.26,
-        5.39,
-        8.82,
-        0.24,
-        10.4,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        margin=0,
-    )
-    add_text(
-        slide,
-        "One selected aggregator executes one deterministic aggregation rule over the complete closed set.",
-        1.15,
-        6.00,
-        11.03,
-        0.25,
-        10.4,
-        TU_RED,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
-
-    add_note(
-        slide,
-        "The weighted draw selects which authorized worker may act as aggregator; it does not select an "
-        "aggregation method. Once the ledger closes the accepted worker-submission set as an ordered root and "
-        "explicit count, the measured aggregator stages exactly those client models. It then executes one "
-        "deterministic rule: for every tensor in the model state dictionary, equal-weight FedAvg computes the "
-        "arithmetic mean of the corresponding tensors from all accepted client models. The active policy has "
-        "no validation reference or loss gate, so validationDataHash and maxLossIncreaseBps are both zero. The "
-        "signed aggregation statement binds the round, policy, closed root, input count, and output. One ledger "
-        "transaction then atomically binds that statement, the encrypted model references, publisher authority, "
-        "and the round transition. Equal-weight FedAvg is deterministic and auditable here, but it is not a "
-        "robust aggregation or Byzantine-tolerance claim.",
-    )
+    """Use the approved actor flow; arrows define the sequence without step numbers."""
+    approved = Presentation(ASSETS / "aggregation-round-a.pptx")
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    slide = new_content_slide(prs, 18, "Who does what during aggregation?", "")
+    for shape in source.shapes:
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.28):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Aggregation diagram must contain only self-contained native shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
 
 
 def slide_original_hybrid_r(prs):
@@ -2389,128 +2602,51 @@ def slide_handoff(prs):
     )
 
 
+def apply_sello_air_asset(slide, page_number: int):
+    """Populate one slide from the approved editable Sello/AIR comparison."""
+    approved = Presentation(ASSETS / "sello-air-a.pptx")
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    for shape in list(slide.shapes):
+        remove_shape(shape)
+    add_content_title(
+        slide, "Sello and AIR: two layers of evidence",
+        "CURRENT VITA-FL IMPLEMENTATION", page_number,
+    )
+    add_domain_navigation(slide, page_number, active_domains={"Agent"})
+    for shape in source.shapes:
+        # Include the subtitle, native diagram, white source band and citations.
+        # Keep the main deck's own title, page number, navigation and footer.
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.71):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip"), \
+            "Sello/AIR diagram must contain only native editable shapes"
+        for node in element.iter():
+            for attribute, value in list(node.attrib.items()):
+                if attribute.startswith("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"):
+                    relationship = source.part.rels[value]
+                    assert relationship.is_external, "Only external source hyperlinks are expected"
+                    node.set(attribute, slide.part.relate_to(
+                        relationship.target_ref, relationship.reltype, is_external=True,
+                    ))
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    notes = source.notes_slide.notes_text_frame.text.replace(
+        "COMBINED ASSURANCE VARIANT A", "SELLO AND AIR — TASKS AND GUARANTEES",
+    ).replace(
+        "Main deck is kept as a separate artifact.",
+        "Approved comparison integrated as Page 20 of the main presentation.",
+    )
+    add_note(slide, notes)
+    return slide
+
+
 def slide_sello_protocol(prs):
-    slide = new_content_slide(
-        prs,
-        15,
-        "Sello: evidence from the receiving service",
-        "Figuera proposal (2026) · receiver-created · owner-encrypted · transparency-recorded",
-    )
-
-    add_rich_text(
-        slide,
-        [
-            ("CORE IDEA   ", TU_RED, True, 11.0),
-            ("The service that performs the action creates the evidence—not the agent.", DARK, True, 13.0),
-        ],
-        0.78,
-        1.61,
-        11.78,
-        0.30,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    stages = [
-        (
-            0.72,
-            "1  AUTHORIZED REQUEST",
-            "The agent presents the owner's permission for one action.",
-            BLUE_TINT,
-            BLUE,
-        ),
-        (
-            4.82,
-            "2  RECEIVING SERVICE",
-            "The service executes the action and signs an encrypted receipt.",
-            GREEN_TINT,
-            GREEN,
-        ),
-        (
-            8.92,
-            "3  TRANSPARENCY LOG",
-            "The log records the receipt and returns inclusion evidence.",
-            PURPLE_TINT,
-            PURPLE,
-        ),
-    ]
-    for x, heading, body, fill, accent in stages:
-        add_box(slide, x, 2.35, 3.15, 1.58, fill=fill, line=accent, line_width=1.4)
-        add_text(
-            slide,
-            heading,
-            x + 0.18,
-            2.62,
-            2.79,
-            0.27,
-            11.5,
-            accent,
-            True,
-            align=PP_ALIGN.CENTER,
-        )
-        add_text(
-            slide,
-            body,
-            x + 0.30,
-            3.10,
-            2.55,
-            0.48,
-            10.2,
-            DARK,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
-
-    add_arrow(slide, 3.89, 3.14, 4.76, 3.14, BLUE, 1.7)
-    add_arrow(slide, 7.99, 3.14, 8.86, 3.14, GREEN, 1.7)
-
-    add_box(slide, 1.18, 4.34, 10.97, 0.76, fill=LIGHT, line=TU_RED, line_width=1.2)
-    add_text(slide, "OWNER VERIFIES LATER", 1.48, 4.56, 2.47, 0.24, 11.0, TU_RED, True)
-    add_text(
-        slide,
-        "Check log inclusion + service signature  →  decrypt the receipt",
-        4.06,
-        4.54,
-        7.70,
-        0.27,
-        11.0,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-
-    add_box(slide, 1.18, 5.35, 10.97, 0.50, fill=TU_RED, line=TU_RED, radius=False)
-    add_text(
-        slide,
-        "VITA-FL adopts the receiver-first pattern: publish the receipt before returning success.",
-        1.45,
-        5.48,
-        10.43,
-        0.23,
-        11.2,
-        WHITE,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
-    add_text(slide, "Source: J. Figuera, Notarized Agents, arXiv:2606.04193 (2026).", 0.80, 6.02, 11.72, 0.18, 8.2, DARK, align=PP_ALIGN.CENTER)
-    add_note(
-        slide,
-        "Figuera's Sello proposal starts from a trust-boundary problem: a compromised agent or operator "
-        "cannot be the sole source of truth about its own actions. The agent presents a signed JWS "
-        "authorization token that binds the owner's HPKE public key and permitted log policy. The called "
-        "service verifies that token, performs or denies the action, and hashes the exact input and output. "
-        "It encrypts the receipt body to the owner with HPKE, signs the encrypted envelope with its own "
-        "Ed25519 key in COSE_Sign1, and submits it to a witness-cosigned Merkle transparency log. The owner "
-        "later discovers entries by the token-derived reference, verifies inclusion and the service key, and "
-        "decrypts locally. VITA-FL selectively adopts the receiver-first pattern and additionally fails "
-        "closed unless the receiver publishes its receipt before returning a successful tool result. It does "
-        "not implement Sello's owner-discovery and witness-cosigned-log architecture: the evaluation used "
-        "single-node CCF Virtual Mode without an independent witness, gossip, or a durable deployment. Sello "
-        "does not prove that a call was never made and does not prevent collusion by a receiving service. "
-        "Source: Juan Figuera, "
-        "Notarized Agents: Receiver-Attested Confidential Receipts for AI Agent Actions, arXiv:2606.04193, 2026.",
-    )
+    """Use the approved comparison of Sello and AIR responsibilities."""
+    slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+    return apply_sello_air_asset(slide, len(prs.slides))
 
 
 def slide_agent(prs):
@@ -3236,137 +3372,22 @@ def slide_conclusion(prs):
 
 
 def slide_worker_roles_backup(prs):
-    slide = new_content_slide(
-        prs,
-        24,
-        "One worker image—two authorized measured roles",
-        "Backup · per-worker RTMR3 replay and separate policy authorization",
-    )
-
-    add_box(slide, 3.37, 1.43, 6.60, 0.76, fill=LIGHT, line=TU_RED, line_width=1.2)
-    add_text(
-        slide,
-        "ONE DIGEST-PINNED dfl-worker IMAGE",
-        3.63,
-        1.64,
-        6.08,
-        0.25,
-        14.2,
-        TU_RED,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
-    add_text(
-        slide,
-        "The packaged image contains both training and native inference code.",
-        3.73,
-        1.91,
-        5.88,
-        0.19,
-        9.0,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-    )
-
-    # Route the branch around the role boxes so no connector crosses content.
-    add_line_segment(slide, 6.67, 2.19, 6.67, 2.43, TU_RED, 1.6)
-    add_line_segment(slide, 3.43, 2.43, 9.91, 2.43, TU_RED, 1.6)
-    add_line_segment(slide, 3.43, 2.43, 3.43, 2.66, BLUE, 1.6, arrow=True)
-    add_line_segment(slide, 9.91, 2.43, 9.91, 2.66, GREEN, 1.6, arrow=True)
-
-    roles = [
-        (
-            0.66,
-            "WORKERS 1–5",
-            "TRAINING-ONLY PROFILE",
-            [
-                "TEE_INFERENCE_ENABLED = 0",
-                "Inference process and endpoint are not started",
-                "Training-only policy-v2 identity",
-                "Worker-specific Compose, event log, Quote V4, and RTMR3",
-            ],
-            BLUE_TINT,
-            BLUE,
-        ),
-        (
-            6.99,
-            "WORKER 0",
-            "COMBINED PROFILE",
-            [
-                "TEE_INFERENCE_ENABLED = 1",
-                "Receiver starts beside the DFL services in the same CVM",
-                "Combined training-and-inference policy-v2 identity",
-                "Its own Compose, event log, Quote V4, and RTMR3",
-            ],
-            GREEN_TINT,
-            GREEN,
-        ),
-    ]
-    for x, heading, profile, bullets, fill, accent in roles:
-        add_box(slide, x, 2.72, 5.68, 2.16, fill=fill, line=accent, line_width=1.2)
-        add_text(slide, heading, x + 0.22, 2.96, 5.24, 0.28, 15.0, accent, True, align=PP_ALIGN.CENTER)
-        add_text(slide, profile, x + 0.22, 3.33, 5.24, 0.22, 10.0, DARK, True, align=PP_ALIGN.CENTER)
-        add_bullets(slide, bullets, x + 0.33, 3.70, 5.02, 0.96, 9.0, DARK, accent, 3)
-
-    add_box(slide, 0.74, 5.08, 7.56, 0.56, fill=LIGHT, line=BORDER, radius=False)
-    add_text(slide, "PER-WORKER REPLAY", 0.94, 5.20, 1.76, 0.20, 8.8, PURPLE, True)
-    add_text(
-        slide,
-        "Compose preimage → ordered events → reconstructed RTMR3 = quoted RTMR3",
-        2.65,
-        5.17,
-        5.42,
-        0.26,
-        8.7,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_box(slide, 8.48, 5.08, 4.13, 0.56, fill=LIGHT, line=BORDER, radius=False)
-    add_text(slide, "AUTHORIZATION", 8.66, 5.20, 1.34, 0.20, 8.8, ORANGE, True)
-    add_text(
-        slide,
-        "expected image digest + allowed role-policy hash",
-        9.98,
-        5.16,
-        2.40,
-        0.29,
-        8.3,
-        DARK,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_box(slide, 1.02, 5.84, 11.31, 0.42, fill=TU_RED, line=TU_RED, radius=False)
-    add_text(
-        slide,
-        "Different Compose and RTMR3 values may pass; an injected image or unapproved role misses the admitted policy.",
-        1.22,
-        5.94,
-        10.91,
-        0.22,
-        10.2,
-        WHITE,
-        True,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
-    )
-    add_note(
-        slide,
-        "All six live workers used the same digest-pinned dfl-worker OCI image, and that image packaged "
-        "both the decentralized-training implementation and the native inference code. Role activation is "
-        "separate from image contents. Worker 0 used the combined start profile and enabled the receiver; "
-        "Workers 1 through 5 used the training-only profile and did not start that process. Each worker submitted "
-        "its own canonical Compose preimage, ordered event log, fresh quote, and final RTMR3 value. The verifier "
-        "replays each event log only against RTMR3 in its associated quote; it does not require one global final "
-        "RTMR3. Replay establishes internal measurement consistency. A separate policy check authorizes the "
-        "shared image digest and one of the two approved role-policy identities. Adding another image or an "
-        "unapproved service changes the measured and policy-bound configuration and is rejected by the admitted "
-        "profile. Phala user_config fields such as authorized SSH keys remain outside the measured app_compose "
-        "and are therefore a separate deployment trust assumption.",
-    )
+    """Use approved A: one image contains training, inference and internal keys."""
+    approved = Presentation(ASSETS / "worker-inference-a.pptx")
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    slide = new_content_slide(prs, 28, "Training and inference share one verified image", "")
+    for shape in source.shapes:
+        if shape.top < Inches(1.43) or shape.top + shape.height > Inches(6.28):
+            continue
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Worker/inference diagram must contain only self-contained native shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", str(slide.shapes._next_shape_id))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
 
 
 def add_threat_tile(slide, threat_id: str, label: str, image_name: str, x: float, y: float):
@@ -3498,14 +3519,19 @@ def build():
     slide_problem(prs)
     slide_engineering_response(prs)
     slide_gap(prs)
+    slide_hospital_motivation(prs)
+    slide_literature_comparison(prs)
+    slide_fl_dfl_roles(prs)
+    slide_lifecycle(prs)
     slide_architecture(prs)
     slide_dfl_hospitals(prs)
     slide_tee_vs_zk(prs)
-    slide_phala_attestation_keys(prs)
+    slide_image_policy(prs)
+    slide_phala_attestation(prs)
+    slide_dstack_keys(prs)
     slide_aggregator_selection(prs)
     slide_aggregator_recovery(prs)
     slide_close_compare_commit(prs)
-    slide_original_hybrid_r(prs)
     slide_handoff(prs)
     slide_sello_protocol(prs)
     slide_agent(prs)
@@ -3518,9 +3544,9 @@ def build():
     slide_worker_roles_backup(prs)
     slide_threats_dfl(prs)
     slide_threats_agent(prs)
-    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=26):
+    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=31):
         slide_threat_detail(prs, number, *threat)
-    assert len(prs.slides) == 39
+    assert len(prs.slides) == 44
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()

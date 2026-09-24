@@ -1,0 +1,16 @@
+{
+  "page": 20,
+  "slides": 44,
+  "unchanged_other_slides_and_notes": 43,
+  "main_deck_sha256_before": "17d7aaca9089cb94d60c92db135a48eaac06afe545e2cfeaee76e9c1c3ec6648",
+  "main_deck_sha256_after": "00672f8d16925290fc1f92a1c1506af31a1239b37ef280d8a45a740a2c93e2b0",
+  "asset_sha256": "bb640980e5b65c5fef5f2cbbc63d4bb4142eb7321375075f551176babbfc7971",
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-sello-air-0tzsen8d/VITA-FL_Thesis_Presentation_TU_Berlin.pptx",
+  "layout": "passed",
+  "generator_import": "passed",
+  "source_hyperlinks": 2,
+  "dfl_chip": "inactive",
+  "agent_chip": "active",
+  "media_masters_and_layouts_unchanged": true,
+  "visual_review": "passed: page 20 preview checked for text, layout, labels and navigation"
+}

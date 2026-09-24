@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 from pptx import Presentation
 from pptx.enum.dml import MSO_FILL_TYPE
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_SHAPE_TYPE
@@ -355,10 +355,31 @@ def render_shape(canvas, shape, sx, sy):
         target_height = max(1, y1 - y0)
         try:
             image = Image.open(BytesIO(shape.image.blob)).convert("RGBA")
-            image = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
         except ValueError:
             image = _svg_picture(shape, target_width, target_height)
         if image is not None:
+            crops = (shape.crop_left, shape.crop_top, shape.crop_right, shape.crop_bottom)
+            if any(crops):
+                source_width, source_height = image.size
+                left, top, right, bottom = crops
+                image = image.crop((
+                    round(left * source_width),
+                    round(top * source_height),
+                    round((1 - right) * source_width),
+                    round((1 - bottom) * source_height),
+                ))
+            image = image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+            try:
+                picture_kind = shape.auto_shape_type
+            except (AttributeError, ValueError):
+                picture_kind = None
+            if picture_kind == MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE:
+                mask = Image.new("L", image.size, 0)
+                radius = max(4, round(min(target_width, target_height) * 0.12))
+                ImageDraw.Draw(mask).rounded_rectangle(
+                    (0, 0, target_width, target_height), radius=radius, fill=255,
+                )
+                image.putalpha(ImageChops.multiply(image.getchannel("A"), mask))
             layer.alpha_composite(image, (x0, y0))
 
     elif shape.shape_type == MSO_SHAPE_TYPE.LINE:

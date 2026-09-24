@@ -1,0 +1,30 @@
+{
+  "slides": 4,
+  "individual_pptx_files": 4,
+  "editable_native_shapes": true,
+  "layout_check": "passed",
+  "source_links_and_speaker_notes": "passed",
+  "main_deck_unchanged": true,
+  "main_deck_sha256": "17d7aaca9089cb94d60c92db135a48eaac06afe545e2cfeaee76e9c1c3ec6648",
+  "preview_renderer": "local Pillow layout renderer; PDF is a preview",
+  "visual_review": "approved variant A passed after wording and navigation changes; variants B-D unchanged",
+  "variants": [
+    {
+      "file": "a-two-evidence-layers.pptx",
+      "shapes": 53
+    },
+    {
+      "file": "b-verification-workflow.pptx",
+      "shapes": 50
+    },
+    {
+      "file": "c-checking-scopes.pptx",
+      "shapes": 46
+    },
+    {
+      "file": "d-detected-changes.pptx",
+      "shapes": 50
+    }
+  ],
+  "main_deck_status_note": "Main deck was unchanged during concept export; approved variant A was subsequently integrated on page 20. See integration.json."
+}

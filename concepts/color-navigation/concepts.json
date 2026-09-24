@@ -1,0 +1,70 @@
+{
+  "palette": {
+    "dfl": "207548",
+    "agent": "1764A1",
+    "infrastructure": "7446A6"
+  },
+  "pages": [
+    {
+      "slug": "01-color-system",
+      "title": "One color per domain. One map throughout the talk.",
+      "purpose": "Farbsystem: A ist die empfohlene Navigation, B und C sind Alternativen.",
+      "note": "Colors describe functional domains, not trust levels or deployment boundaries. TU red remains the existing brand color. Use explicit STOP/error labels for failures. The transparency log belongs to the blue evidence path; blockchain and IPFS share purple but retain separate roles."
+    },
+    {
+      "slug": "02-architecture",
+      "title": "Two responsibility blocks, shared infrastructure",
+      "purpose": "Ersatz für Folie 6. Die drei Farben bezeichnen Funktionsbereiche; die zwei Verantwortungsketten bleiben erhalten.",
+      "note": "DFL computes the model. Contracts coordinate and finalize references, not tensor arithmetic. The receiver independently resolves the authoritative bundle, fetches its artifacts, and verifies them. The log is part of the blue evidence domain, not the blockchain. The layout is a functional map, not a process/deployment isolation claim. Sources: vita-fl/dfl/neural_network/cli.py:1276; smart_contracts/src/core/GMStorage.sol:180; tee_inference/service/model_source.py:218; tee_inference/service/app.py:118."
+    },
+    {
+      "slug": "03-model-handoff",
+      "title": "The receiver resolves the model independently",
+      "purpose": "Ersatz für Folie 14. Blau und Violett sind gleichzeitig aktiv; Ledger und IPFS bleiben getrennte Rollen.",
+      "note": "The finalized bundle contains the historical publisher-key snapshot. The request does not choose a CID, round, publisher, or local model path. Sources: agent/blockchain_source.py:357,561,656; tee_inference/service/model_source.py:218."
+    },
+    {
+      "slug": "04-inference-sequence",
+      "title": "Three TEE tool calls, four log records",
+      "purpose": "Ersatz für Folie 16. Eine Bereichsfarbe, klar beschriftete Akteure und Pfeile. Gezeigt ist der TEE-Pfad mit Sello.",
+      "note": "Shown: receipt-enabled TEE profile. Six public MCP tools exist in total: three for TEE and three for ZK. Each receiver action publishes its receipt before returning success. The agent validates and registers the complete inference evidence bundle as a fourth record. Sello is configuration-dependent; SELLO_REQUIRED enforces it. Sources: agent/mcp_server.py:45,316; tee_inference/service/app.py:118; agent/tee_inference_client.py:691; agent_receipts/environment.py:30."
+    },
+    {
+      "slug": "05-failure-paths",
+      "title": "What happens when a check fails?",
+      "purpose": "Neue Folienidee nach Folie 14 oder 16, alternativ als Backup. Zwei Designbeispiele aus implementierten Fehlerpfaden.",
+      "note": "These are design examples derived from rejection code, not newly performed attack experiments. In scenario 1, the bytes do not match the finalized reference/signature. In scenario 2, Sello receipts are enabled. A failed log publication causes HTTP 503 and does not roll back an already executed action. Sources: agent/blockchain_source.py:656; tee_inference/service/model_source.py:218; tee_inference/service/app.py:137-149; agent_receipts/receiver_log.py:25."
+    },
+    {
+      "slug": "06-evidence-scope",
+      "title": "What does each piece of evidence establish?",
+      "purpose": "Neue Folienidee als vereinfachter Ersatz für Folie 18 oder als Backup nach Folie 17.",
+      "note": "Evidence has scoped guarantees. Current aggregation uses equal-weight FedAvg and does not offer semantic poisoning resistance. The inference verifier checks AIR signature, hashes, REPORTDATA, RTMR3 replay and image/contract policy, but returns dcap_collateral_verified=False. This is distinct from on-chain DFL admission. The CCF log is single-node virtual mode. Sources: dfl/neural_network/cli.py:1276; agent/tee_inference_client.py:542,636; agent_receipts/scitt.py:93; transparency_log/README.md:3,34."
+    },
+    {
+      "slug": "07-worker-roles",
+      "title": "Who aggregated in the actual 24-round run?",
+      "purpose": "Neue empirische Folienidee nach Folie 19 oder als Backup zu Folie 10. Direkt aus dem archivierten Einzelrun erzeugt.",
+      "note": "Data: vita-fl/data/evaluation/authoritative-phala-6w-24r-20260901/round_metrics.csv and worker_activity.csv. A marks the selected aggregator, T marks a training contributor; five accepted client models per round. Counts VM0-5 are 2,3,4,4,9,2. Federated rounds 1-24 publish global model rounds 2-25. This single run shows role changes, not long-run selection fairness or recovery effectiveness; zero aborted attempts were observed."
+    },
+    {
+      "slug": "08-hospital-data-control",
+      "title": "Hospitals want to keep control of patient data",
+      "purpose": "Neue Motivationsfolie nach der Arztperspektive (Folie 3), vor der technischen Antwort. Krankenhäuser wollen gemeinsam lernen und sensible Daten unter eigener Kontrolle behalten.",
+      "note": "This is the target hospital scenario, not a claim of deployment in real hospitals. Hospitals want to protect patient confidentiality, decide who can access their records, and avoid pooling raw patient data in one central training repository. Federated learning addresses that motivation by training where data is held and exchanging model updates. The shared global model is an artifact, not a permanent central training server: VITA-FL selects a temporary aggregator. The code trains on local dataset shards and encrypts exported local model parameters; model updates here means full local models, not only gradients. The proof of concept was evaluated with ChestMNIST on Phala. It does not establish that real patient records remained within hospital premises. Federated learning and encryption alone do not establish a formal privacy guarantee against information leakage from models. Sources: vita-fl/dfl/neural_network/cli.py:991-1004,1069-1077; vita-fl/dfl/neural_network/README.md:9-10,22-23. Suggested narration: Hospitals have a second concern beyond the quality of a prediction: they must retain control of sensitive records. They want to benefit from collaboration without creating a central pool of raw patient data. This motivates local training and protected model exchange in VITA-FL."
+    }
+  ],
+  "heatmap": {
+    "source": "vita-fl/data/evaluation/authoritative-phala-6w-24r-20260901/round_metrics.csv",
+    "aggregator_counts": {
+      "VM-0": 2,
+      "VM-1": 3,
+      "VM-2": 4,
+      "VM-3": 4,
+      "VM-4": 9,
+      "VM-5": 2
+    },
+    "rounds": 24,
+    "updates_per_round": 5
+  }
+}
