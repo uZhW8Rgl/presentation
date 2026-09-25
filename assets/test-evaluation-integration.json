@@ -1,0 +1,39 @@
+{
+  "page": 25,
+  "slides_before": 45,
+  "slides_after": 45,
+  "talk_pages": 28,
+  "backup_pages": 17,
+  "mode": "replace",
+  "preserved_existing_slides_and_notes": 44,
+  "allowed_existing_change": "page-number footer only after inserted Page 25",
+  "main_deck_sha256_before": "08215dbae3e407fb997cbb674c856d9a34e892d31b7d5e613acb479a36822959",
+  "main_deck_sha256_after": "58f20022ad22463498a4ae183a2cdcf75b109ac735949c1918c9ccb0b4ec509f",
+  "asset_sha256": "3aa6482209d1b8186a75276afdd45e3171fda703654f714b81d7bb2e208961d2",
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-test-evaluation-bdv10bwy/VITA-FL_Thesis_Presentation_TU_Berlin.pptx",
+  "structure_check": "passed",
+  "generator_import": "passed",
+  "media_masters_and_layouts_unchanged": true,
+  "source_notes_preserved": true,
+  "native_editable_shapes": true,
+  "dfl_chip": "active",
+  "agent_chip": "active",
+  "visual_review": "passed; integrated preview matches the visually inspected native asset",
+  "initial_insertion_record": "assets/test-evaluation-initial-insertion.json",
+  "inventory_counts_verified": {
+    "definitions": 808,
+    "test_files": 96,
+    "by_language": {
+      "Node": 101,
+      "Python": 569,
+      "Solidity": 138
+    },
+    "by_category": {
+      "unit_component": 731,
+      "local_integration": 77,
+      "system_e2e": 0
+    },
+    "automated_production_context_definitions_identified": 0
+  },
+  "speaker_notes_match_final_inventory": true
+}

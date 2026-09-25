@@ -633,6 +633,9 @@ def add_domain_navigation(slide, page_number: int, *, active_domains: set[str] |
     # Separate on-chain verification (14) from shared dstack-derived keys (15).
     dfl_pages = {page + (page >= 15) for page in dfl_pages} | {15}
     agent_pages = {page + (page >= 15) for page in agent_pages} | {15}
+    # The implemented-test inventory follows the cloud-run overview on Page 24.
+    dfl_pages = {page + (page >= 25) for page in dfl_pages} | {25}
+    agent_pages = {page + (page >= 25) for page in agent_pages} | {25}
     x, y, height = 10.40, .55, .25
     gap, padding = 8 / 120, 4 / 120
     domains = (
@@ -3004,6 +3007,64 @@ def slide_evaluation(prs):
     )
 
 
+TEST_EVALUATION_SLIDE_NAME = "VITA-FL implemented test evaluation"
+
+
+def apply_test_evaluation_asset(slide, page_number: int):
+    """Import the approved editable test matrix without its concept framing."""
+    approved = Presentation(ASSETS / "test-evaluation-a.pptx")
+    assert len(approved.slides) == 1, "The test-evaluation asset must contain one slide"
+    source = approved.slides[0]
+    titles = [shape.text for shape in source.shapes if shape.has_text_frame
+              and shape.top < Inches(.95) and shape.left < Inches(1)
+              and shape.width > Inches(5)]
+    kickers = [shape.text for shape in source.shapes if shape.has_text_frame
+               and Inches(.95) <= shape.top < Inches(1.30)
+               and shape.left < Inches(1) and shape.width > Inches(5)]
+    assert len(titles) == 1 and len(kickers) == 1, "Expected the standard asset heading"
+    assert source.notes_slide.notes_text_frame.text.strip(), "Test classification notes are required"
+    for shape in list(slide.shapes):
+        remove_shape(shape)
+    slide.name = TEST_EVALUATION_SLIDE_NAME
+    add_content_title(slide, titles[0], kickers[0], page_number)
+    add_domain_navigation(slide, page_number, active_domains={"DFL", "Agent"})
+    elements = [deepcopy(shape.element) for shape in source.shapes
+                if shape.top >= Inches(1.43)
+                and shape.top + shape.height <= Inches(6.71)]
+    assert elements, "The test-evaluation asset has no content shapes"
+    ids = {}
+    next_id = slide.shapes._next_shape_id
+    for element in elements:
+        assert not element.xpath(".//a:blip"), "The test matrix must use native editable shapes"
+        for properties in element.xpath(".//p:cNvPr"):
+            old_id = properties.get("id")
+            assert old_id not in ids, "Duplicate shape identifier in the source asset"
+            ids[old_id] = str(next_id)
+            next_id += 1
+    for element in elements:
+        for properties in element.xpath(".//p:cNvPr"):
+            properties.set("id", ids[properties.get("id")])
+        for connection in element.xpath(".//a:stCxn | .//a:endCxn"):
+            connection.set("id", ids[connection.get("id")])
+        for node in element.iter():
+            for attribute, value in list(node.attrib.items()):
+                if attribute.startswith("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"):
+                    relationship = source.part.rels[value]
+                    assert relationship.is_external, "Only external source hyperlinks are expected"
+                    node.set(attribute, slide.part.relate_to(
+                        relationship.target_ref, relationship.reltype, is_external=True,
+                    ))
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
+
+
+def slide_test_evaluation(prs):
+    """Use the approved inventory of implemented test types and their locations."""
+    slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+    return apply_test_evaluation_asset(slide, len(prs.slides))
+
+
 def slide_learning_trajectories(prs):
     slide = new_content_slide(
         prs,
@@ -3538,15 +3599,16 @@ def build():
     slide_external_audit(prs)
     slide_cryptographic_chain(prs)
     slide_evaluation(prs)
+    slide_test_evaluation(prs)
     slide_learning_trajectories(prs)
     slide_learning_quality(prs)
     slide_conclusion(prs)
     slide_worker_roles_backup(prs)
     slide_threats_dfl(prs)
     slide_threats_agent(prs)
-    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=31):
+    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=32):
         slide_threat_detail(prs, number, *threat)
-    assert len(prs.slides) == 44
+    assert len(prs.slides) == 45
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()

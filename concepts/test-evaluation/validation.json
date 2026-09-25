@@ -1,0 +1,158 @@
+{
+  "variant_count": 4,
+  "layout": "passed",
+  "bounds": "passed",
+  "speaker_notes": "present",
+  "source_symbols": "verified",
+  "test_execution": "not performed; slide proposals inventory existing implementations",
+  "main_deck_unchanged": true,
+  "main_deck_sha256": "09807bde3475deceee468fadb67a72f241a062e2045658fb27af33488aad4364",
+  "source_map": [
+    {
+      "path": "dfl/neural_network/tests/test_dicom_provenance.py",
+      "tests": [
+        {
+          "name": "test_checked_in_shard_verifies_against_onchain_style_snapshot",
+          "line": 43
+        },
+        {
+          "name": "test_modified_label_is_rejected",
+          "line": 49
+        },
+        {
+          "name": "test_modified_image_is_rejected",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "path": "smart_contracts/test/DeviceRegistryAttestationBinding.t.sol",
+      "tests": [
+        {
+          "name": "testRegistersOnlyWithBoundAppComposeEvidence",
+          "line": 93
+        },
+        {
+          "name": "testRejectsWrongImageDigestDerivedFromAppCompose",
+          "line": 361
+        }
+      ]
+    },
+    {
+      "path": "smart_contracts/test/GMStorageContribution.t.sol",
+      "tests": [
+        {
+          "name": "testIdenticalRetryIsIdempotent",
+          "line": 228
+        },
+        {
+          "name": "testRetryWithChangedPackageHashReverts",
+          "line": 253
+        },
+        {
+          "name": "testFirstSubmissionRejectsWrongActionKeySignature",
+          "line": 273
+        }
+      ]
+    },
+    {
+      "path": "smart_contracts/test/AggregatorSelectionAccess.t.sol",
+      "tests": [
+        {
+          "name": "testAuthorizedNonAggregatorCanRecoverSelectionGapAfterCompletedRound",
+          "line": 162
+        },
+        {
+          "name": "testTimeoutReportCannotAbortAnActiveSubmissionWindow",
+          "line": 212
+        },
+        {
+          "name": "testTimeoutQuorumDoesNotShrinkAfterRegistryContraction",
+          "line": 346
+        }
+      ]
+    },
+    {
+      "path": "smart_contracts/test/GMStorageAbort.t.sol",
+      "tests": [
+        {
+          "name": "testAbortBeforePublicationLeavesActiveArtifactsUnchanged",
+          "line": 161
+        },
+        {
+          "name": "testAbortAfterRejectedPublicationKeepsLastCompletedArtifacts",
+          "line": 176
+        }
+      ]
+    },
+    {
+      "path": "dfl/node_server/test/gm_crypto.test.js",
+      "tests": [
+        {
+          "name": "gm crypto rejects decryption for participants without a wrapped key",
+          "line": 195
+        }
+      ]
+    },
+    {
+      "path": "agent/tests/test_tee_inference_client.py",
+      "tests": [
+        {
+          "name": "test_valid_bundle_verifies",
+          "line": 359
+        },
+        {
+          "name": "test_request_substitution_is_rejected",
+          "line": 430
+        },
+        {
+          "name": "test_modified_event_log_is_rejected",
+          "line": 421
+        }
+      ]
+    },
+    {
+      "path": "tee_inference/tests/test_authorization.py",
+      "tests": [
+        {
+          "name": "test_wrong_token_binding_scope_and_expiry_rejected_before_model_load",
+          "line": 63
+        },
+        {
+          "name": "test_another_authenticated_agent_cannot_read_or_run_job",
+          "line": 117
+        },
+        {
+          "name": "test_publication_failure_cannot_return_success_without_receipt",
+          "line": 145
+        }
+      ]
+    },
+    {
+      "path": "agent/tests/test_sello_v1.py",
+      "tests": [
+        {
+          "name": "test_receiver_receipt_round_trip",
+          "line": 81
+        },
+        {
+          "name": "test_tampered_output_is_rejected",
+          "line": 140
+        },
+        {
+          "name": "test_wrong_receiver_is_rejected",
+          "line": 151
+        }
+      ]
+    },
+    {
+      "path": "agent/tests/test_receiver_transport.py",
+      "tests": [
+        {
+          "name": "test_tool_response_without_receipt_fails_closed",
+          "line": 46
+        }
+      ]
+    }
+  ]
+}

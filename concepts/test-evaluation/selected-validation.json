@@ -1,0 +1,14 @@
+{
+  "layout": "passed",
+  "bounds": "passed",
+  "native_editable_slide": true,
+  "test_definitions": 808,
+  "unit_component": 731,
+  "local_integration": 77,
+  "automated_full_system": 0,
+  "dedicated_production": 0,
+  "separate_service_smoke_checks": 2,
+  "separate_recorded_cloud_runs": 1,
+  "test_execution": "not performed",
+  "asset": "assets/test-evaluation-a.pptx"
+}
