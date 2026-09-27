@@ -1,0 +1,278 @@
+{
+  "scope": "Read-only source/configuration review; no test executions or cloud calls",
+  "selectable_scenarios_total": 9,
+  "selectable_scenarios": [
+    "normal",
+    "early",
+    "partial",
+    "zero",
+    "recovery",
+    "configuration",
+    "inference",
+    "manipulation",
+    "security"
+  ],
+  "considered_scenarios_total": 8,
+  "excluded_optional_scenario": {
+    "name": "manipulation",
+    "reason": "Not executed in current Phala evaluation; local live-evidence verifier implementation exists, cloud extension documented as undeployed draft."
+  },
+  "tool_order_attack_tests": "Not included in security; deterministic correct three-tool sequence is a positive control, not an adversarial ordering test.",
+  "groups": [
+    {
+      "name": "Settings",
+      "scenarios": [
+        "configuration"
+      ],
+      "count": 1,
+      "slide": "Settings — save/read back parameters; reject invalid deadlines without state changes.",
+      "assertions": [
+        "Exact readback of five training parameters",
+        "HTTP 400 for timeout 0, -1, true, 604800001",
+        "Configuration unchanged after every rejection"
+      ],
+      "source": "vita-fl-td/src/vita_fl_td/runner.py:48;136"
+    },
+    {
+      "name": "Lifecycle / inference",
+      "scenarios": [
+        "normal",
+        "inference"
+      ],
+      "count": 2,
+      "slide": "Lifecycle / inference — five successful rounds; use the finalized model through the deployed agent.",
+      "assertions": [
+        "Bootstrap separate from successful training rounds",
+        "Frozen six-participant roster unchanged",
+        "Exactly five successful non-bootstrap rounds; expected aborted attempts accounted separately",
+        "Every publication closed, nonempty, completed, not aborted; input count/root and policy hash match",
+        "All six participants contribute or aggregate a completed training round when enabled",
+        "Three actual deterministic cloud-agent tools; actual published evidence bound to final model CID/round, chain, contracts, expected image"
+      ],
+      "source": "vita-fl-td/src/vita_fl_td/runner.py:148;186;216;244;611"
+    },
+    {
+      "name": "Collection deadlines",
+      "scenarios": [
+        "early",
+        "partial",
+        "zero"
+      ],
+      "count": 3,
+      "slide": "Collection deadlines — full, partial or empty inputs: close early, finish after timeout or abort.",
+      "assertions": [
+        "early: exact client-limit count and locally observed closure before deadline",
+        "partial: exact allowed contribution count, closure-block timestamp at/after deadline",
+        "zero: no inputs/closure/publication/completion/success increment through deadline plus observation; then quorum abort/reselection and five successful rounds",
+        "Receiver gate confirms actual allowed and blocked accounts; checks exact contributing set for early/partial"
+      ],
+      "instrumentation": "Opt-in cooperative authenticated receiver gate, armed before start, active only training round 1; not a transparent external network fault",
+      "source": "vita-fl-td/src/vita_fl_td/runner.py:70;103;308"
+    },
+    {
+      "name": "Recovery",
+      "scenarios": [
+        "recovery"
+      ],
+      "count": 1,
+      "slide": "Recovery — stop the selected Phala aggregator; prove 1/3 → 2/3 → 3/3, reselection and resumed publication.",
+      "assertions": [
+        "Map immutable roster aggregator to unique CVM and confirm it stopped before completion/abort",
+        "Preserve last finalized model before reselection",
+        "Exactly three distinct eligible votes under six-worker/50-percent policy; abort and reselection in third transaction",
+        "Aborted attempt not successful; five subsequent successful training rounds",
+        "CVM restored; cleanup failure invalidates run"
+      ],
+      "source": "vita-fl-td/src/vita_fl_td/runner.py:381;403; vita-fl-td/src/vita_fl_td/quorum.py:36"
+    },
+    {
+      "name": "Access / contract guards",
+      "scenarios": [
+        "security"
+      ],
+      "count": 1,
+      "slide": "Access / contract guards — reject missing or forged credentials and invalid coordination calls.",
+      "required_checks": 16,
+      "breakdown": {
+        "ui_and_control": 5,
+        "read_only_evm_guards": 4,
+        "positive_inference_control": 1,
+        "inference_auth_rejections": 6
+      },
+      "assertions": [
+        "UI and direct Control missing/wrong authorization return exact 401; configuration unchanged",
+        "eth_call reverts for stale round, wrong aggregator, unregistered action key, non-owner policy change",
+        "Actual inference model-fetch/job/run endpoints reject absent/spoofed authorization; exact peer key anchored before HTTP request"
+      ],
+      "source": "vita-fl-td/src/vita_fl_td/security_bridge.py:37; vita-fl-td/docs/security-scenarios.md:62"
+    },
+    {
+      "name": "Receipt audit",
+      "scenarios": [],
+      "count": null,
+      "slide": "Receipt audit — independently check 17 SCITT, AIR/TDX, session and Sello bindings.",
+      "required_checks": 17,
+      "breakdown": {
+        "scitt": 10,
+        "air_tdx": 1,
+        "sessions": 3,
+        "sello": 3
+      },
+      "source": "vita-fl-td/docs/transparency-audit.md:11; vita-fl-td/src/vita_fl_td/runner.py:587",
+      "boundary": "Cross-scenario optional requirement, enabled in current profile; independent execution of recorded production verification primitives and fresh official Phala quote appraisal, not a separate Intel DCAP implementation or original TLS/PoP observation."
+    }
+  ],
+  "active_local_profile": {
+    "source": "vita-fl-td/config.local.yaml",
+    "default_selected_scenario": "normal",
+    "worker_count": 6,
+    "client_limit": 5,
+    "successful_training_rounds": 5,
+    "epoch": 1,
+    "model_submission_deadline_ms": 45000,
+    "scenario_timeout_seconds": 3600,
+    "poll_seconds": 1,
+    "verify_inference": true,
+    "train_before_inference": true,
+    "verify_worker_participation": true,
+    "inference_mode": "cloud-agent",
+    "inference_timeout_seconds": 600,
+    "security_timeout_seconds": 600,
+    "transparency_audit": true,
+    "faults_kind": "phala",
+    "upload_gate_kind": "control",
+    "allowed_clients_scenario_constraints": {
+      "early": 5,
+      "partial": 2,
+      "zero": 0,
+      "recovery_optional_prearm": 0
+    }
+  },
+  "measurement_and_verdict": {
+    "metrics": [
+      "successful training rounds",
+      "aborted round attempts",
+      "transaction gas"
+    ],
+    "step_seconds": 5,
+    "measurement_window_padding_seconds": 10,
+    "source": "vita-fl-td/src/vita_fl_td/cli.py:315; sustainability-measurement-agent/sma/sma.py:389; SMEW/README.md:118",
+    "claims": [
+      "SMA fetches configured Prometheus time series after scenario execution",
+      "TD assertions and required receipt audit establish scenario outcome",
+      "SMEW also validates SMA/driver outcome and required measurements",
+      "No general energy measurement or Joules claim"
+    ]
+  },
+  "counting_boundaries": [
+    "8 scenario modes do not mean 8 passed live scenarios",
+    "16 security checks and 17 audit checks are not scenario counts",
+    "Assertions within repeated runs are not independent test definitions",
+    "Training signature-present assertion is not a second local verification of every training signature",
+    "No free LLM planning, clinical model-quality, universal attack resistance, load/DoS or all-threat coverage claim"
+  ],
+  "existing_live_reports": {
+    "root": "SMEW/reports",
+    "date": "2026-09-25",
+    "total": 14,
+    "pass": 8,
+    "error": 6,
+    "campaigns": [
+      {
+        "campaign": "vita-fl-cloud-agent-a61f679b",
+        "scenario": "normal",
+        "pass": 5,
+        "error": 1,
+        "successful_rounds": 3,
+        "assertions_per_pass": 75,
+        "submission_deadlines_ms": [
+          45000,
+          90000
+        ]
+      },
+      {
+        "campaign": "vita-fl-normal-a61f679b",
+        "scenario": "normal",
+        "pass": 1,
+        "error": 0,
+        "successful_rounds": 3,
+        "assertions_per_pass": 74
+      },
+      {
+        "campaign": "vita-fl-normal",
+        "scenario": "normal",
+        "pass": 0,
+        "error": 3
+      },
+      {
+        "campaign": "vita-fl-cloud-agent-check-a61f679b",
+        "scenario": "inference",
+        "pass": 1,
+        "error": 0,
+        "assertions_per_pass": 10,
+        "scope": "Inference-only, not a five-round training success"
+      },
+      {
+        "campaign": "vita-fl-recovery-5r-61b96e51",
+        "scenario": "recovery",
+        "pass": 1,
+        "error": 0,
+        "successful_rounds": 5,
+        "assertions_per_pass": 199,
+        "receipt_checks_pass": 17
+      },
+      {
+        "campaign": "vita-fl-recovery-5r-98664d28",
+        "scenario": "recovery",
+        "pass": 0,
+        "error": 1
+      },
+      {
+        "campaign": "vita-fl-partial-5r-61b96e51",
+        "scenario": "partial",
+        "pass": 0,
+        "error": 1
+      }
+    ],
+    "latest_successful_recovery": {
+      "path": "SMEW/reports/vita-fl-recovery-5r-61b96e51/2026_09_25_17_22_19_749db20e/subprocess_output/result.json",
+      "line_references": {
+        "training": 12,
+        "scenario_timeout": 19,
+        "inference_timeout": 52,
+        "audit_required": 53,
+        "security_timeout": 102,
+        "status": 105,
+        "all_workers_active": 1693,
+        "bootstrap_excluded": 1694,
+        "audit_status": 1698,
+        "empty_mutation_checks": 2417
+      },
+      "workers": 6,
+      "successful_nonbootstrap_rounds": 5,
+      "client_limit": 5,
+      "epoch": 1,
+      "submission_deadline_ms": 45000,
+      "scenario_timeout_seconds": 3600,
+      "inference_timeout_seconds": 600,
+      "security_timeout_seconds": 600,
+      "assertions_pass": 199,
+      "receipt_audit_checks_pass": 17
+    },
+    "no_successful_result_found_for": [
+      "configuration",
+      "early",
+      "partial",
+      "zero",
+      "security",
+      "manipulation"
+    ],
+    "all_mutation_check_lists": "empty or absent",
+    "limitations": [
+      "Historical successes predate current local profile; do not infer all eight considered modes passed.",
+      "Normal successes use three rounds, not current five-round profile.",
+      "Cloud-normal five PASS span differing deadlines, not five same-condition repetitions.",
+      "No executed adversarial tool-order checks documented."
+    ]
+  }
+}

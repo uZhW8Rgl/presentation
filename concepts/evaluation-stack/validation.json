@@ -1,0 +1,53 @@
+{
+  "variant_count": 4,
+  "editable": "Native PowerPoint shapes and text",
+  "layout": "passed; shape bounds and preview font metrics",
+  "pptx_round_trip": "passed; four-slide deck and four one-slide files",
+  "speaker_notes": "present; responsibilities, boundaries and source map",
+  "main_deck_unchanged": true,
+  "main_deck_sha256": "58f20022ad22463498a4ae183a2cdcf75b109ac735949c1918c9ccb0b4ec509f",
+  "source_map": [
+    {
+      "path": "SMEW/README.md",
+      "sha256": "9fefc7324836fb692fd1522725d824016fac3ff9616f304fcd8e8322589e8f70"
+    },
+    {
+      "path": "SMEW/smew/daemon.py",
+      "sha256": "87162c792ad8144fc904ec9093cbc076258b85e1c6527bb3024acc2c7fe1f28b"
+    },
+    {
+      "path": "SMEW/smew/runner.py",
+      "sha256": "81151e9b6d21ad58645c6c974b0bf6c77aff4f4ab3c279545b155cc8ad7bd2d1"
+    },
+    {
+      "path": "SMEW/smew/analysis/vita_fl.py",
+      "sha256": "7e2ba7714b192da7bba628be6a6d5c5b329e230d72faea0866a0aa94cf173f94"
+    },
+    {
+      "path": "SMEW/reporting.py",
+      "sha256": "011a9d2f2630930b9170b2f4a06f72c2647727a729b6fce1a576bca011b034b6"
+    },
+    {
+      "path": "sustainability-measurement-agent/sma/sma.py",
+      "sha256": "cc2f429b968e57070ebadd5aba04633b27689b35c466441e8aab1d35d1c86888"
+    },
+    {
+      "path": "vita-fl-td/README.md",
+      "sha256": "9a13014762e92b21ab12d93c628e56f9f28fb1af35c69a922d59aa06a5a2dfdb"
+    },
+    {
+      "path": "vita-fl-td/src/vita_fl_td/cli.py",
+      "sha256": "b8130ca48b32ac3e15072c5bd2c59f64f3af1a3178ea97eaa8ad6fae475319cb"
+    },
+    {
+      "path": "vita-fl-td/src/vita_fl_td/runner.py",
+      "sha256": "9f8eb21a49be74ea3012075ec9c92d853051fe041b37fca5ec37a97281e58c09"
+    },
+    {
+      "path": "vita-fl-td/src/vita_fl_td/transparency_audit.py",
+      "sha256": "d164a6e705b0835f46191fc8894a4456f04a921468c5163fa4d4d489fb30c105"
+    }
+  ],
+  "preview_renderer": "Local Pillow renderer; final PowerPoint font layout can differ",
+  "cloud_runs": "None; architecture presentation only"
+}

@@ -1,10 +1,10 @@
 # VITA-FL — Master's Thesis Presentation
 
 This repository contains the English presentation for the VITA-FL master's
-thesis. It comprises twenty-eight talk pages, three compact backup and overview
+thesis. It comprises twenty-nine talk pages, three compact backup and overview
 pages (one worker-role overview and two threat overviews), and fourteen
-full-size use/misuse-case backup pages, for a total of forty-five pages. The complete
-timed talk is approximately twenty-three minutes. The deck is built directly from
+full-size use/misuse-case backup pages, for a total of forty-six pages. The complete
+timed talk is approximately twenty-four minutes. The deck is built directly from
 the official TU Berlin PowerPoint template, and its title page preserves the
 official TU Berlin branding.
 
@@ -12,9 +12,10 @@ official TU Berlin branding.
 
 - `TU_Berlin_Praesentation_Master_einfarbig_Rot.pptx`: unchanged TU Berlin source template
 - `VITA-FL_Thesis_Presentation_TU_Berlin.pptx`: editable 16:9 presentation
-- `preview/contact-sheet.png`: preview of all forty-five pages
+- `preview/contact-sheet.png`: preview of all forty-six pages
 - `build_presentation.py`: reproducible deck generator
-- `update_slide25_test_evaluation.py`: idempotent insertion/update of Page 25 with structural preservation checks
+- `update_evaluation_stack.py`: idempotent insertion/update of the approved evaluation-stack diagram on Page 24 with structural preservation checks
+- `update_slide25_test_evaluation.py`: idempotent insertion/update of the selected CI/external-test slide on Page 26 with structural preservation checks
 - `attestation_slides.py`: on-chain verification diagram for Page 14 and the earlier key-derivation layout retained for concepts
 - `render_preview.py`: lightweight local QA renderer
 - `assets/threat-diagrams/T1.png` … `T14.png`: use/misuse-case source diagrams
@@ -26,9 +27,10 @@ official TU Berlin branding.
 - `assets/dstack-key-usage-d.pptx`: approved editable key-use actor map used on Page 15
 - `assets/aggregation-round-a.pptx`: approved editable aggregation flow used on Page 18
 - `assets/sello-air-a.pptx`: approved editable Sello/AIR evidence comparison used on Page 20
-- `assets/test-evaluation-a.pptx`: approved native test-level matrix used on Page 25
+- `assets/evaluation-stack-c.pptx`: approved native evaluation-stack diagram used on Page 24
+- `assets/test-evaluation-a.pptx`: approved native CI/external-test variant A used on Page 26
 - `assets/test-evaluation-integration.json`: insertion/update audit and backup location
-- `assets/worker-inference-a.pptx`: approved combined-image and internal-key diagram used on Page 29
+- `assets/worker-inference-a.pptx`: approved combined-image and internal-key diagram used on Page 30
 - `data/evaluation/authoritative_phala_6w_24r*.{csv,json}`: the sole six-worker, 24-round Phala run of the current deterministic equal-weight FedAvg path, including simulated Anvil gas accounting, used by the cloud-run and learning-metric slides; the generator records the run-specific Tier-1 allocation of six worker and two infrastructure TEE slots
 - `requirements.txt`: pinned Python dependencies
 
@@ -37,7 +39,7 @@ for layout inspection; PowerPoint remains authoritative for exact font metrics
 and line wrapping. Preview rendering expects the DejaVu Sans fonts at their
 standard Linux paths.
 
-Pages 1–6 have no domain legend. Pages 7–45 show compact **DFL** and **Agent**
+Pages 1–6 have no domain legend. Pages 7–46 show compact **DFL** and **Agent**
 chips at the top right, directly left of the TU Berlin logo. Active domains
 retain green (`#207548`) and blue (`#1764A1`); inactive domains are gray.
 Page 20 explicitly activates only **Agent**; its **DFL** chip is gray.
@@ -79,11 +81,12 @@ role used in VITA-FL. Three example rounds highlight the same participants takin
 the aggregator role in turn. Two role panels introduce worker and aggregator tasks;
 speaker notes explain local/global models, role assignment, and recovery limits.
 
-Page 9 uses the approved [lifecycle F3](concepts/lifecycle/integrated/f3-publication-arc.png).
+Page 9 uses the approved [lifecycle diagram](preview/slide-09.png).
 Workers send local updates directly to the aggregator. The global-model section
 integrates IPFS model files and blockchain references into the publish/load cycle.
-A model-use branch leads to attested inference, invoked by an agent through MCP,
-with a tool receipt recorded in the transparency log. All diagram elements remain
+A model-use branch leads to inference, invoked by an agent through MCP,
+with a tool receipt recorded in the transparency log. A separate Phala remote
+attestation check appears beneath Inference, linked by an evidence-verification connector. All diagram elements remain
 editable PowerPoint shapes; notes explain the abstraction and prototype flow.
 
 Page 10 uses the approved [architecture layout A](concepts/architecture-ledger/draft-a.png):
@@ -128,29 +131,54 @@ binding and deployment-policy checks. The AIR caption reads **Attested Inference
 Receipt**, and the service and shared-log labels use **Inference TEE** and
 **Transparency Log**. Technical limitations remain in the speaker notes; the
 visible scope sentence is omitted. The approved native asset is reused by the
-generator, and the main deck retains forty-five pages.
+generator.
 
-Page 25 presents **Implemented tests by test level**. The scope is explicitly
-**Audited CI scope · current code, all profiles**: it inventories 731
-unit/component and 77 local integration test definitions in the audited CI
-paths. Each definition is counted once before parameter expansion, with mixed
-suites classified at the individual test level. The count describes implemented
-tests, not a newly executed pass rate or complete coverage of every file in the
-repository. Current mTLS and RA-TLS tests are included; this scope is separate
-from the legacy-profile Phala run on Page 24. The matrix shows the configured execution context and distinguishes local
-process/API integration from
-isolated logic, cryptography, fixtures and mocks. Speaker notes explain the
-classification, source paths, CI/publishing dependencies and the absence of an
-automated complete cloud training/inference or fault-injection evaluation.
-Both DFL and Agent navigation chips are active.
+Page 24 uses the approved **Local evaluation, deployed system** diagram
+from `assets/evaluation-stack-c.pptx`. SMEW coordinates the campaign, SMA runs
+the test driver and retrieves Prometheus time series for the measurement window,
+and vita-fl-td checks the deployed VITA-FL system through its APIs and RPC.
+The diagram separates the local experiment host from the VITA-FL services and
+Prometheus in Phala; saved results feed the reports and Marimo analysis.
+SMA retrieves the time series after the scenario ends. The slide explains the
+evaluation workflow without claiming that system metrics constitute a general
+energy measurement or changing the scope of the historical run on Page 25.
 
-Page 29 uses the approved [combined worker/inference diagram A](concepts/worker-inference/a-shared-image.png).
+Page 26 uses the selected **CI checks and external system tests** variant A
+from [the CI/external proposals](concepts/test-evaluation/ci-external/README.md).
+Its left catalog groups **878 CI-selected definitions** into seven subjects:
+learning/model integrity, round control/recovery, identity/transport,
+inference/agent workflow, receipts/provenance, runtime/telemetry and
+deployment/packaging. Unit, component and integration tests share one CI block;
+each definition counts once before parameter expansion or repeated executions.
+The right catalog covers **eight external modes**: configuration, normal,
+inference, early, partial, zero, recovery and security. A separate,
+cross-scenario receipt audit has **17 checks**; the security mode has **16 checks,
+including a positive inference control**. These are distinct counting units,
+not passed runs or an exhaustive coverage measure. Manipulation and adversarial
+tool-order tests remain outside the selected external scope.
+
+The current Phala training profile uses six workers, five successful training
+rounds excluding bootstrap, client limit five and a 45-second collection deadline.
+Configuration is a setup-only check. The current profile also trains before the
+inference mode; historical runs can use different settings. SMEW/SMA/vita-fl-td
+exercise the deployed services; collection scenarios use a documented upload
+gate, while recovery stops the selected aggregator CVM. Speaker notes distinguish
+implemented checks, configured execution and observed results. Both DFL and
+Agent navigation chips are active.
+
+The earlier **808 = 731 unit/component + 77 integration** inventory remains only
+in the historical `concepts/test-evaluation/test-inventory.{csv,json,md}` files.
+Its absence of an automated complete cloud training/inference or fault-injection
+evaluation describes that historical inventory. It is not the current Page 26
+scope and does not change the legacy-profile Phala results on Page 25.
+
+Page 30 uses the approved [combined worker/inference diagram A](concepts/worker-inference/a-shared-image.png).
 One image and container contain the DFL and inference processes, with keys
 used internally. The agent receives results and signed evidence through its
 tool call, without a private-key transfer. Notes retain the distinction between
 on-chain admission and KMS key release and the associated update-policy assumption.
 
-Pages 29–45 are backup material and are not included in the timing below.
+Pages 30–46 are backup material and are not included in the timing below.
 
 ## Suggested timing
 
@@ -179,13 +207,14 @@ Pages 29–45 are backup material and are not included in the timing below.
 | 21 | Agent-mediated attested inference | 0:55 |
 | 22 | Independent audit | 0:50 |
 | 23 | Cryptographic chain of custody | 0:55 |
-| 24 | Sole-run protocol, Tier-1 capacity allocation, and workload summary | 0:45 |
-| 25 | Implemented tests: unit/component and local integration by CI scope | 0:55 |
-| 26 | BCE, macro-AUROC, macro-F1, accuracy, and exact match across all 24 rounds | 0:50 |
-| 27 | Dataset imbalance and metric interpretation | 0:45 |
-| 28 | Conclusion and outlook | 0:40 |
+| 24 | Evaluation workflow: SMEW, SMA, vita-fl-td, and VITA-FL in Phala | 0:45 |
+| 25 | Sole-run protocol, Tier-1 capacity allocation, and workload summary | 0:45 |
+| 26 | CI checks by subject and configured external system tests | 0:55 |
+| 27 | BCE, macro-AUROC, macro-F1, accuracy, and exact match across all 24 rounds | 0:50 |
+| 28 | Dataset imbalance and metric interpretation | 0:45 |
+| 29 | Conclusion and outlook | 0:40 |
 
-Total: approximately twenty-three minutes, including brief transitions between the
+Total: approximately twenty-four minutes, including brief transitions between the
 timed pages. For a shorter slot, Pages 13–17 and 23
 can be treated as technical detail pages without breaking the main narrative.
 
@@ -193,28 +222,45 @@ can be treated as technical detail pages without breaking the main narrative.
 
 The delivered PPTX preserves existing slide edits. The approved lifecycle and
 image-policy slides were inserted directly into that file, and the Sello/AIR
-comparison replaces Page 20. The implemented-test matrix is inserted as Page 25
-after the cloud-run overview. All existing slide content and notes are preserved;
-only the page-number footers of subsequent pages are advanced. The generator
+comparison replaces Page 20. The approved evaluation-stack diagram is inserted
+as Page 24 before the historical cloud-run overview, now on Page 25. The
+selected CI/external-test variant A replaces the previous test matrix on Page 26.
+The update retains the other slides and their notes; the deck remains at 46 pages. The generator
 includes these diagrams from their
 independent assets. The former combined
 attestation/key slide was replaced with two native diagrams; all other slide
 edits were retained. A full regeneration recreates the
 source version of earlier slides; it does not retain edits made only in PowerPoint.
 
-To update the approved test slide while preserving existing PowerPoint edits,
-run from the presentation directory:
+To insert or update the approved evaluation-stack slide while preserving
+existing PowerPoint edits, run from the presentation directory:
 
 ```bash
+.venv/bin/python update_evaluation_stack.py --render
+```
+
+The updater integrates the editable diagram from `assets/evaluation-stack-c.pptx`
+and advances the subsequent page numbers. It updates the existing diagram on
+repeat runs; `--render` refreshes the previews.
+
+To rebuild the selected CI/external-test asset and update Page 26 while
+preserving existing PowerPoint edits, run from the presentation directory:
+
+```bash
+.venv/bin/python concepts/test-evaluation/build_selected.py
 .venv/bin/python update_slide25_test_evaluation.py --render
 ```
 
+The selected builder uses CI/external variant A and the current inventory in
+`concepts/test-evaluation/ci-external/`. The earlier `inventory_tests.py` belongs
+to the historical 808-definition inventory and is not a prerequisite for this build.
+
 The updater creates a backup in a new `vita-fl-before-test-evaluation-*`
 directory under the system temporary directory and validates the candidate before replacing the deck. It verifies
-all existing slide XML (apart from page numbers), speaker notes and slide
-relationships, unchanged media/masters/layouts, sequential Page 2–45 footers, the
-28-page talk/17-page backup boundary, native shapes and the generator hook.
-A second run updates Page 25 instead of adding another page. It records the
+the other slides' XML (apart from page numbers), speaker notes and slide
+relationships, unchanged media/masters/layouts, sequential Page 2–46 footers, the
+29-page talk/17-page backup boundary, native shapes and the generator hook.
+A second run updates the test slide on Page 26 instead of adding another page. It records the
 asset and deck hashes in `assets/test-evaluation-integration.json`.
 
 For a complete regeneration, run from the presentation directory:

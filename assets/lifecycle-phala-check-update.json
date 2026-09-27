@@ -1,0 +1,13 @@
+{
+  "page": 9,
+  "rename": "Attested inference \u2192 Inference",
+  "addition": "Phala remote attestation check, below Inference",
+  "native_editable_shapes": true,
+  "unchanged_other_slides": 45,
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-page9-phala-adlynmyy",
+  "asset": "assets/lifecycle-f3.pptx",
+  "layout": "passed",
+  "visual_review": "passed; Page 9 preview checked",
+  "main_sha256": "631064f82b0eb2798e6d758672be0ef225cf00f91e3ce27a27c7ecab6499a88d",
+  "generator_import": "passed; labels and notes match the main slide"
+}

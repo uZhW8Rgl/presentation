@@ -1,0 +1,22 @@
+{
+  "page": 24,
+  "slides_before": 45,
+  "slides_after": 46,
+  "talk_pages": 29,
+  "backup_pages": 17,
+  "mode": "insert",
+  "preserved_existing_slides_and_notes": 45,
+  "allowed_existing_change": "page-number footers only, starting at inserted Page 24",
+  "main_deck_sha256_before": "58f20022ad22463498a4ae183a2cdcf75b109ac735949c1918c9ccb0b4ec509f",
+  "main_deck_sha256_after": "0ec6eb38fb5cb400da98f64d104b468d859516d2e2a2be9b4c1e36aeb3f3d7b7",
+  "asset_sha256": "03541abbc6b39023522706b19ef2b33e6a267dd5b0f64ad9ea79f9837838102d",
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-evaluation-stack-c6mz22fr/VITA-FL_Thesis_Presentation_TU_Berlin.pptx",
+  "structure_check": "passed",
+  "generator_import": "passed",
+  "media_masters_and_layouts_unchanged": true,
+  "source_notes_preserved": true,
+  "native_editable_shapes": true,
+  "visual_review": "passed; rendered Page 24 reviewed and body matches approved C exactly",
+  "repeated_application": "identical slide and deck snapshots in memory",
+  "test_inventory_updater_compatibility": "passed; detects and validates Page 26"
+}

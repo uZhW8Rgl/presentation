@@ -1,0 +1,85 @@
+{
+  "ci_groups": [
+    {
+      "id": "learning_model_integrity",
+      "count": 78,
+      "label": "Learning & model integrity",
+      "detail": "Data splits · aggregation math · model bindings",
+      "matrix_label": "Learning &\nmodel integrity",
+      "ci_check": "Data partitions; aggregation math;\nmodel-bundle authentication",
+      "external": "normal: 5 completed training rounds\nAll six workers participate",
+      "short_label": "Learning & models",
+      "short_detail": "Data splits · aggregation · model binding"
+    },
+    {
+      "id": "round_coordination_recovery",
+      "count": 117,
+      "label": "Round control & recovery",
+      "detail": "Local timer · input closure · quorum · publication",
+      "matrix_label": "Round control\n& recovery",
+      "ci_check": "Local timer; closure; quorum;\natomic publication and round state",
+      "external": "early / partial / zero; recovery\nDeadline, 3-vote quorum, resumed rounds",
+      "short_label": "Rounds & recovery",
+      "short_detail": "Timer · closure · quorum · publication"
+    },
+    {
+      "id": "identity_secure_transport",
+      "count": 240,
+      "label": "Identity & secure transport",
+      "detail": "Admission · quotes · keys · TLS · authorization",
+      "matrix_label": "Identity &\nsecure transport",
+      "ci_check": "Admission policies; key binding;\nRA-TLS/mTLS and access control",
+      "external": "security: reject missing/forged auth\nReject invalid coordination calls",
+      "short_label": "Identity & transport",
+      "short_detail": "Admission · attestation · keys · TLS"
+    },
+    {
+      "id": "inference_agent_workflow",
+      "count": 49,
+      "label": "Inference & agent workflow",
+      "detail": "MCP tools · job ownership · TEE/ZK workflow",
+      "matrix_label": "Inference &\nagent workflow",
+      "ci_check": "Tool API; job ownership;\nTEE and ZK inference lifecycle",
+      "external": "inference: finalized-model binding\nDeployed agent and actual inference",
+      "short_label": "Inference & agents",
+      "short_detail": "MCP tools · owned jobs · TEE/ZK"
+    },
+    {
+      "id": "receipts_provenance",
+      "count": 64,
+      "label": "Receipts & provenance",
+      "detail": "AIR / Sello / SCITT · signatures · data provenance",
+      "matrix_label": "Receipts &\nprovenance",
+      "ci_check": "AIR/Sello checks; log bindings;\nsigned training-data provenance",
+      "external": "17-check published-evidence audit\nSCITT · AIR/TDX · sessions · Sello",
+      "short_label": "Receipts & provenance",
+      "short_detail": "AIR · Sello · SCITT · signed input"
+    },
+    {
+      "id": "runtime_control_telemetry",
+      "count": 107,
+      "label": "Runtime control & telemetry",
+      "detail": "Configuration · upload gates · worker telemetry",
+      "matrix_label": "Runtime control\n& telemetry",
+      "ci_check": "Configuration validation; gate\ncontrol; signed-event metrics",
+      "external": "configuration: exact settings readback\nInvalid deadlines leave state unchanged",
+      "short_label": "Runtime & telemetry",
+      "short_detail": "Settings · gates · signed-event metrics"
+    },
+    {
+      "id": "deployment_packaging",
+      "count": 223,
+      "label": "Deployment & packaging",
+      "detail": "Image policy · revision order · Docker / Terraform",
+      "matrix_label": "Deployment &\npackaging",
+      "ci_check": "Images and deployment order;\nDocker contexts; offline Terraform",
+      "external": "No external redeployment scenario\nRun pins: image, chain and contracts",
+      "short_label": "Deployment & packaging",
+      "short_detail": "Images · revisions · Docker · Terraform"
+    }
+  ],
+  "ci_source_commit": "61b96e514c0803d071f6f955d353e9d46a1e2244",
+  "ci_count_unit": "Unique declared test definition selected by current vita-fl CI; parameterized cases and repeats are not expanded.",
+  "external_modes": 8,
+  "audit_checks": 17
+}

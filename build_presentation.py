@@ -636,6 +636,9 @@ def add_domain_navigation(slide, page_number: int, *, active_domains: set[str] |
     # The implemented-test inventory follows the cloud-run overview on Page 24.
     dfl_pages = {page + (page >= 25) for page in dfl_pages} | {25}
     agent_pages = {page + (page >= 25) for page in agent_pages} | {25}
+    # Introduce evaluation tooling before the historical cloud-run evidence.
+    dfl_pages = {page + (page >= 24) for page in dfl_pages} | {24}
+    agent_pages = {page + (page >= 24) for page in agent_pages} | {24}
     x, y, height = 10.40, .55, .25
     gap, padding = 8 / 120, 4 / 120
     domains = (
@@ -1700,7 +1703,7 @@ def slide_lifecycle(prs):
         "and selection can choose the same participant in successive rounds.\n\n"
         "A finalized model can also be used for inference. The Published model arrow "
         "summarizes the receiver resolving its authoritative blockchain reference and "
-        "retrieving the corresponding IPFS bundle. The agent invokes the attested inference "
+        "retrieving the corresponding IPFS bundle. The agent invokes the inference "
         "service through MCP and receives its result. The receiver publishes the tool "
         "receipt to the separate transparency log. Domain evidence binds the model, "
         "inference input, and output; log inclusion alone does not verify computation. "
@@ -1710,7 +1713,11 @@ def slide_lifecycle(prs):
         "Prototype references: vita-fl/dfl/node_server/src/server.ts:463-533,672-702,"
         "2110-2180,2313-2330; vita-fl/dfl/node_server/src/ipfs.ts:315-346,380-435; "
         "vita-fl/smart_contracts/src/core/GMStorage.sol:180-248; "
-        "vita-fl/smart_contracts/src/core/AggregatorSelection.sol:171-195.",
+        "vita-fl/smart_contracts/src/core/AggregatorSelection.sol:171-195.\n\n"
+        "The Phala remote attestation check below Inference represents appraisal of "
+        "the receiver's TDX quote through the Phala verifier. The agent consumes the "
+        "verification result and checks the expected deployment policy. The connector "
+        "indicates evidence verification, not an additional training step.",
     )
     return slide
 
@@ -3008,12 +3015,13 @@ def slide_evaluation(prs):
 
 
 TEST_EVALUATION_SLIDE_NAME = "VITA-FL implemented test evaluation"
+EVALUATION_STACK_SLIDE_NAME = "VITA-FL evaluation tools architecture"
 
 
-def apply_test_evaluation_asset(slide, page_number: int):
-    """Import the approved editable test matrix without its concept framing."""
-    approved = Presentation(ASSETS / "test-evaluation-a.pptx")
-    assert len(approved.slides) == 1, "The test-evaluation asset must contain one slide"
+def _apply_native_evaluation_asset(slide, page_number: int, asset_name: str, slide_name: str):
+    """Import an approved editable evaluation slide without concept framing."""
+    approved = Presentation(ASSETS / asset_name)
+    assert len(approved.slides) == 1, "The approved evaluation asset must contain one slide"
     source = approved.slides[0]
     titles = [shape.text for shape in source.shapes if shape.has_text_frame
               and shape.top < Inches(.95) and shape.left < Inches(1)
@@ -3022,20 +3030,20 @@ def apply_test_evaluation_asset(slide, page_number: int):
                and Inches(.95) <= shape.top < Inches(1.30)
                and shape.left < Inches(1) and shape.width > Inches(5)]
     assert len(titles) == 1 and len(kickers) == 1, "Expected the standard asset heading"
-    assert source.notes_slide.notes_text_frame.text.strip(), "Test classification notes are required"
+    assert source.notes_slide.notes_text_frame.text.strip(), "Evaluation speaker notes are required"
     for shape in list(slide.shapes):
         remove_shape(shape)
-    slide.name = TEST_EVALUATION_SLIDE_NAME
+    slide.name = slide_name
     add_content_title(slide, titles[0], kickers[0], page_number)
     add_domain_navigation(slide, page_number, active_domains={"DFL", "Agent"})
     elements = [deepcopy(shape.element) for shape in source.shapes
                 if shape.top >= Inches(1.43)
                 and shape.top + shape.height <= Inches(6.71)]
-    assert elements, "The test-evaluation asset has no content shapes"
+    assert elements, "The evaluation asset has no content shapes"
     ids = {}
     next_id = slide.shapes._next_shape_id
     for element in elements:
-        assert not element.xpath(".//a:blip"), "The test matrix must use native editable shapes"
+        assert not element.xpath(".//a:blip"), "The evaluation diagram must use native editable shapes"
         for properties in element.xpath(".//p:cNvPr"):
             old_id = properties.get("id")
             assert old_id not in ids, "Duplicate shape identifier in the source asset"
@@ -3059,8 +3067,28 @@ def apply_test_evaluation_asset(slide, page_number: int):
     return slide
 
 
+def apply_test_evaluation_asset(slide, page_number: int):
+    """Import the approved test inventory at its current position."""
+    return _apply_native_evaluation_asset(
+        slide, page_number, "test-evaluation-a.pptx", TEST_EVALUATION_SLIDE_NAME,
+    )
+
+
+def apply_evaluation_stack_asset(slide, page_number: int):
+    """Import approved variant C: experiment host, Phala and evidence flows."""
+    return _apply_native_evaluation_asset(
+        slide, page_number, "evaluation-stack-c.pptx", EVALUATION_STACK_SLIDE_NAME,
+    )
+
+
+def slide_evaluation_stack(prs):
+    """Introduce SMEW, SMA, vita-fl-td and VITA-FL before evaluation results."""
+    slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+    return apply_evaluation_stack_asset(slide, len(prs.slides))
+
+
 def slide_test_evaluation(prs):
-    """Use the approved inventory of implemented test types and their locations."""
+    """Use approved A: CI checks by subject and external system-test scenarios."""
     slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
     return apply_test_evaluation_asset(slide, len(prs.slides))
 
@@ -3598,6 +3626,7 @@ def build():
     slide_agent(prs)
     slide_external_audit(prs)
     slide_cryptographic_chain(prs)
+    slide_evaluation_stack(prs)
     slide_evaluation(prs)
     slide_test_evaluation(prs)
     slide_learning_trajectories(prs)
@@ -3606,9 +3635,9 @@ def build():
     slide_worker_roles_backup(prs)
     slide_threats_dfl(prs)
     slide_threats_agent(prs)
-    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=32):
+    for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=33):
         slide_threat_detail(prs, number, *threat)
-    assert len(prs.slides) == 45
+    assert len(prs.slides) == 46
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()

@@ -1,0 +1,20 @@
+{
+  "slides": 3,
+  "ci_definitions": 878,
+  "disjoint_ci_groups": 7,
+  "external_scenario_modes": 8,
+  "receipt_audit_checks": 17,
+  "security_scenario_checks": 16,
+  "layout": "passed",
+  "pptx_roundtrip": "passed",
+  "speaker_notes": "present",
+  "native_editable_shapes": true,
+  "main_and_selected_slide_preserved": {
+    "VITA-FL_Thesis_Presentation_TU_Berlin.pptx": "0ec6eb38fb5cb400da98f64d104b468d859516d2e2a2be9b4c1e36aeb3f3d7b7",
+    "assets/test-evaluation-a.pptx": "3aa6482209d1b8186a75276afdd45e3171fda703654f714b81d7bb2e208961d2",
+    "concepts/test-evaluation/a-test-categories.png": "721d61dd18264a1286853f1800216c5854d620b2aa92971663d6bffcf052f553",
+    "concepts/test-evaluation/test-inventory.json": "567ac71891e30e9f5bbb52184d6893cc847ae16dfce8dbfee734b6ee3f971d83"
+  },
+  "test_execution": "none; source/configuration inventory only",
+  "preview_renderer": "Pillow; PowerPoint remains authoritative for exact fonts"
+}
