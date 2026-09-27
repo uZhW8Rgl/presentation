@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Insert/update approved evaluation architecture as Page 24, preserving existing edits."""
+"""Insert/update approved evaluation architecture after the attack trees, if present.
+
+Preserves legacy Page 24 and the six-tree layout at Page 30 without rebuilding.
+"""
 from __future__ import annotations
 
 import argparse
@@ -14,33 +17,41 @@ from zipfile import ZipFile
 from pptx import Presentation
 
 import build_presentation as b
-from update_slide25_test_evaluation import footer, set_footer, snapshot, visible
+from update_slide25_test_evaluation import (
+    attack_tree_count, footer, set_footer, snapshot, visible,
+)
 
 ROOT = Path(__file__).resolve().parent
 DECK = ROOT / 'VITA-FL_Thesis_Presentation_TU_Berlin.pptx'
 ASSET = ROOT / 'assets/evaluation-stack-c.pptx'
 RECORD = ROOT / 'assets/evaluation-stack-integration.json'
-TARGET = 23
+
+
+def evaluation_stack_target(prs):
+    return 23 + attack_tree_count(prs)
 
 
 def check_structure(prs):
-    assert len(prs.slides) == 46, 'Expected 29 talk pages and 17 backup pages'
+    tree_count = attack_tree_count(prs)
+    target = evaluation_stack_target(prs)
+    assert len(prs.slides) == 46 + tree_count, \
+        'Unexpected talk/backup page count for the evaluation and attack-tree layout'
     assert len(prs.slide_masters) == 2
-    assert prs.slides[TARGET].name == b.EVALUATION_STACK_SLIDE_NAME
+    assert prs.slides[target].name == b.EVALUATION_STACK_SLIDE_NAME
     assert sum(s.name == b.EVALUATION_STACK_SLIDE_NAME for s in prs.slides) == 1
     assert 'Cryptographic chain of custody' in visible(prs.slides[22])
-    assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[24])
-    assert prs.slides[25].name == b.TEST_EVALUATION_SLIDE_NAME
-    assert 'What changed over the 24 federated rounds?' in visible(prs.slides[26])
-    assert 'Conclusion and outlook' in visible(prs.slides[28])
-    assert 'Training and inference share one verified image' in visible(prs.slides[29])
+    assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[target + 1])
+    assert prs.slides[target + 2].name == b.TEST_EVALUATION_SLIDE_NAME
+    assert 'What changed over the 24 federated rounds?' in visible(prs.slides[target + 3])
+    assert 'Conclusion and outlook' in visible(prs.slides[target + 5])
+    assert 'Training and inference share one verified image' in visible(prs.slides[target + 6])
     for number, slide in enumerate(prs.slides, 1):
         assert slide.notes_slide.notes_text_frame.text.strip(), f'Empty notes: Page {number}'
         if number > 1:
             assert footer(slide).text == f'Page {number}', f'Wrong footer: Page {number}'
         ids = [node.get('id') for node in slide.element.xpath('.//p:cNvPr')]
         assert len(ids) == len(set(ids)), f'Duplicate shape IDs: Page {number}'
-    slide = prs.slides[TARGET]
+    slide = prs.slides[target]
     assert 'Variant C' not in visible(slide)
     for name in ('SMEW', 'SMA', 'vita-fl-td', 'VITA-FL', 'Prometheus', 'Marimo'):
         assert name in visible(slide), name
@@ -61,11 +72,14 @@ def main():
     assert ASSET.is_file(), f'Missing approved asset: {ASSET}'
     prs = Presentation(DECK)
     old_count = len(prs.slides)
-    inserting = old_count == 45
-    assert old_count in (45, 46), 'Unexpected deck structure; refusing to overwrite it'
+    tree_count = attack_tree_count(prs)
+    target = evaluation_stack_target(prs)
+    inserting = old_count == 45 + tree_count
+    assert old_count in (45 + tree_count, 46 + tree_count), \
+        'Unexpected deck structure; refusing to overwrite it'
     if inserting:
-        assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[TARGET])
-        assert prs.slides[24].name == b.TEST_EVALUATION_SLIDE_NAME
+        assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[target])
+        assert prs.slides[target + 1].name == b.TEST_EVALUATION_SLIDE_NAME
         assert not any(s.name == b.EVALUATION_STACK_SLIDE_NAME for s in prs.slides)
     else:
         check_structure(prs)
@@ -77,11 +91,11 @@ def main():
         b.slide_evaluation_stack(prs)
         slide_id = prs.slides._sldIdLst[-1]
         prs.slides._sldIdLst.remove(slide_id)
-        prs.slides._sldIdLst.insert(TARGET, slide_id)
-        for number in range(TARGET + 1, len(prs.slides) + 1):
+        prs.slides._sldIdLst.insert(target, slide_id)
+        for number in range(target + 1, len(prs.slides) + 1):
             set_footer(prs.slides[number - 1], number)
     else:
-        b.apply_evaluation_stack_asset(prs.slides[TARGET], TARGET + 1)
+        b.apply_evaluation_stack_asset(prs.slides[target], target + 1)
     check_structure(prs)
 
     handle, filename = tempfile.mkstemp(prefix='.evaluation-stack-', suffix='.pptx', dir=ROOT)
@@ -93,36 +107,38 @@ def main():
         check_structure(checked)
         preserved = 0
         for index, old in enumerate(before):
-            if not inserting and index == TARGET:
+            if not inserting and index == target:
                 continue
-            new_index = index + int(inserting and index >= TARGET)
+            new_index = index + int(inserting and index >= target)
             assert snapshot(checked.slides[new_index]) == old, \
                 f'Existing Page {index+1} changed beyond its page-number footer'
             preserved += 1
         source = Presentation(ASSET).slides[0]
-        assert checked.slides[TARGET].notes_slide.notes_text_frame.text == source.notes_slide.notes_text_frame.text
+        assert checked.slides[target].notes_slide.notes_text_frame.text == source.notes_slide.notes_text_frame.text
         with ZipFile(backup) as old_zip, ZipFile(candidate) as new_zip:
             assert new_zip.testzip() is None
             for name in old_zip.namelist():
                 if name.startswith(('ppt/media/', 'ppt/slideMasters/', 'ppt/slideLayouts/', 'ppt/notesMasters/')):
                     assert new_zip.read(name) == old_zip.read(name), name
         generated = b.prepare_template()
-        for _ in range(TARGET):
+        for _ in range(target):
             generated.slides.add_slide(generated.slide_masters[1].slide_layouts[0])
         b.slide_evaluation_stack(generated)
-        assert visible(generated.slides[TARGET]) == visible(checked.slides[TARGET])
-        assert len(generated.slides[TARGET].shapes) == len(checked.slides[TARGET].shapes)
-        assert generated.slides[TARGET].notes_slide.notes_text_frame.text == source.notes_slide.notes_text_frame.text
+        assert visible(generated.slides[target]) == visible(checked.slides[target])
+        assert len(generated.slides[target].shapes) == len(checked.slides[target].shapes)
+        assert generated.slides[target].notes_slide.notes_text_frame.text == source.notes_slide.notes_text_frame.text
         os.replace(candidate, DECK)
     finally:
         candidate.unlink(missing_ok=True)
 
     RECORD.write_text(json.dumps({
-        'page': 24, 'slides_before': old_count, 'slides_after': 46,
-        'talk_pages': 29, 'backup_pages': 17,
+        'page': target + 1, 'slides_before': old_count, 'slides_after': len(checked.slides),
+        'talk_pages': 29 + tree_count, 'backup_pages': 17,
+        'attack_tree_pages': tree_count,
         'mode': 'insert' if inserting else 'replace',
         'preserved_existing_slides_and_notes': preserved,
-        'allowed_existing_change': 'page-number footers only, starting at inserted Page 24',
+        'allowed_existing_change': (f'page-number footers only, starting at inserted Page {target + 1}'
+                                    if inserting else 'none outside the replaced evaluation architecture'),
         'main_deck_sha256_before': before_hash,
         'main_deck_sha256_after': hashlib.sha256(DECK.read_bytes()).hexdigest(),
         'asset_sha256': hashlib.sha256(ASSET.read_bytes()).hexdigest(),
@@ -134,7 +150,8 @@ def main():
     if args.render:
         import render_preview
         render_preview.main()
-    print(f'{"Inserted" if inserting else "Updated"} Page 24; 46 pages (29 talk, 17 backup).')
+    print(f'{"Inserted" if inserting else "Updated"} Page {target + 1}; '
+          f'{len(checked.slides)} pages ({29 + tree_count} talk, 17 backup).')
     print(f'Preserved {preserved} existing slides and notes. Backup: {backup}')
     print(f'Checks: {RECORD}')
 

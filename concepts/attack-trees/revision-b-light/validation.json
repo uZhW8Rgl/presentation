@@ -1,0 +1,92 @@
+{
+  "slides": 6,
+  "coverage": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11",
+    "T12",
+    "T13",
+    "T14"
+  ],
+  "structure": [
+    {
+      "slug": "01-admission",
+      "nodes": 12,
+      "leaves": 7
+    },
+    {
+      "slug": "02-model",
+      "nodes": 13,
+      "leaves": 8
+    },
+    {
+      "slug": "03-recovery",
+      "nodes": 13,
+      "leaves": 8
+    },
+    {
+      "slug": "04-inference",
+      "nodes": 12,
+      "leaves": 7
+    },
+    {
+      "slug": "05-audit",
+      "nodes": 12,
+      "leaves": 7
+    },
+    {
+      "slug": "06-disclosure",
+      "nodes": 12,
+      "leaves": 7
+    }
+  ],
+  "layout": "passed",
+  "pptx_roundtrip": "passed",
+  "four_status_legend_on_each_slide": "passed",
+  "root_assessments": {
+    "01-admission": "blocked",
+    "02-model": "boundary",
+    "03-recovery": "possible",
+    "04-inference": "blocked",
+    "05-audit": "possible",
+    "06-disclosure": "boundary"
+  },
+  "neutral_OR_AND_gates": true,
+  "assessment_composition": "passed",
+  "all_leaf_actor_and_credentials": "passed",
+  "implementation_source_hashes": "passed",
+  "assessment_counts": {
+    "blocked": 24,
+    "neutral": 23,
+    "boundary": 17,
+    "possible": 10
+  },
+  "source_main_preserved": {
+    "/home/ramon/master/Master-Thesis/overleaf/chapters/chapter4.tex": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6",
+    "/home/ramon/master/Master-Thesis/presentation/VITA-FL_Thesis_Presentation_TU_Berlin.pptx": "631064f82b0eb2798e6d758672be0ef225cf00f91e3ce27a27c7ecab6499a88d"
+  },
+  "visual_review": {
+    "overview": "All six previews inspected for tree layout, readability and color legend.",
+    "02-model.png": "Final full-resolution preview inspected; protected execution compromise explicit; no text overflow.",
+    "03-recovery.png": "Final full-resolution preview inspected; four distinct routes readable, no overlap.",
+    "other_final_changes": "Slide 4 title refined and slide 5 leaf shortened; layout checks pass."
+  },
+  "single_line_leaf_labels": {
+    "passed": true,
+    "count": 44
+  },
+  "independent_semantic_review": {
+    "slides_1_2": "Passed; added provenance-verifier source reference.",
+    "slide_3": "Passed after removing captured-transaction replay from outsider-signature-forgery branch; source range corrected.",
+    "slides_4_5_6": "Passed; technical status, log authority and conditional TEE secret access distinguished."
+  },
+  "review_scope": "Read-only code review. No new security tests, attacks, deployment changes or live-policy verification."
+}

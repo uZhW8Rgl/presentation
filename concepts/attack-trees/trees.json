@@ -1,0 +1,709 @@
+{
+  "source": "overleaf/chapters/chapter4.tex",
+  "status": "Presentation synthesis from Chapter 4; leaves denote hypothetical achieved attack subgoals, not proof of exploitability.",
+  "legend": {
+    "OR": "Any child represents an alternative route.",
+    "AND": "All children are jointly required.",
+    "scope": "Leaves are modeled adversary actions/objectives, not experimentally proven exploit paths."
+  },
+  "coverage": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11",
+    "T12",
+    "T13",
+    "T14"
+  ],
+  "slide_notes_recommended": [
+    "Derived from Chapter 4; a threat-model diagram, not experimental evidence.",
+    "Threat IDs trace to the chapter; F/NF identifiers denote relevant requirements and AS identifiers denote assumptions.",
+    "Requirements listed are relevant constraints, not assertions that every path was tested or defeated.",
+    "Cross-cutting T2, T6, T13, and T14 can appear on more than one tree.",
+    "T14 also names ledger-level and economic manipulation. The slides show coalition and governance examples; ledger agreement itself is an AS2 premise rather than an application guarantee."
+  ],
+  "trees": [
+    {
+      "title": "Attack tree: model-production integrity",
+      "assets": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A7"
+      ],
+      "requirements": [
+        "F3",
+        "F4",
+        "F5",
+        "F9",
+        "F11",
+        "NF3",
+        "NF4"
+      ],
+      "assumptions": [
+        "AS1",
+        "AS2",
+        "AS3",
+        "AS4",
+        "AS5",
+        "AS6",
+        "AS7"
+      ],
+      "branches": [
+        {
+          "label": "Abuse participant authority",
+          "leaves": [
+            {
+              "label": "Get an unapproved workload admitted",
+              "threats": [
+                "T1"
+              ],
+              "note": "Includes genuine evidence for disallowed code and rebinding valid evidence to another identity, action key, endpoint, or deployment. Genuine hardware evidence alone is insufficient authorization.",
+              "requirements": [
+                "F3",
+                "F11"
+              ],
+              "assumptions": [
+                "AS2",
+                "AS3",
+                "AS4",
+                "AS5",
+                "AS6"
+              ],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Get stale authority or updates accepted",
+              "threats": [
+                "T2"
+              ],
+              "note": "Reuse a consumed registration, superseded authority, or contribution from another round/deployment. Counter consumption prevents reuse, but is not proof of quote recentness.",
+              "requirements": [
+                "F11"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "checked",
+          "annotation": "Requirements: F3 · F11",
+          "requirements": [
+            "F11",
+            "F3"
+          ],
+          "assumptions": [
+            "AS2",
+            "AS3",
+            "AS4",
+            "AS5",
+            "AS6"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Corrupt training inputs",
+          "leaves": [
+            {
+              "label": "Get altered data or signer roles accepted",
+              "threats": [
+                "T3"
+              ],
+              "note": "Changes to signed images/annotations, substituted signer roles, or keys outside the current signer-policy snapshot are detected before training.",
+              "requirements": [
+                "F9"
+              ],
+              "assumptions": [
+                "AS1",
+                "AS5",
+                "AS7"
+              ],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Get valid poisoned contributions accepted",
+              "threats": [
+                "T7",
+                "T14"
+              ],
+              "note": "An authorized signer or a coalition can submit attributable but semantically harmful data/updates. Equal-weight aggregation does not establish statistical benignity or resistance to coordinated poisoning.",
+              "requirements": [
+                "F5",
+                "F9",
+                "NF4"
+              ],
+              "assumptions": [],
+              "scope": "residual_learning_risk"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "mixed",
+          "annotation": "F9 · NF4; valid poisoning remains a risk",
+          "requirements": [
+            "F5",
+            "F9",
+            "NF4"
+          ],
+          "assumptions": [
+            "AS1",
+            "AS5",
+            "AS7"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Corrupt the publication",
+          "leaves": [
+            {
+              "label": "Get substituted or stale artifacts accepted",
+              "threats": [
+                "T4"
+              ],
+              "note": "Return an unrelated or stale update, global model, signature, or recipient bundle instead of the objects selected by authoritative state. Publication/parent-model context matters in addition to a valid signature.",
+              "requirements": [
+                "F5"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Publish while omitting an accepted update",
+              "threats": [
+                "T6"
+              ],
+              "note": "Omission after acceptance is the integrity arm of T6. The closed accepted set and intact measured aggregation path constrain it. Stalling before publication is shown in the availability tree.",
+              "requirements": [
+                "F4"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "checked",
+          "annotation": "Requirements: F4 · F5",
+          "requirements": [
+            "F4",
+            "F5"
+          ],
+          "assumptions": [],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        }
+      ],
+      "boundary": "Valid signatures establish provenance, not benign learning.",
+      "notes": "This tree groups the threats by attack surface. The root and intermediate nodes are attacker objectives; the leaves describe hypothetical successful misuse. Every OR node represents alternative means. Requirements are relevant controls, not attack leaves. The poison-input path remains a residual risk rather than a demonstrated rejected exploit.",
+      "number": 1,
+      "slug": "training",
+      "label_de": "Training und Modellintegrität",
+      "goal": "Compromise model production",
+      "operator": "OR",
+      "domains": [
+        "DFL"
+      ]
+    },
+    {
+      "title": "Attack tree: inference and agent integrity",
+      "assets": [
+        "A4",
+        "A5",
+        "A6"
+      ],
+      "requirements": [
+        "F5",
+        "F6",
+        "F8",
+        "F10",
+        "F11",
+        "NF3",
+        "NF4"
+      ],
+      "assumptions": [
+        "AS1",
+        "AS3",
+        "AS4",
+        "AS5",
+        "AS6"
+      ],
+      "branches": [
+        {
+          "label": "Substitute bound objects",
+          "leaves": [
+            {
+              "label": "Get an answer for the wrong model/input accepted",
+              "threats": [
+                "T8"
+              ],
+              "note": "Cause inference for a model/input that differs from the selected finalized model tuple and receiver-issued image/job context.",
+              "requirements": [
+                "F5",
+                "F6",
+                "F11"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Pass unrelated output/evidence as verified",
+              "threats": [
+                "T8"
+              ],
+              "note": "Combine individually valid request, output, receipt, attestation, or model-manifest objects into a misleadingly coherent result. Verification must check their bindings.",
+              "requirements": [
+                "F6",
+                "F10",
+                "F11"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "checked",
+          "annotation": "Requirements: F5 · F6 · F10 · F11",
+          "requirements": [
+            "F10",
+            "F11",
+            "F5",
+            "F6"
+          ],
+          "assumptions": [],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Replay an earlier context",
+          "leaves": [
+            {
+              "label": "Get stale request/job context accepted",
+              "threats": [
+                "T2"
+              ],
+              "note": "Reuse a request/job from another model, receiver run, session, or request context.",
+              "requirements": [
+                "F11"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Get another session's receipt accepted",
+              "threats": [
+                "T2"
+              ],
+              "note": "Reuse receipts or evidence across distinct contexts. The chapter explicitly does not exclude same-context replay within the issue-time window.",
+              "requirements": [
+                "F11"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "mixed",
+          "annotation": "F11; same-context replay remains open",
+          "requirements": [
+            "F11"
+          ],
+          "assumptions": [],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Manipulate the agent",
+          "leaves": [
+            {
+              "label": "Get an unverified answer accepted via injection",
+              "threats": [
+                "T9"
+              ],
+              "note": "Prompt injection or misleading metadata attempts to make the agent bypass mandatory verification. The actual acceptance decision belongs to deterministic services.",
+              "requirements": [
+                "F8",
+                "NF3"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Get spoofed tool identity/output accepted",
+              "threats": [
+                "T9"
+              ],
+              "note": "Tool-name conflicts or fabricated outputs attempt to mislead the bounded workflow. This is a modeled attempt, not proof that the service checks can be bypassed.",
+              "requirements": [
+                "F8",
+                "NF3"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "checked",
+          "annotation": "Requirements: F8 · NF3",
+          "requirements": [
+            "F8",
+            "NF3"
+          ],
+          "assumptions": [],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        }
+      ],
+      "boundary": "Receipt checks do not independently authenticate the Intel quote chain.",
+      "notes": "The chapter states that per-call verification checks internal signatures and bindings but does not authenticate the individual quote signature/Intel chain. Hardware attribution depends on earlier admission of the registry-bound receiver. Recentness is not challenge-based replay protection. These slide statements describe Chapter 4, not any later implementation-specific external audit.",
+      "number": 2,
+      "slug": "inference",
+      "label_de": "Inferenz und Agent",
+      "goal": "Accept a misbound or unverified result",
+      "operator": "OR",
+      "domains": [
+        "Agent"
+      ]
+    },
+    {
+      "title": "Attack tree: progress and auditability",
+      "assets": [
+        "A1",
+        "A3",
+        "A4",
+        "A5",
+        "A6"
+      ],
+      "requirements": [
+        "F2",
+        "F4",
+        "F10",
+        "NF2",
+        "NF3",
+        "NF4"
+      ],
+      "assumptions": [
+        "AS2",
+        "AS5",
+        "AS6",
+        "AS8"
+      ],
+      "branches": [
+        {
+          "label": "Stop successful completion",
+          "leaves": [
+            {
+              "label": "Stall or withhold aggregation",
+              "threats": [
+                "T6"
+              ],
+              "note": "Stop progressing, refuse enough eligible updates, or withhold publication. This is the availability arm of T6; omission from an accepted set is shown in the integrity tree.",
+              "requirements": [
+                "F2",
+                "NF2"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Make shared infrastructure unavailable",
+              "threats": [
+                "T12"
+              ],
+              "note": "Exhaust or make ledger, storage, network, inference, UI, or other shared services unreachable beyond the targeted aggregator-recovery path.",
+              "requirements": [
+                "F2",
+                "NF2"
+              ],
+              "assumptions": [],
+              "scope": "residual_infrastructure_risk"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "mixed",
+          "annotation": "F2 · NF2; no global availability guarantee",
+          "requirements": [
+            "F2",
+            "NF2"
+          ],
+          "assumptions": [],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Disrupt the audit trail",
+          "leaves": [
+            {
+              "label": "Suppress results or required evidence",
+              "threats": [
+                "T10"
+              ],
+              "note": "Release success without a receipt, omit a complete verified domain bundle, or suppress the entire interaction. Publication before receiver success cannot prove calls that never reached/completed at the receiver.",
+              "requirements": [
+                "F10",
+                "NF3",
+                "NF4"
+              ],
+              "assumptions": [],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Block log writes or present conflicting views",
+              "threats": [
+                "T11"
+              ],
+              "note": "Refuse a record, return invalid inclusion or ordering evidence, or provide inconsistent views. Exact-byte verification addresses invalid statements, whereas detecting a colluding split view needs witnesses/anchoring outside the prototype.",
+              "requirements": [
+                "F10",
+                "NF4"
+              ],
+              "assumptions": [
+                "AS8"
+              ],
+              "scope": "mixed_detection_and_residual_risk"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "mixed",
+          "annotation": "F10 · NF4; split-view boundary: AS8",
+          "requirements": [
+            "F10",
+            "NF3",
+            "NF4"
+          ],
+          "assumptions": [
+            "AS8"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Force unjustified recovery",
+          "leaves": [
+            {
+              "label": "Reach the eligible-reporter threshold",
+              "threats": [
+                "T14"
+              ],
+              "note": "Collect admissible reports from enough distinct eligible non-aggregator identities to meet the configured threshold. By itself this can describe justified recovery; identity admission does not prove that reporters are independent.",
+              "requirements": [
+                "F2",
+                "F3",
+                "F4"
+              ],
+              "assumptions": [],
+              "scope": "residual_collusion_risk"
+            },
+            {
+              "label": "Make those reports falsely allege failure",
+              "threats": [
+                "T14"
+              ],
+              "note": "The same report set falsely alleges failure of a healthy aggregator. False reports alone may remain below the threshold. Both leaves refer to the same current round and selected aggregator, and all reports must satisfy the contract timing and reportability conditions.",
+              "requirements": [
+                "F2",
+                "F4"
+              ],
+              "assumptions": [],
+              "scope": "residual_collusion_risk"
+            }
+          ],
+          "note": "Both properties must hold for the same report set: sufficient eligible reports and a false allegation against a healthy aggregator. The threshold alone can represent justified recovery; false reports alone may remain below the threshold. This AND is a conjunction of conditions, not a temporal sequence.",
+          "operator": "AND",
+          "boundary": "residual",
+          "annotation": "T14; quorum does not prove independence",
+          "requirements": [
+            "F2",
+            "F3",
+            "F4"
+          ],
+          "assumptions": [],
+          "rationale": "Both properties must hold for the same report set: sufficient eligible reports and a false allegation against a healthy aggregator. The threshold alone can represent justified recovery; false reports alone may remain below the threshold. This AND is a conjunction of conditions, not a temporal sequence. The model presupposes all other contract eligibility, timing, and reportability conditions. The chapter treats sufficiently broad collusion as outside its general application-level guarantees."
+        }
+      ],
+      "boundary": "Targeted recovery does not guarantee global availability or log consistency.",
+      "notes": "The root is OR because disrupting progress, auditability, or coordination is sufficient for this high-level adversary objective. Only the unjustified-recovery branch is AND. Successful replacement tests do not demonstrate resistance to colluding voters or permanent shared-infrastructure outages.",
+      "number": 3,
+      "slug": "availability",
+      "label_de": "Verfügbarkeit und Auditspur",
+      "goal": "Disrupt progress or auditability",
+      "operator": "OR",
+      "domains": [
+        "DFL",
+        "Agent"
+      ]
+    },
+    {
+      "title": "Attack tree: models, keys and trust roots",
+      "assets": [
+        "A4",
+        "A7"
+      ],
+      "requirements": [
+        "F3",
+        "F7",
+        "NF3",
+        "NF4"
+      ],
+      "assumptions": [
+        "AS1",
+        "AS3",
+        "AS4",
+        "AS5",
+        "AS7"
+      ],
+      "branches": [
+        {
+          "label": "Abuse model distribution",
+          "leaves": [
+            {
+              "label": "Recover a key outside the recipient set",
+              "threats": [
+                "T5"
+              ],
+              "note": "Obtain a model key through the intended publication/recovery path without being an eligible recipient. Public ciphertext downloads alone do not constitute disclosure.",
+              "requirements": [
+                "F7"
+              ],
+              "assumptions": [
+                "AS1",
+                "AS5"
+              ],
+              "scope": "modeled_attack"
+            },
+            {
+              "label": "Obtain plaintext through unauthorized access",
+              "threats": [
+                "T5"
+              ],
+              "note": "Obtain a plaintext model or service-local secret through the intended distribution path. Subsequent redistribution by an authorized plaintext recipient is explicitly outside the guarantee.",
+              "requirements": [
+                "F7"
+              ],
+              "assumptions": [
+                "AS1",
+                "AS5"
+              ],
+              "scope": "modeled_attack"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "mixed",
+          "annotation": "F7; recipient redistribution is out of scope",
+          "requirements": [
+            "F7"
+          ],
+          "assumptions": [
+            "AS1",
+            "AS5"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Compromise secret custody",
+          "leaves": [
+            {
+              "label": "Extract private or process keys",
+              "threats": [
+                "T13"
+              ],
+              "note": "Extract participant, process, medical-signer, receiver, or other protected private keys. The corresponding guarantees depend on protected key custody.",
+              "requirements": [],
+              "assumptions": [
+                "AS5"
+              ],
+              "scope": "assumption_boundary"
+            },
+            {
+              "label": "Misuse live keys inside a compromised workload",
+              "threats": [
+                "T13"
+              ],
+              "note": "Use protected key material for unauthorized operations after compromising its workload. A process exploit alone does not establish this leaf; actual secret misuse is required. Additional signatures do not repair a compromised signer.",
+              "requirements": [],
+              "assumptions": [
+                "AS5"
+              ],
+              "scope": "assumption_boundary"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "assumption",
+          "annotation": "Assumption boundary: AS5",
+          "requirements": [],
+          "assumptions": [
+            "AS5"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        },
+        {
+          "label": "Defeat the roots of trust",
+          "leaves": [
+            {
+              "label": "Break cryptographic or hardware trust",
+              "threats": [
+                "T13"
+              ],
+              "note": "Break a selected primitive or defeat the measured-execution/attestation root. This is an explicit premise boundary, not an exploit countered by an application-level test.",
+              "requirements": [],
+              "assumptions": [
+                "AS1",
+                "AS3"
+              ],
+              "scope": "assumption_boundary"
+            },
+            {
+              "label": "Compromise governance authority",
+              "threats": [
+                "T13",
+                "T14"
+              ],
+              "note": "Compromise governance keys or coordinate policy abuse. Correct policy configuration, signer governance, and intact protected principals remain assumptions.",
+              "requirements": [],
+              "assumptions": [
+                "AS4",
+                "AS5",
+                "AS7"
+              ],
+              "scope": "assumption_boundary"
+            }
+          ],
+          "note": "",
+          "operator": "OR",
+          "boundary": "assumption",
+          "annotation": "Assumptions: AS1 · AS3–AS5 · AS7",
+          "requirements": [],
+          "assumptions": [
+            "AS1",
+            "AS3",
+            "AS4",
+            "AS5",
+            "AS7"
+          ],
+          "rationale": "Alternative successful subgoals of the named attack surface. A leaf denotes its successful effect, not merely an attempted mutation or replay."
+        }
+      ],
+      "boundary": "Protection ends at compromised roots or authorized plaintext redistribution.",
+      "notes": "The broad root intentionally includes both confidentiality and key-trust compromise: a defeated signing/attestation root can violate integrity even before disclosure occurs. T5 describes the intended encrypted-distribution boundary; T13 marks explicit trust premises; governance collusion is part of T14. These are distinct from clinically incorrect but correctly signed data.",
+      "number": 4,
+      "slug": "confidentiality",
+      "label_de": "Modelle, Schlüssel und Vertrauenswurzeln",
+      "goal": "Expose secrets or defeat trust roots",
+      "operator": "OR",
+      "domains": [
+        "DFL",
+        "Agent"
+      ]
+    }
+  ],
+  "source_sha256": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6"
+}

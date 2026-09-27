@@ -2,9 +2,10 @@
 """Insert/update the approved test matrix after the Phala run without rebuilding.
 
 The optional evaluation architecture slide shifts the test matrix from Page 25
-to Page 26. Existing slides and notes are compared before the candidate file
-atomically replaces the original. Decks with 44, 45 or 46 slides are supported;
-no cloud operations occur.
+to Page 26; six approved attack trees shift it to Page 32. Existing slides and
+notes are compared before the candidate file atomically replaces the original.
+Legacy layouts and those with six contiguous attack trees are supported; no
+cloud operations occur.
 """
 from __future__ import annotations
 
@@ -28,6 +29,9 @@ ROOT = Path(__file__).resolve().parent
 DECK = ROOT / "VITA-FL_Thesis_Presentation_TU_Berlin.pptx"
 ASSET = ROOT / "assets/test-evaluation-a.pptx"
 RECORD = ROOT / "assets/test-evaluation-integration.json"
+ATTACK_TREE_PREFIX = "VITA-FL attack tree: "
+ATTACK_TREE_START = 23
+ATTACK_TREE_COUNT = 6
 
 
 def visible(slide):
@@ -66,23 +70,40 @@ def snapshot(slide):
     }
 
 
+def attack_tree_count(prs):
+    trees = [(index, slide.name) for index, slide in enumerate(prs.slides)
+             if slide.name.startswith(ATTACK_TREE_PREFIX)]
+    if not trees:
+        return 0
+    assert [index for index, _ in trees] == list(
+        range(ATTACK_TREE_START, ATTACK_TREE_START + ATTACK_TREE_COUNT)
+    ), "Expected all six attack trees consecutively after Page 23"
+    names = [name for _, name in trees]
+    assert len(set(names)) == ATTACK_TREE_COUNT, "Duplicate attack-tree slide names"
+    assert all(name.removeprefix(ATTACK_TREE_PREFIX).strip() for name in names), \
+        "Attack-tree slide name lacks its slug"
+    return len(trees)
+
+
 def evaluation_target(prs):
+    tree_count = attack_tree_count(prs)
     phala = [index for index, slide in enumerate(prs.slides)
              if "One end-to-end Phala FedAvg run" in visible(slide)]
     assert len(phala) == 1, "Expected exactly one Phala-run slide"
     architecture_name = getattr(b, "EVALUATION_STACK_SLIDE_NAME", "VITA-FL evaluation tools architecture")
     architecture = [index for index, slide in enumerate(prs.slides)
                     if slide.name == architecture_name]
-    assert architecture in ([], [23]), "Unexpected evaluation architecture position"
-    assert phala[0] == 23 + len(architecture), "Unexpected Phala-run position"
+    assert architecture in ([], [23 + tree_count]), "Unexpected evaluation architecture position"
+    assert phala[0] == 23 + tree_count + len(architecture), "Unexpected Phala-run position"
     return phala[0] + 1
 
 
 def check_structure(prs):
     target = evaluation_target(prs)
-    architecture_count = target - 24
-    assert len(prs.slides) == 45 + architecture_count, \
-        "Expected 28 or 29 talk pages and 17 backup pages"
+    tree_count = attack_tree_count(prs)
+    architecture_count = target - 24 - tree_count
+    assert len(prs.slides) == 45 + architecture_count + tree_count, \
+        "Unexpected talk/backup page count for the evaluation and attack-tree layout"
     assert len(prs.slide_masters) == 2
     assert prs.slides[target].name == b.TEST_EVALUATION_SLIDE_NAME
     assert sum(slide.name == b.TEST_EVALUATION_SLIDE_NAME for slide in prs.slides) == 1
@@ -114,11 +135,11 @@ def main():
         raise FileNotFoundError(f"Approved slide asset is not ready: {ASSET}")
     prs = Presentation(DECK)
     old_count = len(prs.slides)
-    assert old_count in (44, 45, 46), "Refuse to modify an unexpected deck structure"
     target = evaluation_target(prs)
-    architecture_count = target - 24
+    tree_count = attack_tree_count(prs)
+    architecture_count = target - 24 - tree_count
     inserting = not any(slide.name == b.TEST_EVALUATION_SLIDE_NAME for slide in prs.slides)
-    assert old_count == 44 + architecture_count + int(not inserting), \
+    assert old_count == 44 + architecture_count + tree_count + int(not inserting), \
         "Unexpected deck size for its evaluation slides"
     if inserting:
         assert "What changed over the 24 federated rounds?" in visible(prs.slides[target])
@@ -177,7 +198,8 @@ def main():
 
     record = {
         "page": target + 1, "slides_before": old_count, "slides_after": len(checked.slides),
-        "talk_pages": 28 + architecture_count, "backup_pages": 17,
+        "talk_pages": 28 + architecture_count + tree_count, "backup_pages": 17,
+        "attack_tree_pages": tree_count,
         "mode": "insert" if inserting else "replace",
         "preserved_existing_slides_and_notes": preserved,
         "allowed_existing_change": (f"page-number footer only after inserted Page {target + 1}"
@@ -195,7 +217,7 @@ def main():
         import render_preview
         render_preview.main()
     print(f'{"Inserted" if inserting else "Updated"} Page {target + 1} in {DECK.name}; '
-          f'{len(checked.slides)} pages ({28 + architecture_count} talk, 17 backup).')
+          f'{len(checked.slides)} pages ({28 + architecture_count + tree_count} talk, 17 backup).')
     print(f"Preserved {preserved} existing slides and their notes; backup: {backup}")
     print(f"Checks: {RECORD}")
 

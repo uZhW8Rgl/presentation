@@ -1,0 +1,1727 @@
+{
+  "source": "overleaf/chapters/chapter4.tex",
+  "source_sha256": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6",
+  "modeling_notes": "These six diagrams map selected Chapter 4 threats to the reviewed VITA-FL implementation. OR means alternative sufficient routes; AND means jointly necessary conditions, not message order. Colors apply at every depth: green is a shown attack blocked by the intact reviewed checks under stated assumptions; yellow explicitly requires a protected-execution, key-custody or trusted-service boundary; red is an availability effect achievable with the named external capability; white is a prerequisite. A green goal names a hypothetical attacker success, not a successful exploit. No implicit signing authority is granted to a participant, deployer or intermediary. Logical enrollment identities, TEE Ethereum action keys, TEE RSA artifact keys, medical-signer keys, AIR/Sello keys and log keys are distinct. Each leaf records attacker_capability and required_credentials. Replaying recorded evidence or withholding traffic needs no private key; minting new valid statements requires the corresponding signer or control of its execution. Host control does not imply guest control. Legitimate timeout recovery during a network partition is not a forged vote or a protocol-safety failure. Prepared-model freshness is scoped to model preparation; technical verified-tool success is not arbitrary LLM text. The trees cover selected routes, not every residual risk or an exhaustive audit. Source notes distinguish implementation findings from Chapter 4; neither the chapter nor main deck was changed. No attacks, new security tests or live deployment checks were performed.",
+  "trees": [
+    {
+      "slug": "01-admission",
+      "name_de": "1 · Worker-Autorität",
+      "title": "Attack tree: unauthorized worker authority",
+      "threats": [
+        "T1",
+        "T2"
+      ],
+      "domains": [
+        "DFL"
+      ],
+      "root": {
+        "label": "Gain unauthorized worker authority",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Admit an unapproved workload",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Present a genuine quote for an unapproved image",
+                "refs": [
+                  "T1"
+                ],
+                "note": "The attacker can launch an unapproved image and obtain a genuine quote for it. Successful registration would additionally require an owner-committed participant, its enrollment signature, the quote-bound action-key sender, current nonce and permitted image/policy. A quote alone supplies none of those authorizations.",
+                "kind": "condition",
+                "short_label": "Quote for unapproved image",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Build and attest an attacker-controlled CVM.",
+                "required_credentials": "Own quote/key only; legitimate roster enrollment and accepted workload policy are not assumed."
+              },
+              {
+                "label": "Verifier accepts the wrong app measurement / policy",
+                "refs": [
+                  "F3",
+                  "AS3",
+                  "AS4"
+                ],
+                "note": "The shown attempt is rejected by committed-roster membership, expected image digest and allowed role-policy checks. Green does not assume an exploitable verifier defect.",
+                "kind": "check_failure",
+                "short_label": "Pass image / roster / policy checks",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt registration of the changed workload.",
+                "required_credentials": "Would need required enrollment/action authority plus a prohibited policy-check bypass."
+              }
+            ],
+            "refs": [
+              "T1",
+              "F3"
+            ],
+            "note": "Authentic evidence of unapproved code plus acceptance despite the policy mismatch jointly yields this route; genuine attestation alone is insufficient.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Rebind valid attestation",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Attach valid evidence to another identity, key or endpoint",
+                "refs": [
+                  "T1"
+                ],
+                "note": "Reuse genuine evidence under a different logical identity, action authority, communication key, endpoint or deployment context.",
+                "kind": "condition",
+                "short_label": "Rebind identity / key / endpoint",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Copy available genuine quote/enrollment material and alter claimed context.",
+                "required_credentials": "No private key needed to submit a copied or altered object; no fresh valid signature is assumed."
+              },
+              {
+                "label": "Registry accepts the mismatched identity / key / context",
+                "refs": [
+                  "F3",
+                  "F11"
+                ],
+                "note": "Enrollment signature and quote REPORTDATA jointly bind participant, action authority, RSA public key, endpoint, compose/image/policy and nonce. Substitution does not create matching fresh evidence.",
+                "kind": "check_failure",
+                "short_label": "Pass enrollment / quote bindings",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt to make the altered context pass verification.",
+                "required_credentials": "Fresh matching enrollment/quote evidence is absent; their verification blocks this attempt."
+              }
+            ],
+            "refs": [
+              "T1",
+              "F3",
+              "F11"
+            ],
+            "note": "Different authority/context plus erroneous registry admission are jointly needed.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Replay earlier authority",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Reuse captured signed material",
+                "op": "OR",
+                "children": [
+                  {
+                    "label": "Reuse evidence with a consumed registration counter",
+                    "refs": [
+                      "T2",
+                      "F11"
+                    ],
+                    "note": "Attempt a later registration with evidence whose counter has already been consumed.",
+                    "kind": "condition",
+                    "short_label": "Replay consumed registration",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Replay captured earlier enrollment/registration evidence.",
+                    "required_credentials": "None for replay; the original signature is reused, not newly forged."
+                  },
+                  {
+                    "label": "Replay a previously signed round action in an invalid current context",
+                    "refs": [
+                      "T2",
+                      "F11"
+                    ],
+                    "note": "Replay a recorded signed action, not sign a new one with an unavailable old key. Current authority/context and transaction replay checks still apply. The fully registered run freezes roster mutation.",
+                    "kind": "condition",
+                    "short_label": "Replay an earlier signed action",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Copy a previously signed transaction/action.",
+                    "required_credentials": "No new private-key access; only recorded signed material."
+                  }
+                ],
+                "refs": [
+                  "T2"
+                ],
+                "note": "Recorded registration or round-action material can be copied without access to its private signing key. No fresh signature and no regular in-run key-rotation mechanism are assumed.",
+                "assessment": "neutral",
+                "assessment_reason": "OR over (neutral, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+              },
+              {
+                "label": "Current-authority / freshness checks accept it",
+                "refs": [
+                  "F11"
+                ],
+                "note": "Consumed registration nonces, frozen roster and action-specific current-state/context checks reject invalid replay. In-run key rotation is not silently assumed.",
+                "kind": "check_failure",
+                "short_label": "Pass nonce / current-state checks",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt acceptance of stale material.",
+                "required_credentials": "No new valid current-context signature; verification must be defeated to succeed."
+              }
+            ],
+            "refs": [
+              "T2",
+              "F11"
+            ],
+            "note": "Stale authority and acceptance by the corresponding current-state check must concern the same attempted transition.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "refs": [
+          "T1",
+          "T2",
+          "F3",
+          "F11"
+        ],
+        "note": "Scope: external admission/substitution/replay attempts against the intact owner-committed run. Governance and protected-signing compromise are separate trust boundaries, not capabilities silently granted here.",
+        "assessment": "blocked",
+        "assessment_reason": "OR over (blocked, blocked, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Admission binds roster, code and keys; replaying a signature does not grant current signing authority.",
+      "source_lines": {
+        "T1": [
+          279,
+          291
+        ],
+        "T2": [
+          299,
+          309
+        ],
+        "F3": [
+          562,
+          568
+        ],
+        "F11": [
+          619,
+          624
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only implementation and attacker-capability review. No attack run, cloud-policy check or exhaustive security audit; Chapter 4 and the main deck remain unchanged.",
+        "sources": [
+          {
+            "path": "vita-fl/smart_contracts/src/core/DeviceRegistry.sol",
+            "lines": [
+              119,
+              134,
+              248,
+              255,
+              293,
+              338,
+              477,
+              530
+            ],
+            "finding": "Committed roster, current action authority, enrollment/REPORTDATA binding, consumed nonce, image/policy and frozen roster.",
+            "sha256": "f00f9f5268d1f0f55158b71d334dc50542a1ac7704818460634f988d87ef7f4b"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/attestation/AutomataDcapTdxV4Attestation.sol",
+            "lines": [
+              149,
+              171,
+              310,
+              333
+            ],
+            "finding": "DCAP signature/platform and RTMR3 replay checks.",
+            "sha256": "9d373198ce9209b90ab3055bf6bd8cd39f1a95227632d78003285ab98bed09b0"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/action_key.ts",
+            "lines": [
+              65,
+              98,
+              198,
+              205
+            ],
+            "finding": "Separate Phala dstack-derived action signer, bound to participant, chain and registry.",
+            "sha256": "1b9ddf9e0c58f76c1090937c5f521da69eedc5612fe07b980d3b3f19603a6d62"
+          }
+        ],
+        "limits": [
+          "Green covers the shown external attempts under intact admission/governance assumptions, not compromise of the attestation root or administrator."
+        ]
+      }
+    },
+    {
+      "slug": "02-model",
+      "name_de": "2 · Modellintegrität und Poisoning",
+      "title": "Attack tree: model integrity and poisoning",
+      "threats": [
+        "T3",
+        "T4",
+        "T6",
+        "T7",
+        "T13",
+        "T14"
+      ],
+      "domains": [
+        "DFL"
+      ],
+      "root": {
+        "label": "Corrupt the model in this run",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Train on tampered inputs",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Alter signed image / label bytes or substitute signer role",
+                "refs": [
+                  "T3"
+                ],
+                "note": "An outsider can edit a copy of sample bytes or signer metadata, but this does not make that copy part of the admitted training input. ChestMNIST shards are bundled in the image and copied at startup; a changed image also faces admission. The full success path requires reaching the training input and bypassing provenance verification.",
+                "kind": "condition",
+                "short_label": "Alter signed sample bytes",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Modify an input copy or candidate data package; no protected runtime write is assumed.",
+                "required_credentials": "No key needed to alter bytes; the existing medical signature becomes invalid."
+              },
+              {
+                "label": "Worker accepts invalid signatures, links or signer roles",
+                "refs": [
+                  "F9"
+                ],
+                "note": "Before training, separate image/annotation signatures, their image linkage and current authorized signer roles are checked. A modified external file is not automatically mounted into the approved runtime.",
+                "kind": "check_failure",
+                "short_label": "Pass provenance checks anyway",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt acceptance and actual training on the changed input.",
+                "required_credentials": "No valid matching medical signatures; intact provenance/admission checks block the attempt."
+              }
+            ],
+            "refs": [
+              "T3",
+              "F9"
+            ],
+            "note": "Data or signer manipulation plus acceptance into training is necessary. Detecting either before training defeats this modeled path.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Substitute model artifacts",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Store returns a swapped update or an old signed model",
+                "refs": [
+                  "T4"
+                ],
+                "note": "An intermediary substitutes update bytes, model/signature objects, recipient bundle or a stale publication.",
+                "kind": "condition",
+                "short_label": "Swap update / replay old model",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Control returned storage objects or intercepted artifact delivery.",
+                "required_credentials": "No private key for byte changes or replay of an existing signed object."
+              },
+              {
+                "label": "Consumer uses artifacts that violate tuple / context binding",
+                "refs": [
+                  "F5",
+                  "F11"
+                ],
+                "note": "Consumers bind signatures, artifact hashes, authorized participant, round and authoritative publication tuple. New accepted updates additionally have current action-key commitments. Replaying an old valid signature does not satisfy a new context.",
+                "kind": "check_failure",
+                "short_label": "Pass signature / context checks",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt use of a substituted or stale artifact.",
+                "required_credentials": "Matching artifact signatures and action/context commitments are absent; intact checks reject the attempt."
+              }
+            ],
+            "refs": [
+              "T4",
+              "F5",
+              "F11"
+            ],
+            "note": "Substituted bytes must actually be accepted and used. This path can occur after finalization and need not create a new malicious publication.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Publish a false aggregate",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Compromise the admitted aggregator process or obtain both required signing authorities",
+                "short_label": "Compromise aggregator runtime",
+                "assessment": "boundary",
+                "assessment_reason": "This condition explicitly crosses the stated protected-execution, key-custody or trusted-service boundary; ordinary deployment ownership does not provide it.",
+                "note": "Requires actual control of the protected aggregator process, or the current aggregator action key AND its RSA artifact signer. Running or enrolling a CVM alone supplies neither capability. This explicitly crosses protected execution/key custody (AS5).",
+                "refs": [
+                  "T6",
+                  "T13",
+                  "AS5"
+                ],
+                "attacker_capability": "Protected aggregator execution/signing compromise.",
+                "required_credentials": "Current aggregator action key plus RSA artifact signing authority, or control of the TEE process using both."
+              },
+              {
+                "label": "Publish a mathematically false output with valid signatures and accepted-set bindings",
+                "short_label": "Sign false aggregate as valid",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "The intact staging path checks accepted membership, plaintext hashes and exact count and averages exactly those staged files. The contract checks signed set/policy/output bindings; it does not independently recompute the numerical mean. This leaf requires a false result that retains every cryptographic/role/context binding, not a trivially mismatched hash.",
+                "refs": [
+                  "T6",
+                  "F4",
+                  "F5"
+                ],
+                "attacker_capability": "Use the compromised aggregator authority to choose and publish a false result.",
+                "required_credentials": "Both signing authorities supplied by the preceding condition, plus normal publication context."
+              }
+            ],
+            "note": "No external uncredentialed omission route is asserted. Correct computation depends on the admitted execution; signatures bind the claimed calculation and output but are not an independent arithmetic proof.",
+            "refs": [
+              "T6",
+              "T13",
+              "F4",
+              "F5",
+              "AS5"
+            ],
+            "assessment": "boundary",
+            "assessment_reason": "AND over (boundary, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Inject a harmful signed update",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Compromise admitted worker execution so it can choose an arbitrary update",
+                "short_label": "Compromise worker runtime",
+                "assessment": "boundary",
+                "assessment_reason": "This condition explicitly crosses the stated protected-execution, key-custody or trusted-service boundary; ordinary deployment ownership does not provide it.",
+                "note": "The approved training code does not expose an arbitrary-update signing interface. A successful process/key-custody compromise is explicitly required for this in-run arbitrary-update route; it is not implied by participant ownership.",
+                "refs": [
+                  "T7",
+                  "T13",
+                  "AS5"
+                ],
+                "attacker_capability": "Actual control of the admitted worker training/signing execution.",
+                "required_credentials": "Worker RSA signing authority and current action-key commitment authority, or their protected process."
+              },
+              {
+                "label": "Submit a well-formed harmful update whose inclusion actually degrades the aggregate",
+                "short_label": "Sign a harmful in-context update",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "The manipulated update must be signed, committed with the current worker action key, accepted in the current context, included, and actually harm aggregate quality. The equal-weight mean has no demonstrated statistical poisoning defense. No harmful update or measured quality effect was produced in this review.",
+                "refs": [
+                  "T7",
+                  "T14",
+                  "F5"
+                ],
+                "attacker_capability": "Choose an effective harmful update through the compromised worker.",
+                "required_credentials": "Both worker signing authorities from the preceding condition; all normal shape/context/acceptance checks still apply."
+              }
+            ],
+            "note": "This selected in-run route makes missing worker signing authority explicit. Legitimately signed misleading medical data is a separate semantic limitation if such data is authorized and provisioned; it is not automatically an available injection path into the current bundled dataset.",
+            "refs": [
+              "T7",
+              "T13",
+              "T14",
+              "AS5"
+            ],
+            "assessment": "boundary",
+            "assessment_reason": "AND over (boundary, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "refs": [
+          "T3",
+          "T4",
+          "T6",
+          "T7",
+          "T14"
+        ],
+        "note": "Scope: selected attacks on the existing admitted run. Outsiders can alter available objects but cannot invent RSA- and action-signed worker updates. False aggregation and arbitrary harmful updates below explicitly require compromise of admitted execution. This is not a statistical robustness guarantee.",
+        "assessment": "boundary",
+        "assessment_reason": "OR over (blocked, blocked, boundary, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Arbitrary updates need protected signing authority; this does not establish statistical model robustness.",
+      "source_lines": {
+        "T3": [
+          317,
+          326
+        ],
+        "T4": [
+          334,
+          342
+        ],
+        "T6": [
+          367,
+          378
+        ],
+        "T7": [
+          386,
+          399
+        ],
+        "T14": [
+          528,
+          538
+        ],
+        "F4/F5": [
+          570,
+          584
+        ],
+        "F9": [
+          604,
+          609
+        ],
+        "T13": [
+          508,
+          520
+        ],
+        "AS5": [
+          225,
+          228
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only implementation and attacker-capability review. No attack run, cloud-policy check or exhaustive security audit; Chapter 4 and the main deck remain unchanged.",
+        "sources": [
+          {
+            "path": "vita-fl/dfl/node_server/src/server.ts",
+            "lines": [
+              470,
+              518,
+              644,
+              732,
+              1341,
+              1399,
+              2146,
+              2155,
+              2276,
+              2317,
+              2820,
+              2860
+            ],
+            "finding": "Update RSA authentication and action commitment; accepted-set staging/hash/count checks; model signature verification.",
+            "sha256": "b7248ae1f0e5f374bee10cc023b4af78b32ab8dbdf1e3d22c704e4decb7ce9a5"
+          },
+          {
+            "path": "vita-fl/dfl/neural_network/cli.py",
+            "lines": [
+              985,
+              990,
+              1279,
+              1311
+            ],
+            "finding": "Provenance before training; exact staged files used for equal-weight aggregation and signed output.",
+            "sha256": "215b85e8762aaa40d7c21fc9690d9b2b4bf33d50715e22017d1dc5d055f3212d"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/AggregationPolicy.sol",
+            "lines": [
+              237,
+              278
+            ],
+            "finding": "Action signature binds policy/set/output; no independent numerical recomputation.",
+            "sha256": "e9965ed9cdd521d06f1b703f6822296e82f2a8d2de6cbeb14216cab7431ca368"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/GMStorage.sol",
+            "lines": [
+              294,
+              342
+            ],
+            "finding": "Update commitment requires current action authority.",
+            "sha256": "84deba98bda6b74e6b03b0b917f09638f9de7b0d21114eedbd1efef366924003"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/gm_crypto.ts",
+            "lines": [
+              126,
+              172,
+              209,
+              213
+            ],
+            "finding": "Plaintext model and encrypted bundle have RSA signatures.",
+            "sha256": "b54558861535277ad3e94492d59716d4bb419101324d1d5ac95ca42d61b441bf"
+          },
+          {
+            "path": "vita-fl/dfl/Dockerfile",
+            "lines": [
+              73,
+              76
+            ],
+            "finding": "Training data included in admitted image.",
+            "sha256": "931bac007801b2ae91c7687b886400c9d6ccd263478c2f96944cef379f7f2c09"
+          },
+          {
+            "path": "vita-fl/dfl/start_node_neural_network.sh",
+            "lines": [
+              71,
+              80
+            ],
+            "finding": "Selected existing training directory copied at startup.",
+            "sha256": "429d22be7a958df81f101ae8794e77e560674617cd4bce8cf7ee122ff50c09bb"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/worker_policy.ts",
+            "lines": [
+              45,
+              76,
+              478,
+              480
+            ],
+            "finding": "TRAIN_DATA_SRC, DATASET_NAME and EPOCH are variable allowed policy values.",
+            "sha256": "861b3d73a14472869188fc0723801bc35a200ffe62fa908c7121b7bac5763a3d"
+          },
+          {
+            "path": "vita-fl/dfl/neural_network/dicom_provenance.py",
+            "lines": [
+              307,
+              374
+            ],
+            "finding": "Verify separate acquisition/annotation signatures, image linkage and current authorized signer roles.",
+            "sha256": "49c95818d969dbdf24226f6ce09109bc74f8b9d6752f5755aeb0ec828f6eb13e"
+          }
+        ],
+        "limits": [
+          "Not all launch configuration is immutable: an authorized deployment actor can select existing data paths and epoch settings; no arbitrary new signed-data feed or quality attack was demonstrated.",
+          "An authorized medical signer may honestly authenticate false semantics without breaking cryptography. A future approved data-provisioning path must be evaluated separately; merely being outside this run is not labeled an assumption breach.",
+          "Yellow root applies only to the displayed in-run compromise routes. It neither proves model quality nor exhaustively excludes launch-configuration or learning attacks."
+        ]
+      }
+    },
+    {
+      "slug": "03-recovery",
+      "name_de": "3 · Rundenfortschritt und Recovery",
+      "title": "Attack tree: disrupt rounds and recovery",
+      "threats": [
+        "T2",
+        "T6",
+        "T12",
+        "T13",
+        "T14"
+      ],
+      "domains": [
+        "DFL"
+      ],
+      "root": {
+        "label": "Disrupt rounds or recovery",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Forge reports as an outsider",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Submit a timeout report using an unauthorized outsider transaction sender",
+                "short_label": "Submit an unauthorized report",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "Calling the public function from an outsider account does not grant current reporter authority. This branch concerns newly invented reports, not replay of an already signed authorized transaction. Such replay instead meets transaction nonce, duplicate-report and context guards.",
+                "refs": [
+                  "T2",
+                  "T14",
+                  "F11"
+                ],
+                "attacker_capability": "Invoke the public report function from an attacker-owned account.",
+                "required_credentials": "Only an outsider transaction key; no authorized TEE action signature."
+              },
+              {
+                "label": "Get reports accepted without the required current action-key authority",
+                "short_label": "Bypass current action authority",
+                "assessment": "blocked",
+                "assessment_reason": "The intact reviewed implementation rejects this success condition under its stated trust assumptions. This is not a demonstrated bypass.",
+                "note": "The contract resolves msg.sender through the currently registered action key. Logical participant/enrollment accounts are not accepted as reporter authority. Training round after bootstrap; same still-current round and aggregator; reportable contract state; distinct eligible non-aggregators using their current action keys, no duplicate logical reporter, fixed reporter snapshot, sufficient quorum and an eligible replacement. A changed round or missing replacement can make the transaction revert.",
+                "refs": [
+                  "F2",
+                  "F11"
+                ],
+                "attacker_capability": "Attempt unauthorized report acceptance.",
+                "required_credentials": "Required current TEE action-key signature is absent; intact authorization blocks the route."
+              }
+            ],
+            "note": "This is the blocked uncredentialed report-forgery attempt, not an ability to generate valid arbitrary votes.",
+            "refs": [
+              "T2",
+              "T14",
+              "F2",
+              "F11"
+            ],
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Fabricate a signed quorum",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Compromise enough admitted action signers to produce arbitrary current-authority reports",
+                "short_label": "Compromise quorum signers",
+                "assessment": "boundary",
+                "assessment_reason": "This condition explicitly crosses the stated protected-execution, key-custody or trusted-service boundary; ordinary deployment ownership does not provide it.",
+                "note": "Actual arbitrary-transaction signing with enough distinct current TEE action keys is required. Logical participant keys, owning several CVMs or enrolling several allowed workers is insufficient. Quorum is ceil(eligible reporters * percentage / 100); default 50%, hence 3 of 5 non-aggregators for six authorized participants. Going offline does not remove an authorized identity or shrink an existing snapshot.",
+                "refs": [
+                  "T13",
+                  "T14",
+                  "AS5"
+                ],
+                "attacker_capability": "Compromise enough protected reporter signers or their execution.",
+                "required_credentials": "Enough current TEE action keys to meet the reporting quorum."
+              },
+              {
+                "label": "Submit false reports that satisfy every time, round, eligibility and quorum guard",
+                "short_label": "Meet time / round / quorum guards",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "Training round after bootstrap; same still-current round and aggregator; reportable contract state; distinct eligible non-aggregators using their current action keys, no duplicate logical reporter, fixed reporter snapshot, sufficient quorum and an eligible replacement. A changed round or missing replacement can make the transaction revert. Even compromised signers cannot skip those guards. This branch invents no key-extraction method.",
+                "refs": [
+                  "T14",
+                  "F2"
+                ],
+                "attacker_capability": "Use compromised signers for otherwise contract-valid reports.",
+                "required_credentials": "Current action-key signatures supplied by the preceding condition."
+              }
+            ],
+            "note": "Only this route describes deliberately fabricated but validly authorized votes; it explicitly requires protected-signing compromise.",
+            "refs": [
+              "T13",
+              "T14",
+              "AS5",
+              "F2"
+            ],
+            "assessment": "boundary",
+            "assessment_reason": "AND over (boundary, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Trigger timeout replacement",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Block all uploads before the first acceptance and keep the round unable to publish",
+                "short_label": "Block all uploads before acceptance",
+                "assessment": "possible",
+                "assessment_reason": "With the explicitly stated non-secret capability, this availability effect is consistent with the reviewed code; it was not exercised in this review.",
+                "note": "The network/hosting attacker prevents every update reaching the selected aggregator before any update is accepted. An empty set cannot close. Blocking only a subset is insufficient evidence: remaining contributions may allow publication after the deadline. The disruption must last through worker miss thresholds and time allowances.",
+                "refs": [
+                  "T6",
+                  "T12"
+                ],
+                "attacker_capability": "Control availability of all worker-to-selected-aggregator upload paths long enough.",
+                "required_credentials": "No worker private key; packets/connections are withheld."
+              },
+              {
+                "label": "Enough intact workers observe timeouts and their valid reports reach the live ledger",
+                "short_label": "Honest timeout votes reach ledger",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "At least the reporting quorum keeps running, can read policy/state and send transactions. Upload failures feed the miss counter; honest code waits through the collection/aggregation allowance and signs its own reports. Training round after bootstrap; same still-current round and aggregator; reportable contract state; distinct eligible non-aggregators using their current action keys, no duplicate logical reporter, fixed reporter snapshot, sufficient quorum and an eligible replacement. A changed round or missing replacement can make the transaction revert. Quorum is ceil(eligible reporters * percentage / 100); default 50%, hence 3 of 5 non-aggregators for six authorized participants. Going offline does not remove an authorized identity or shrink an existing snapshot.",
+                "refs": [
+                  "T12",
+                  "F2"
+                ],
+                "attacker_capability": "Maintain selective network disruption while leaving worker-to-ledger access available.",
+                "required_credentials": "The attacker has no key; intact workers create their own valid timeout signatures."
+              }
+            ],
+            "note": "This is an availability attack with a correct recovery reaction. It does not prove an unjustified replacement of a reachable, timely-publishing aggregator or a forged signature.",
+            "refs": [
+              "T6",
+              "T12",
+              "F2"
+            ],
+            "assessment": "possible",
+            "assessment_reason": "AND over (possible, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Prevent timely recovery",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Keep the selected aggregator unavailable during the recovery interval",
+                "short_label": "Keep selected aggregator offline",
+                "assessment": "possible",
+                "assessment_reason": "With the explicitly stated non-secret capability, this availability effect is consistent with the reviewed code; it was not exercised in this review.",
+                "note": "Requires actual infrastructure/network availability control and a sustained outage, not arbitrary behavior inside intact admitted code.",
+                "refs": [
+                  "T6",
+                  "T12"
+                ],
+                "attacker_capability": "Stop the hosted CVM/service or cut its communication.",
+                "required_credentials": "Hosting/network control; no TEE signing key."
+              },
+              {
+                "label": "Keep recovery reports from reaching quorum by blocking ledger access or enough reporters",
+                "short_label": "Block ledger / reporting quorum",
+                "assessment": "possible",
+                "assessment_reason": "With the explicitly stated non-secret capability, this availability effect is consistent with the reviewed code; it was not exercised in this review.",
+                "note": "Sustain the disruption before enough votes are counted. Either prevent report transactions/required policy reads or stop enough eligible workers. The fixed authorization/snapshot count does not automatically shrink with offline workers. Quorum is ceil(eligible reporters * percentage / 100); default 50%, hence 3 of 5 non-aggregators for six authorized participants. Going offline does not remove an authorized identity or shrink an existing snapshot.",
+                "refs": [
+                  "T12",
+                  "F2"
+                ],
+                "attacker_capability": "Control reporter availability or their ledger connectivity.",
+                "required_credentials": "No signature key; denial of delivery/execution suffices."
+              }
+            ],
+            "note": "The aggregator outage and missing report quorum must overlap. One failed aggregator alone is covered by recovery.",
+            "refs": [
+              "T6",
+              "T12",
+              "F2"
+            ],
+            "assessment": "possible",
+            "assessment_reason": "AND over (possible, possible); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "note": "Separates outsider forgery, compromised signing authority, selective network outage with honest recovery, and blocked recovery. Availability disruption is not automatically a failure of quorum safety.",
+        "refs": [
+          "T2",
+          "T6",
+          "T12",
+          "T13",
+          "T14",
+          "F2"
+        ],
+        "assessment": "possible",
+        "assessment_reason": "OR over (blocked, boundary, possible, possible); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Invented valid votes need TEE signing control; blocked traffic can trigger honest timeout votes without stolen keys.",
+      "source_lines": {
+        "T6": [
+          367,
+          378
+        ],
+        "T12": [
+          491,
+          500
+        ],
+        "T14": [
+          528,
+          538
+        ],
+        "F2": [
+          555,
+          560
+        ],
+        "quorum_boundary": [
+          678,
+          678
+        ],
+        "T2": [
+          299,
+          309
+        ],
+        "T13": [
+          508,
+          520
+        ],
+        "AS5": [
+          225,
+          228
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only implementation and attacker-capability review. No attack run, cloud-policy check or exhaustive security audit; Chapter 4 and the main deck remain unchanged.",
+        "sources": [
+          {
+            "path": "vita-fl/dfl/node_server/src/action_key.ts",
+            "lines": [
+              65,
+              98,
+              198,
+              205
+            ],
+            "finding": "Phala dstack-derived current action signer.",
+            "sha256": "1b9ddf9e0c58f76c1090937c5f521da69eedc5612fe07b980d3b3f19603a6d62"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/bc_client.ts",
+            "lines": [
+              877,
+              907
+            ],
+            "finding": "Report transaction uses the action signer.",
+            "sha256": "fda5f1b6a89bfa97e94ae048ca5b8ae04ec31efa6212e8d65777d54123ef2e0b"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/DeviceRegistry.sol",
+            "lines": [
+              248,
+              255
+            ],
+            "finding": "Only current registered action address resolves to reporter identity.",
+            "sha256": "f00f9f5268d1f0f55158b71d334dc50542a1ac7704818460634f988d87ef7f4b"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/AggregatorSelection.sol",
+            "lines": [
+              195,
+              277,
+              280,
+              313
+            ],
+            "finding": "Reportability, context, authority, snapshot/quorum and replacement guards.",
+            "sha256": "9d2fc0b94f4a7efb5f1364d75b7415630f28ef4b250e61051ff5f9da32ea5755"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/server.ts",
+            "lines": [
+              110,
+              174,
+              2037,
+              2044,
+              2208,
+              2240
+            ],
+            "finding": "Honest miss tracking, empty-set recovery, failed uploads and reporting.",
+            "sha256": "b7248ae1f0e5f374bee10cc023b4af78b32ab8dbdf1e3d22c704e4decb7ce9a5"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/state_timing.ts",
+            "lines": [
+              88,
+              111,
+              149,
+              155
+            ],
+            "finding": "Cannot close empty set; defer honest report during window/aggregation allowance.",
+            "sha256": "e537c423ea03613e761be268807af496ab89b1958610710449118288752e414d"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/GMStorage.sol",
+            "lines": [
+              453,
+              489
+            ],
+            "finding": "Bootstrap exception and aborted-round transition.",
+            "sha256": "84deba98bda6b74e6b03b0b917f09638f9de7b0d21114eedbd1efef366924003"
+          }
+        ],
+        "limits": [
+          "No forged vote, network partition or quorum attack was executed.",
+          "Red partition route is an availability effect with honest recovery; it is not evidence of unjustified eviction under healthy connectivity.",
+          "Threshold is configuration-dependent; 3/5 is the current default example for six authorized participants."
+        ]
+      }
+    },
+    {
+      "slug": "04-inference",
+      "name_de": "4 · Falsche Inferenz als verifiziert ausgeben",
+      "title": "Attack tree: verify an invalid inference result",
+      "threats": [
+        "T2",
+        "T4",
+        "T8",
+        "T9"
+      ],
+      "domains": [
+        "Agent"
+      ],
+      "root": {
+        "label": "Verify an invalid inference result",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Use the wrong model bundle",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Return an old model with its genuine publisher signature",
+                "refs": [
+                  "T4"
+                ],
+                "note": "Use a legitimately signed older model as in the concrete Chapter 4 storage example; signature authenticity alone can hold.",
+                "kind": "condition",
+                "short_label": "Replay an old signed model",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Return a captured older signed storage object.",
+                "required_credentials": "No signing key to replay an existing valid object."
+              },
+              {
+                "label": "Verify inference from a bundle that disagrees with the publication selected at model preparation",
+                "refs": [
+                  "F5",
+                  "F6",
+                  "F11"
+                ],
+                "note": "Model preparation independently resolves the authoritative bundle and verifies its authorized signature and round. Jobs are bound to that prepared model. This does not claim that every subsequent inference re-fetches the globally newest publication. The downstream verification must also incorrectly accept a different binding for this attack to succeed.",
+                "kind": "check_failure",
+                "short_label": "Pass selected-bundle checks",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt acceptance contrary to the prepared authoritative model tuple.",
+                "required_credentials": "Cannot mint matching model/AIR/Sello evidence; intact tuple/binding checks block this path."
+              }
+            ],
+            "refs": [
+              "T4",
+              "F5",
+              "F11"
+            ],
+            "note": "Replayed storage bytes do not require key theft. Success still requires the intact preparation and verification path to accept the wrong model binding; green is scoped to that selected model, not perpetual latest-version freshness.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Mix valid but unrelated evidence",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Introduce a foreign context",
+                "op": "OR",
+                "children": [
+                  {
+                    "label": "Substitute output for another model / image job",
+                    "refs": [
+                      "T8"
+                    ],
+                    "note": "The response does not belong to the receiver-issued image job and model selected for this call.",
+                    "kind": "condition",
+                    "short_label": "Swap output / job evidence",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Replace bytes or reuse captured output from a different job.",
+                    "required_credentials": "No key to attempt substitution; no fresh valid receipt is assumed."
+                  },
+                  {
+                    "label": "Replay a request or receipt from another session",
+                    "refs": [
+                      "T2",
+                      "T8"
+                    ],
+                    "note": "The signature can remain valid, but the model, receiver run, session or request context differs. Same-context replay within the issue-time window is a separate residual boundary.",
+                    "kind": "condition",
+                    "short_label": "Replay across sessions",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Replay available evidence from another request/session.",
+                    "required_credentials": "No signing key to copy a previously valid receipt."
+                  }
+                ],
+                "refs": [
+                  "T2",
+                  "T8"
+                ],
+                "note": "These are alternative ways to create incompatible evidence objects.",
+                "assessment": "neutral",
+                "assessment_reason": "OR over (neutral, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+              },
+              {
+                "label": "Verifier accepts conflicting manifest / digests / job bindings",
+                "refs": [
+                  "F6",
+                  "F11"
+                ],
+                "note": "AIR verification binds signature, nonce, manifest/request/response digests, quote and RA-TLS session; Sello additionally binds the exact service/action/job-call input and response to the admitted receiver. A valid object in a different context is rejected.",
+                "kind": "check_failure",
+                "short_label": "Pass digest / session checks",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt acceptance of conflicting signed evidence.",
+                "required_credentials": "Fresh matching AIR/Sello signing authority is absent; intact checks reject the shown substitution."
+              }
+            ],
+            "refs": [
+              "T2",
+              "T8",
+              "F6",
+              "F11"
+            ],
+            "note": "Incompatible evidence must receive an accepting verification decision. Merely swapping an object is insufficient.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Fake verified tool success",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Use prompt instructions to ask the agent to skip evidence verification",
+                "short_label": "Inject misleading instructions",
+                "assessment": "neutral",
+                "assessment_reason": "A capability or necessary condition only; the other AND conditions still have to hold.",
+                "note": "Prompt content can influence orchestration, but the tools are registered locally in code. It does not grant tool-registration control, receipt-signing keys or authority to change deterministic verification.",
+                "refs": [
+                  "T9",
+                  "F8"
+                ],
+                "attacker_capability": "Control attacker-supplied prompt content.",
+                "required_credentials": "No private keys or control over local tool definitions."
+              },
+              {
+                "label": "Have the intact tool return verified success despite missing or invalid checks",
+                "short_label": "Return verified success anyway",
+                "assessment": "blocked",
+                "assessment_reason": "The intact reviewed implementation rejects this success condition under its stated trust assumptions. This is not a demonstrated bypass.",
+                "note": "The technical verified-and-transparency-logged stage is set only after verification and domain publication. This does not cover arbitrary final LLM prose: its hallucination filter is heuristic and no universal truthful-chat guarantee is claimed.",
+                "refs": [
+                  "T9",
+                  "F8",
+                  "NF3"
+                ],
+                "attacker_capability": "Attempt to bypass intact technical tool acceptance using prompt content.",
+                "required_credentials": "Prompt instructions supply neither the required AIR/Sello evidence nor control of the verifier code."
+              }
+            ],
+            "note": "No tool-metadata or tool-identity mutation is assumed from prompt access. Code compromise is a separate stronger actor outside this shown prompt-only route.",
+            "refs": [
+              "T9",
+              "F8",
+              "NF3"
+            ],
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "refs": [
+          "T2",
+          "T4",
+          "T8",
+          "T9"
+        ],
+        "note": "Scope is deterministic verified-tool acceptance by intact client/receiver implementations. Arbitrary LLM chat claims are not covered; their heuristic filter is not a security proof. An attacker does not gain AIR/Sello keys or local tool-registration control through prompt text.",
+        "assessment": "blocked",
+        "assessment_reason": "OR over (blocked, blocked, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Verified tool status requires bound evidence; arbitrary LLM wording is outside this guarantee.",
+      "source_lines": {
+        "T2": [
+          299,
+          309
+        ],
+        "T4": [
+          334,
+          342
+        ],
+        "T8": [
+          413,
+          426
+        ],
+        "T9": [
+          432,
+          441
+        ],
+        "F5/F6": [
+          579,
+          590
+        ],
+        "F8": [
+          598,
+          602
+        ],
+        "F11": [
+          619,
+          624
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only implementation and attacker-capability review. No attack run, cloud-policy check or exhaustive security audit; Chapter 4 and the main deck remain unchanged.",
+        "sources": [
+          {
+            "path": "vita-fl/tee_inference/service/model_source.py",
+            "lines": [
+              218,
+              241
+            ],
+            "finding": "Resolve and verify authoritative model bundle at preparation.",
+            "sha256": "b119df10f732074c41698e5f7dbb0e60b6d6d102da8abc2ea1e24d9bbc9605c4"
+          },
+          {
+            "path": "vita-fl/tee_inference/service/app.py",
+            "lines": [
+              329,
+              360
+            ],
+            "finding": "Inference job uses prepared model context.",
+            "sha256": "b3c84a4ef9dc909edbb9049d5858067153598e19a5a7c13dcbc3ae91291f093d"
+          },
+          {
+            "path": "vita-fl/agent/tee_inference_client.py",
+            "lines": [
+              245,
+              269,
+              521,
+              618,
+              704,
+              755
+            ],
+            "finding": "Exact job input; AIR/nonce/digests/session verification; domain publication before verified stage.",
+            "sha256": "4f1b0cd4b0f3e9443400bb574589c9f6fa47302e2a4bd774d5a45ea9a65b6b0d"
+          },
+          {
+            "path": "vita-fl/agent/sello_client.py",
+            "lines": [
+              182,
+              199
+            ],
+            "finding": "Sello service/action/input/output/session binding.",
+            "sha256": "9a35d6ba08c3aa43e44c05a57c5ced271484e32fac1580c2715b3c92d009db67"
+          },
+          {
+            "path": "vita-fl/agent/run_agent.py",
+            "lines": [
+              329,
+              365,
+              728,
+              737,
+              1058
+            ],
+            "finding": "Local tool definitions; heuristic final-text check distinct from technical success.",
+            "sha256": "6afbfeffdedd638f0f364f96db09915510e3270aef4ac3559c7ba6f810a7780d"
+          }
+        ],
+        "limits": [
+          "Green is limited to intact technical verification; not unrestricted chat text or compromised client code.",
+          "Current publication means selected at model preparation; per-call absolute latest-model freshness is not asserted."
+        ]
+      }
+    },
+    {
+      "slug": "05-audit",
+      "name_de": "5 · Receipts und Transparency Log",
+      "title": "Attack tree: evidence and interaction suppression",
+      "threats": [
+        "T10",
+        "T11"
+      ],
+      "domains": [
+        "Agent"
+      ],
+      "root": {
+        "label": "Undermine evidence or suppress interaction",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Claim complete evidence despite missing records",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Leave a required record absent",
+                "op": "OR",
+                "children": [
+                  {
+                    "label": "Receiver Sello receipt is not accepted by the log",
+                    "refs": [
+                      "T10",
+                      "F10"
+                    ],
+                    "note": "The receipt committing to canonical receiver-call input/output is absent from the owner-authorized log, or lacks its required verified statement.",
+                    "kind": "condition",
+                    "short_label": "Block Sello publication",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Refuse/drop receipt publication requests or responses.",
+                    "required_credentials": "No signer key to deny log/network availability."
+                  },
+                  {
+                    "label": "Verified inference domain bundle is not published",
+                    "refs": [
+                      "T10",
+                      "F10"
+                    ],
+                    "note": "The separate domain bundle contains numeric inference request/response, manifest and execution evidence. A Sello receipt alone does not replace it.",
+                    "kind": "condition",
+                    "short_label": "Block inference publication",
+                    "assessment": "neutral",
+                    "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                    "attacker_capability": "Refuse/drop domain-evidence publication.",
+                    "required_credentials": "No key to prevent delivery; cannot fabricate replacement evidence."
+                  }
+                ],
+                "refs": [
+                  "T10",
+                  "F10"
+                ],
+                "note": "The two records serve different claims and have different publication stages. Either missing required record defeats evidence completeness.",
+                "assessment": "neutral",
+                "assessment_reason": "OR over (neutral, neutral); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+              },
+              {
+                "label": "Workflow still marks the corresponding claim successful",
+                "refs": [
+                  "F10",
+                  "NF3"
+                ],
+                "note": "Receiver returns failure when required Sello publication fails; client verifies the receipt and exact logged bytes; inference domain publication precedes the technical verified stage. A visible failure is availability loss, not a successful false completeness claim. Arbitrary chat prose is outside this scope.",
+                "kind": "check_failure",
+                "short_label": "Still return verified success",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt false technical completeness despite the missing record.",
+                "required_credentials": "No required valid publication/verification evidence; intact path fails closed."
+              }
+            ],
+            "refs": [
+              "T10",
+              "F10",
+              "NF3"
+            ],
+            "note": "Absence plus a false successful claim is required. The normal prototype is specified to fail closed.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Conceal log equivocation",
+            "op": "AND",
+            "children": [
+              {
+                "label": "A controlled log issues valid statements for conflicting views",
+                "refs": [
+                  "T11",
+                  "AS8"
+                ],
+                "note": "Requires control of the trusted log service and the ability to issue valid log statements. Merely observing receipts or manipulating network bytes does not confer this authority. It does not require forging honest receiver/AIR/Sello signatures.",
+                "kind": "condition",
+                "short_label": "Log signs conflicting views",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Malicious/compromised authorized log service with log-statement signing authority.",
+                "required_credentials": "The log signing authority, not participant, AIR or Sello private keys."
+              },
+              {
+                "label": "No independent witness or anchor compares the views",
+                "refs": [
+                  "AS8"
+                ],
+                "note": "Environmental boundary: the prototype has no independent witnesses. The diagram does not claim an attacker can defeat an existing witness deployment.",
+                "kind": "boundary",
+                "short_label": "No independent view comparison",
+                "assessment": "boundary",
+                "assessment_reason": "AS8 marks the external consistency boundary: local statements cannot establish a single global view without independent witnessing/anchoring. Yellow marks this external assurance dependency, not an already breached cryptographic primitive.",
+                "attacker_capability": "Exploit the absence of independent comparison after the controlled log issues conflicting views.",
+                "required_credentials": "Log authority comes from the other AND condition; no witness compromise is assumed."
+              }
+            ],
+            "refs": [
+              "T11",
+              "AS8"
+            ],
+            "note": "Both validly signed equivocation by the controlled log and absence of independent history comparison are necessary. This is the AS8 log-consistency boundary, not arbitrary signature forging by a network outsider.",
+            "assessment": "boundary",
+            "assessment_reason": "AND over (neutral, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Suppress the entire interaction",
+            "op": "OR",
+            "children": [
+              {
+                "label": "Drop the request before it reaches the receiver",
+                "refs": [
+                  "T10"
+                ],
+                "note": "An actor controlling request forwarding or service/network availability can prevent the call reaching the receiver. There is then no receiver execution for which a receipt could exist. No fabricated success is asserted.",
+                "kind": "condition",
+                "short_label": "Drop request before execution",
+                "assessment": "possible",
+                "assessment_reason": "T10 permits suppression before the receiver sees a call. No receiver receipt can prove the execution of a call that never arrived; no trust assumption has to fail.",
+                "attacker_capability": "Control request forwarding or network/service availability.",
+                "required_credentials": "No protected signing key."
+              },
+              {
+                "label": "Intermediary withholds the entire result from the user",
+                "refs": [
+                  "T10"
+                ],
+                "note": "A receipt may already exist if execution completed. Withholding a result does not delete a published record; the failure concerns the user-visible interaction.",
+                "kind": "condition",
+                "short_label": "Withhold response from user",
+                "assessment": "possible",
+                "assessment_reason": "T10 permits withholding the entire user-facing result. A previously published receipt can remain intact; the colored success concerns interaction suppression, not log erasure.",
+                "attacker_capability": "Control result forwarding or response-path availability.",
+                "required_credentials": "No key to withhold a response; already published evidence is not deleted."
+              }
+            ],
+            "refs": [
+              "T10"
+            ],
+            "note": "Either omission can suppress the intended interaction at the user boundary; full log erasure is not implied.",
+            "assessment": "possible",
+            "assessment_reason": "OR over (possible, possible); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "refs": [
+          "T10",
+          "T11"
+        ],
+        "note": "The root includes false completeness, inconsistent log histories and suppressed interaction. Exact-byte inclusion is not proof that every intended interaction exists.",
+        "assessment": "possible",
+        "assessment_reason": "OR over (blocked, boundary, possible); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Dropping traffic needs no key; conflicting valid log views require control of the log authority.",
+      "source_lines": {
+        "workflow_receipts": [
+          145,
+          150
+        ],
+        "T10": [
+          449,
+          459
+        ],
+        "T11": [
+          467,
+          476
+        ],
+        "AS8": [
+          242,
+          245
+        ],
+        "F10": [
+          611,
+          617
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only implementation and attacker-capability review. No attack run, cloud-policy check or exhaustive security audit; Chapter 4 and the main deck remain unchanged.",
+        "sources": [
+          {
+            "path": "vita-fl/tee_inference/service/app.py",
+            "lines": [
+              196,
+              246
+            ],
+            "finding": "Receiver fails when required Sello publication cannot complete.",
+            "sha256": "b3c84a4ef9dc909edbb9049d5858067153598e19a5a7c13dcbc3ae91291f093d"
+          },
+          {
+            "path": "vita-fl/agent/sello_client.py",
+            "lines": [
+              182,
+              199
+            ],
+            "finding": "Verify exact receiver call and receipt.",
+            "sha256": "9a35d6ba08c3aa43e44c05a57c5ced271484e32fac1580c2715b3c92d009db67"
+          },
+          {
+            "path": "vita-fl/agent_receipts/scitt.py",
+            "lines": [
+              93,
+              115,
+              189,
+              216
+            ],
+            "finding": "Local statement/key/exact-byte verification, no independent history comparison in this path.",
+            "sha256": "818367d460c73c4f14a46172e4da8762f68640b4fa471d61e2acc0ba06b7f159"
+          },
+          {
+            "path": "vita-fl/agent/tee_inference_client.py",
+            "lines": [
+              704,
+              755
+            ],
+            "finding": "Domain publication required before technical verified success.",
+            "sha256": "4f1b0cd4b0f3e9443400bb574589c9f6fa47302e2a4bd774d5a45ea9a65b6b0d"
+          }
+        ],
+        "limits": [
+          "Split-view route requires malicious log authority, not just a network adversary.",
+          "No requests were suppressed or log views forked in this review.",
+          "Withheld response does not erase receipts that are already published."
+        ]
+      }
+    },
+    {
+      "slug": "06-disclosure",
+      "name_de": "6 · Modellschlüssel und Klartext",
+      "title": "Attack tree: disclose the TEE-held model",
+      "threats": [
+        "T5",
+        "T13"
+      ],
+      "domains": [
+        "DFL",
+        "Agent"
+      ],
+      "root": {
+        "label": "Expose model outside the TEE",
+        "op": "OR",
+        "children": [
+          {
+            "label": "Bypass admitted-key protection",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Obtain the published encrypted model bundle",
+                "refs": [
+                  "T5"
+                ],
+                "note": "Ciphertext can be publicly downloadable without violating the confidentiality claim.",
+                "kind": "condition",
+                "short_label": "Obtain model ciphertext",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Read publicly retrievable encrypted model objects.",
+                "required_credentials": "No private key to obtain ciphertext."
+              },
+              {
+                "label": "Recover its key outside the eligible recipient snapshot",
+                "refs": [
+                  "F7",
+                  "T5",
+                  "AS1"
+                ],
+                "note": "This is a required failure of the intended encrypted distribution guarantee. Chapter 4 does not supply a cryptographic break or key-recovery exploit.",
+                "kind": "check_failure",
+                "short_label": "Decrypt without recipient key",
+                "assessment": "blocked",
+                "assessment_reason": "The displayed acceptance failure is prevented by the specified Chapter 4 checks when those checks and the stated trust premises hold. Green is a model-based protection claim, not proof that an implementation is universally secure.",
+                "attacker_capability": "Attempt decryption as an ineligible outsider.",
+                "required_credentials": "Matching authorized recipient private key is absent; intact RSA/AES protection blocks this route."
+              }
+            ],
+            "refs": [
+              "T5",
+              "F7"
+            ],
+            "note": "Possession of ciphertext and its matching decryption key yields plaintext under the normal published format; ciphertext alone is insufficient.",
+            "assessment": "blocked",
+            "assessment_reason": "AND over (neutral, blocked); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Break TEE secret protection",
+            "op": "AND",
+            "children": [
+              {
+                "label": "Obtain the matching encrypted model",
+                "refs": [
+                  "T5"
+                ],
+                "note": "The ciphertext must match the recovered round key. A key wrapper is needed only for the stolen-recipient-key unwrap alternative; direct exposure of the round key does not require one.",
+                "kind": "condition",
+                "short_label": "Obtain matching ciphertext",
+                "assessment": "neutral",
+                "assessment_reason": "Action or prerequisite shown without an independent security verdict. Its effect depends on the remaining AND/OR conditions.",
+                "attacker_capability": "Read publicly retrievable encrypted model objects.",
+                "required_credentials": "No private key to obtain ciphertext."
+              },
+              {
+                "label": "Obtain the matching round key",
+                "op": "OR",
+                "children": [
+                  {
+                    "label": "Use a stolen recipient private key to unwrap the model key",
+                    "refs": [
+                      "T13",
+                      "AS5"
+                    ],
+                    "note": "Private-key extraction is an explicit assumption failure. This leaf includes successful unwrap of the matching envelope; no extraction method is claimed.",
+                    "kind": "boundary",
+                    "short_label": "Unwrap with stolen recipient key",
+                    "assessment": "boundary",
+                    "assessment_reason": "This path requires the explicit AS5 protected-key-custody assumption to fail and successful unwrapping of the matching model key.",
+                    "attacker_capability": "Actually extract the admitted recipient RSA private key and obtain its matching envelope.",
+                    "required_credentials": "The matching TEE recipient RSA private key; deployment ownership does not supply it."
+                  },
+                  {
+                    "label": "Expose the model key while the workload holds it in plaintext",
+                    "refs": [
+                      "T13",
+                      "AS5"
+                    ],
+                    "note": "The protected workload is compromised while the relevant key is materialized; a generic process exploit without actual key exposure is not enough.",
+                    "kind": "boundary",
+                    "short_label": "Expose live model key",
+                    "assessment": "boundary",
+                    "assessment_reason": "This path requires AS5 to fail while the matching model key is materialized in the protected process.",
+                    "attacker_capability": "Compromise execution while the matching model key is materialized.",
+                    "required_credentials": "Actual access to the live plaintext model key."
+                  }
+                ],
+                "refs": [
+                  "T13",
+                  "AS5"
+                ],
+                "note": "The two custody failures provide alternative ways to recover the actual matching round key.",
+                "assessment": "boundary",
+                "assessment_reason": "OR over (boundary, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+              }
+            ],
+            "refs": [
+              "T5",
+              "T13",
+              "AS5"
+            ],
+            "note": "A usable matching secret plus accessible matching ciphertext suffices. Additional signature checks cannot restore compromised key custody.",
+            "assessment": "boundary",
+            "assessment_reason": "AND over (neutral, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          },
+          {
+            "label": "Expose secrets through operator control",
+            "op": "OR",
+            "refs": [
+              "T13",
+              "AS4",
+              "AS5"
+            ],
+            "note": "These are conditional implementation boundaries, not confirmed exploits. The official launchers disable SSH, but admission does not itself attest SSH absence. KMS release of existing app secrets to an upgrade is a separate authorization question. Each route below explicitly requires successful access and disclosure; owning the deployment alone is not enough.",
+            "children": [
+              {
+                "label": "Use privileged access inside the admitted TEE to disclose the matching model key",
+                "short_label": "Read model key via guest access",
+                "refs": [
+                  "T13",
+                  "AS4",
+                  "AS5"
+                ],
+                "kind": "boundary",
+                "assessment": "boundary",
+                "note": "The official launcher sets ssh_authorized_keys=[]; phala/README.md documents that separate SSH user configuration is outside the verified app_compose. Thus admission alone does not prove absence of privileged guest access in an independently launched otherwise-identical CVM. This leaf requires actual privileged access and extraction of a usable matching model key, followed by decryption of the available ciphertext. It does not assert SSH access in the current deployment. Runtime private-key material is written inside the guest with mode 0600.",
+                "assessment_reason": "Yellow denotes the required failure of protected key custody and the explicit deployment-evidence boundary (AS4/AS5), not an automatic capability of a human deployer.",
+                "attacker_capability": "Actually obtain privileged access inside the admitted guest and extract its usable secrets.",
+                "required_credentials": "Privileged guest access and matching key material, not merely cloud deployment rights."
+              },
+              {
+                "label": "Registry-unapproved upgraded code obtains prior app secrets and exposes the matching model key",
+                "short_label": "Altered code obtains old keys",
+                "refs": [
+                  "T13",
+                  "AS4",
+                  "AS5"
+                ],
+                "kind": "boundary",
+                "assessment": "boundary",
+                "note": "DeviceRegistry checks the configured image digest and role policy at new admission. Releasing existing application secrets to an upgraded workload is a separate KMS decision. The application uses dstack getKey to unseal its persisted recipient key; the effective live KMS upgrade policy was not verified. This successful attack condition additionally requires access to the persisted key state and matching envelope, recovery and disclosure of the model key, and decryption of the available ciphertext. An image update or an unchanged app identifier alone does not prove access. No current KMS vulnerability is claimed.",
+                "assessment_reason": "Yellow denotes the required failure of the intended secret-release/key-custody protection for altered code. The open live-policy question is documented separately and is not itself evidence that an attack succeeds.",
+                "attacker_capability": "Make registry-unapproved upgraded execution receive prior app secrets and usable sealed state and disclose the matching model key.",
+                "required_credentials": "Actual KMS release plus matching persisted key state/envelope; app ownership or update ability alone is insufficient."
+              }
+            ],
+            "assessment": "boundary",
+            "assessment_reason": "OR over (boundary, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+          }
+        ],
+        "refs": [
+          "T5",
+          "T13"
+        ],
+        "note": "The admitted plaintext recipient is the protected workload, not its human deployer. The modeled paths require actual model disclosure or recovery of its matching decryption key. Operator privileges alone do not establish either. No export from the running deployment has been observed.",
+        "assessment": "boundary",
+        "assessment_reason": "OR over (blocked, boundary, boundary); each route retains all actor, credential, timing and context prerequisites. No attack success was observed."
+      },
+      "takeaway": "Model keys go to admitted TEE workloads; deploying a TEE does not itself grant access to its plaintext.",
+      "source_lines": {
+        "T5": [
+          350,
+          359
+        ],
+        "T13": [
+          508,
+          520
+        ],
+        "F7": [
+          592,
+          596
+        ],
+        "AS5": [
+          225,
+          228
+        ],
+        "AS4": [
+          220,
+          223
+        ]
+      },
+      "implementation_context": {
+        "scope": "Read-only review of recipient encryption, TEE key material and documented deployment boundaries; no live KMS/SSH test, no attack and no exhaustive security audit.",
+        "sources": [
+          {
+            "path": "vita-fl/dfl/node_server/src/gm_crypto.ts",
+            "lines": [
+              178,
+              195
+            ],
+            "finding": "Model key wrapped separately for each eligible recipient public key.",
+            "sha256": "b54558861535277ad3e94492d59716d4bb419101324d1d5ac95ca42d61b441bf"
+          },
+          {
+            "path": "vita-fl/dfl/node_server/src/participant_key.ts",
+            "lines": [
+              247,
+              290,
+              332,
+              350
+            ],
+            "finding": "dstack-derived sealing key protects persisted RSA private key; runtime PEM materializes inside the guest.",
+            "sha256": "70f7dbb95e4b6ca65dc2e6ef2d4d5b05b1d35b573f273e0d52986435cb98a03a"
+          },
+          {
+            "path": "vita-fl/smart_contracts/src/core/DeviceRegistry.sol",
+            "lines": [
+              487,
+              490
+            ],
+            "finding": "New admission requires configured worker image digest and allowed role policy.",
+            "sha256": "f00f9f5268d1f0f55158b71d334dc50542a1ac7704818460634f988d87ef7f4b"
+          },
+          {
+            "path": "vita-fl/phala/main.tf",
+            "lines": [
+              395,
+              403
+            ],
+            "finding": "Official worker launcher selects KMS and disables SSH/prelaunch.",
+            "sha256": "f5807bb33025b4d91fb3536e7cd94d2400c3ca1e1d5720d62920ff6bb521ced5"
+          },
+          {
+            "path": "vita-fl/phala/README.md",
+            "lines": [
+              877,
+              885
+            ],
+            "finding": "SSH absence is a deployment control outside current app_compose attestation.",
+            "sha256": "a078c0b0db2f47530674349de2e3617e5ad7e058f9f72d904288248641b717c8"
+          }
+        ],
+        "limits": [
+          "The effective cloud KMS upgrade policy was not verified.",
+          "No privileged access or secret export from the current deployment was demonstrated.",
+          "This is not an exhaustive implementation audit."
+        ]
+      }
+    }
+  ],
+  "color_assessment": {
+    "basis": "All six trees reviewed against source code, explicit actor capabilities and separate signing authorities; no attacks or live deployment-policy verification.",
+    "possible": "Red: the named external actor can cause this availability effect with the stated capability, without assuming access to protected TEE keys; source-based reasoning, not a measured exploit.",
+    "boundary": "Yellow: a specific protected-execution, key-custody or trusted-service boundary must be crossed. Missing evidence or a merely future feature is not enough to classify a path yellow.",
+    "blocked": "Green: the depicted attack is blocked by specified checks under the stated assumptions; not an unconditional system-wide security proof.",
+    "neutral": "White: action or prerequisite without a separate verdict, including pure prerequisite groups.",
+    "composition": "OR: red if any modeled route is red, else yellow if any is boundary-dependent, else green only if all are blocked; neutral otherwise. AND: green if any required part is blocked; otherwise yellow if an external boundary is required; otherwise red if a modeled attack effect is possible, with neutral prerequisites still required; neutral otherwise.",
+    "scope_note": "Registration, node ownership and deployment rights do not imply arbitrary TEE signatures. Each displayed attack needs its explicit actor capabilities. Green applies to the shown attack, not universal security. No claim of statistical model robustness follows from the slide-2 coloring."
+  },
+  "implementation_review": {
+    "01-admission": {
+      "root_assessment": "blocked",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    },
+    "02-model": {
+      "root_assessment": "boundary",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    },
+    "03-recovery": {
+      "root_assessment": "possible",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    },
+    "04-inference": {
+      "root_assessment": "blocked",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    },
+    "05-audit": {
+      "root_assessment": "possible",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    },
+    "06-disclosure": {
+      "root_assessment": "boundary",
+      "leaf_capabilities_explicit": true,
+      "source_review": "completed",
+      "attack_executed": false
+    }
+  }
+}

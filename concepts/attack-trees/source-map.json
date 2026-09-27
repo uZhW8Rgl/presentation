@@ -1,0 +1,90 @@
+{
+  "source": "/home/ramon/master/Master-Thesis/overleaf/chapters/chapter4.tex",
+  "sha256": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6",
+  "threats": {
+    "T1": {
+      "title": "Unauthorized workload admission or identity substitution",
+      "line": 279
+    },
+    "T2": {
+      "title": "Replay or stale-context reuse",
+      "line": 299
+    },
+    "T3": {
+      "title": "Training-input or signer-policy manipulation",
+      "line": 317
+    },
+    "T4": {
+      "title": "Artifact substitution or stale publication",
+      "line": 334
+    },
+    "T5": {
+      "title": "Unauthorized model or key disclosure",
+      "line": 350
+    },
+    "T6": {
+      "title": "Aggregator omission or availability failure",
+      "line": 367
+    },
+    "T7": {
+      "title": "Semantically malicious but valid data or updates",
+      "line": 386
+    },
+    "T8": {
+      "title": "Inference substitution or forged evidence",
+      "line": 413
+    },
+    "T9": {
+      "title": "Agent or tool manipulation",
+      "line": 432
+    },
+    "T10": {
+      "title": "Evidence or result suppression",
+      "line": 449
+    },
+    "T11": {
+      "title": "Transparency-log omission or equivocation",
+      "line": 467
+    },
+    "T12": {
+      "title": "Infrastructure denial of service",
+      "line": 491
+    },
+    "T13": {
+      "title": "Cryptographic, key, or platform-root compromise",
+      "line": 508
+    },
+    "T14": {
+      "title": "Systemic collusion or economic manipulation",
+      "line": 528
+    }
+  },
+  "tree_coverage": {
+    "training": [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T6",
+      "T7",
+      "T14"
+    ],
+    "inference": [
+      "T2",
+      "T8",
+      "T9"
+    ],
+    "availability": [
+      "T6",
+      "T10",
+      "T11",
+      "T12",
+      "T14"
+    ],
+    "confidentiality": [
+      "T5",
+      "T13",
+      "T14"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "pages": [
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "slides_before": 46,
+  "slides_after": 52,
+  "talk_pages": 35,
+  "backup_pages": 17,
+  "mode": "insert",
+  "preserved_other_slides_and_notes": 46,
+  "allowed_existing_change": "page-number footers only on insertion; none outside trees on update",
+  "main_deck_sha256_before": "631064f82b0eb2798e6d758672be0ef225cf00f91e3ce27a27c7ecab6499a88d",
+  "main_deck_sha256_after": "ee099d8d74c5323a4b305862aef41b7e5d9fe8dd48808c5bf3b7855a19c6c56f",
+  "asset_sha256": "3b4e701d6f9898c9b229cd7b7ee5a9d12bac23df1d2e4d52bb3256a26f3d3073",
+  "chapter4_sha256": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6",
+  "chapter4_unchanged": true,
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-attack-trees-1ry1u0p0/VITA-FL_Thesis_Presentation_TU_Berlin.pptx",
+  "structure_check": "passed",
+  "generator_hook": "passed",
+  "approved_shape_xml_preserved_except_footer": true,
+  "source_notes_preserved": true,
+  "media_masters_layouts_unchanged": true,
+  "native_editable_shapes": true,
+  "visual_review": "Integrated Page 26 inspected; all six rendered slide bodies match the previously reviewed approved previews pixel-for-pixel (only footers differ).",
+  "idempotent_update": "passed on an isolated 52-slide deck copy; main deck unchanged by this check",
+  "evaluation_and_test_updaters": "Both structural checks pass on the 52-slide main deck; legacy layouts remain supported."
+}

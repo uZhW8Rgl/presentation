@@ -3600,6 +3600,64 @@ def slide_threat_detail(prs, number, threat_id, title, group, image_name):
     )
 
 
+ATTACK_TREE_SLIDE_PREFIX = "VITA-FL attack tree: "
+ATTACK_TREE_SLUGS = (
+    "01-admission", "02-model", "03-recovery", "04-inference", "05-audit", "06-disclosure",
+)
+ATTACK_TREE_ASSET = ASSETS / "attack-trees-b-light.pptx"
+
+
+def apply_attack_tree_asset(slide, source, page_number: int, slug: str):
+    """Copy the complete approved native diagram, preserving its neutral navigation."""
+    assert slug in ATTACK_TREE_SLUGS
+    for shape in list(slide.shapes):
+        remove_shape(shape)
+    for shape in source.shapes:
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Approved attack trees must be self-contained native shapes"
+        for node in element.iter():
+            assert not any(key.startswith("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}")
+                           for key in node.attrib), "Unexpected relationship in native attack-tree asset"
+        # Copy all shapes together, so their unique IDs and connector targets remain valid.
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    slide.name = ATTACK_TREE_SLIDE_PREFIX + slug
+    footers = [shape for shape in slide.shapes if shape.has_text_frame
+               and shape.top > Inches(6.7) and shape.text.startswith("B light · ")]
+    assert len(footers) == 1
+    text = footers[0].element.xpath(".//a:t")
+    assert len(text) == 1
+    text[0].text = f"Page {page_number}"
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
+
+
+def insert_attack_tree_slides(prs, after_page: int = 23):
+    """Insert after the original architecture narrative; retain existing navigation."""
+    assert not any(slide.name.startswith(ATTACK_TREE_SLIDE_PREFIX) for slide in prs.slides)
+    source = Presentation(ATTACK_TREE_ASSET)
+    assert len(source.slides) == len(ATTACK_TREE_SLUGS)
+    assert (source.slide_width, source.slide_height) == (prs.slide_width, prs.slide_height)
+    added_ids = []
+    for offset, (asset_slide, slug) in enumerate(zip(source.slides, ATTACK_TREE_SLUGS), 1):
+        slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+        apply_attack_tree_asset(slide, asset_slide, after_page + offset, slug)
+        added_ids.append(prs.slides._sldIdLst[-1])
+    for offset, slide_id in enumerate(added_ids):
+        prs.slides._sldIdLst.remove(slide_id)
+        prs.slides._sldIdLst.insert(after_page + offset, slide_id)
+    for page, slide in enumerate(prs.slides, 1):
+        if page <= after_page:
+            continue
+        footers = [shape for shape in slide.shapes if shape.has_text_frame
+                   and shape.top > Inches(6.7) and shape.text.startswith("Page ")]
+        assert len(footers) == 1
+        text = footers[0].element.xpath(".//a:t")
+        assert len(text) == 1
+        text[0].text = f"Page {page}"
+    return prs
+
+
 def build():
     build_assets()
     prs = prepare_template()
@@ -3638,6 +3696,9 @@ def build():
     for number, threat in enumerate(THREAT_DETAIL_SLIDES, start=33):
         slide_threat_detail(prs, number, *threat)
     assert len(prs.slides) == 46
+    # Existing slides keep their original domain assignment before the insertion.
+    insert_attack_tree_slides(prs)
+    assert len(prs.slides) == 52
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()
