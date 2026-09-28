@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make slide 21's conclusion and outlook specific to thesis Chapter 8."""
+"""Make the conclusion and outlook specific to thesis Chapter 8, locating it by title."""
 
 from __future__ import annotations
 
@@ -43,10 +43,13 @@ def replace_run_text(shape, text):
 
 
 def main():
-    shutil.copy2(DECK, BACKUP)
     prs = Presentation(DECK)
-    assert len(prs.slides) >= 21
-    slide = prs.slides[20]
+    matches = [index for index, slide in enumerate(prs.slides)
+               if any(getattr(shape, "has_text_frame", False)
+                      and shape.text.strip() == "Conclusion and outlook" for shape in slide.shapes)]
+    assert len(matches) == 1, "Expected exactly one conclusion slide"
+    target = matches[0]
+    slide = prs.slides[target]
 
     by_text = {
         shape.text.strip(): shape
@@ -54,6 +57,11 @@ def main():
         if getattr(shape, "has_text_frame", False) and shape.text.strip()
     }
     assert "Conclusion and outlook" in by_text
+    if "CORE CONCLUSION" in by_text:
+        # Preserve later visual revisions of the already updated conclusion.
+        print(f"Page {target + 1} already contains the Chapter 8 conclusion; no changes.")
+        return
+    shutil.copy2(DECK, BACKUP)
     assert "TRUST-MINIMIZED—NOT TRUSTLESS" in by_text
     assert "DEMONSTRATED" in by_text
     assert "REMAINING BOUNDARIES" in by_text
@@ -170,7 +178,7 @@ def main():
     prs.save(TEMP)
 
     check = Presentation(TEMP)
-    check_slide = check.slides[20]
+    check_slide = check.slides[target]
     visible = "\n".join(
         shape.text for shape in check_slide.shapes if getattr(shape, "has_text_frame", False)
     )

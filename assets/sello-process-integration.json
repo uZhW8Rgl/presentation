@@ -1,0 +1,29 @@
+{
+  "pages": [
+    24,
+    25
+  ],
+  "slides_before": 52,
+  "slides_after": 54,
+  "talk_pages": 37,
+  "backup_pages": 17,
+  "mode": "insert",
+  "preserved_other_slides_and_notes": 52,
+  "allowed_existing_change": "page-number footers only on insertion; none outside process slides on update",
+  "main_deck_sha256_before": "ee099d8d74c5323a4b305862aef41b7e5d9fe8dd48808c5bf3b7855a19c6c56f",
+  "main_deck_sha256_after": "dfd464728f8013cc30875cd5b21f7132deed4c5dd34fb9ff1a6b84d837e350e7",
+  "asset_sha256": "314c0286d51b57b92e1576eb7e33d33288dd0678248763fdc7cf3147359d435e",
+  "chapter4_sha256": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6",
+  "chapter4_unchanged": true,
+  "backup": "/home/ramon/.vscode-tmp/vita-fl-before-sello-process-m7fd25uf/VITA-FL_Thesis_Presentation_TU_Berlin.pptx",
+  "structure_check": "passed",
+  "idempotent_asset_update": "passed",
+  "approved_shape_xml_preserved_except_footer": true,
+  "source_notes_preserved": true,
+  "media_masters_layouts_unchanged": true,
+  "native_editable_shapes": true,
+  "visual_review": "passed: main presentation pages 24 and 25 inspected at full size; no clipping or overlap; grouped steps and removal of visible A10 confirmed",
+  "generator_hook_check": "passed: actual assets tested in memory, 46 -> 48 -> 54 slides; main deck unchanged",
+  "compatible_updater_structure_checks": "passed: Sello process, attack trees, evaluation stack, test evaluation",
+  "approved_detailed_slide_comparison": "passed: all shapes and notes preserved from the approved slide, except the page-number footer"
+}

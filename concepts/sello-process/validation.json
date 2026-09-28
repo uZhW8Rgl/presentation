@@ -1,0 +1,97 @@
+{
+  "slides": 3,
+  "single_slide_pptx": 4,
+  "approved_presentation_pair": 2,
+  "generalized_groups": [
+    "A2/A4",
+    "A3/A5",
+    "A6–A8"
+  ],
+  "generalized_A10_visible": false,
+  "layout": "passed",
+  "roundtrip": "passed",
+  "sello_and_shared_steps_1_to_9": "passed",
+  "air_steps_A1_to_A10": "passed",
+  "air_numbering": "B individual; A/C grouped ranges of the same steps",
+  "three_color_legend_on_each": "passed",
+  "scope": "run_and_verify_tee_inference (third MCP call)",
+  "color_map": {
+    "sello": "A84B13",
+    "air": "245AA5",
+    "shared": "686868"
+  },
+  "actor_areas": {
+    "A": 3,
+    "B": 4,
+    "C": 3
+  },
+  "phala_inference_quote_before_agent_rtmr3": "passed",
+  "native_shapes": true,
+  "main_and_chapter_preserved": {
+    "/home/ramon/master/Master-Thesis/presentation/VITA-FL_Thesis_Presentation_TU_Berlin.pptx": "ee099d8d74c5323a4b305862aef41b7e5d9fe8dd48808c5bf3b7855a19c6c56f",
+    "/home/ramon/master/Master-Thesis/overleaf/chapters/chapter4.tex": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6"
+  },
+  "code_sources": [
+    {
+      "path": "vita-fl/transport_security/attestation.py",
+      "sha256": "4706c3d0548d7b1489547c42ec182c13d1d6876b7a531317c956c2c920e58433"
+    },
+    {
+      "path": "vita-fl/agent/run_agent.py",
+      "sha256": "6afbfeffdedd638f0f364f96db09915510e3270aef4ac3559c7ba6f810a7780d"
+    },
+    {
+      "path": "vita-fl/agent/sello_client.py",
+      "sha256": "9a35d6ba08c3aa43e44c05a57c5ced271484e32fac1580c2715b3c92d009db67"
+    },
+    {
+      "path": "vita-fl/transport_security/ratls_client.py",
+      "sha256": "8ac86c4d5cd85262ce88cfc3a20f28281122c45e359445788851857146ac2a3a"
+    },
+    {
+      "path": "vita-fl/tee_inference/service/app.py",
+      "sha256": "b3c84a4ef9dc909edbb9049d5858067153598e19a5a7c13dcbc3ae91291f093d"
+    },
+    {
+      "path": "vita-fl/agent_receipts/sello_v1.py",
+      "sha256": "6fbc5cfad8a57ef3794420a9df96e1f93b65bfa3f5bf8698023427504fefa42a"
+    },
+    {
+      "path": "vita-fl/agent_receipts/receiver_log.py",
+      "sha256": "2f100d35c39cf1afefa4b3db96e1bb3cb1779717d92ccde5033981254b387f96"
+    },
+    {
+      "path": "vita-fl/agent_receipts/scitt.py",
+      "sha256": "818367d460c73c4f14a46172e4da8762f68640b4fa471d61e2acc0ba06b7f159"
+    },
+    {
+      "path": "vita-fl/agent_receipts/environment.py",
+      "sha256": "8618fa10336f05cd268ec72e40f09e98fcc1b9574eec721f8a6441d325fcfeb3"
+    },
+    {
+      "path": "vita-fl/phala/dstack-compose.worker.phala.tftpl",
+      "sha256": "ede512b4c8efc28e7a0cfde0070137166f65b1b225387beb95b5a296b3b929e7"
+    },
+    {
+      "path": "vita-fl/phala/dstack-compose.contracts.phala.tftpl",
+      "sha256": "d6fee4cbe48ce32438f71b3a2c96e92ce198fb894147ab244c9addbac6a5d705"
+    },
+    {
+      "path": "vita-fl/agent/tee_inference_client.py",
+      "sha256": "4f1b0cd4b0f3e9443400bb574589c9f6fa47302e2a4bd774d5a45ea9a65b6b0d"
+    },
+    {
+      "path": "vita-fl/tee_inference/service/attestation.py",
+      "sha256": "e6d79ad3db01872ae2cfb22ae3ea14025f61dde1f53b887db69111b57cd4b87a"
+    }
+  ],
+  "visual_review": "passed: approved detailed slide preserved; generalized slide inspected at full size with A2/A4, A3/A5, A6–A8 and no visible A10",
+  "main_presentation_integration": {
+    "pages": [
+      24,
+      25
+    ],
+    "record": "../../assets/sello-process-integration.json",
+    "status": "passed"
+  }
+}

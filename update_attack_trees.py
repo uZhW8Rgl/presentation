@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Insert/update the six approved attack trees after Page 23, preserving existing edits."""
+"""Insert/update approved attack trees after the chain-of-custody / Sello section."""
 from __future__ import annotations
 
 import argparse
@@ -14,14 +14,16 @@ from zipfile import ZipFile
 from pptx import Presentation
 
 import build_presentation as b
-from update_slide25_test_evaluation import footer, snapshot, visible
+from update_slide25_test_evaluation import (
+    attack_tree_count, attack_tree_target, chain_of_custody_index, footer,
+    sello_process_count, snapshot, visible,
+)
 
 ROOT = Path(__file__).resolve().parent
 DECK = ROOT / 'VITA-FL_Thesis_Presentation_TU_Berlin.pptx'
 ASSET = b.ATTACK_TREE_ASSET
 RECORD = ROOT / 'assets/attack-trees-integration.json'
 CHAPTER = ROOT.parent / 'overleaf/chapters/chapter4.tex'
-TARGET = 23
 COUNT = len(b.ATTACK_TREE_SLUGS)
 
 
@@ -30,23 +32,28 @@ def digest(path):
 
 
 def check_structure(prs):
-    assert len(prs.slides) == 52, 'Expected 35 talk pages and 17 backup pages'
+    target = attack_tree_target(prs)
+    process_count = sello_process_count(prs)
+    assert len(prs.slides) == 52 + process_count, 'Unexpected talk/backup page count'
+    assert attack_tree_count(prs) == COUNT
     assert len(prs.slide_masters) == 2
     names = [b.ATTACK_TREE_SLIDE_PREFIX + slug for slug in b.ATTACK_TREE_SLUGS]
-    assert [prs.slides[i].name for i in range(TARGET, TARGET + COUNT)] == names
+    assert [prs.slides[i].name for i in range(target, target + COUNT)] == names
     assert sum(s.name.startswith(b.ATTACK_TREE_SLIDE_PREFIX) for s in prs.slides) == COUNT
-    for i, text in ((22, 'Cryptographic chain of custody'), (30, 'One end-to-end Phala FedAvg run'),
-                    (34, 'Conclusion and outlook'), (35, 'Training and inference share one verified image')):
+    for i, text in ((chain_of_custody_index(prs), 'Cryptographic chain of custody'),
+                    (target + COUNT + 1, 'One end-to-end Phala FedAvg run'),
+                    (target + COUNT + 5, 'Conclusion and outlook'),
+                    (target + COUNT + 6, 'Training and inference share one verified image')):
         assert text in visible(prs.slides[i]), (i, text)
-    assert prs.slides[29].name == b.EVALUATION_STACK_SLIDE_NAME
-    assert prs.slides[31].name == b.TEST_EVALUATION_SLIDE_NAME
+    assert prs.slides[target + COUNT].name == b.EVALUATION_STACK_SLIDE_NAME
+    assert prs.slides[target + COUNT + 2].name == b.TEST_EVALUATION_SLIDE_NAME
     for page, slide in enumerate(prs.slides, 1):
         assert slide.notes_slide.notes_text_frame.text.strip(), f'Empty notes on Page {page}'
         if page > 1:
             assert footer(slide).text == f'Page {page}'
         ids = [node.get('id') for node in slide.element.xpath('.//p:cNvPr')]
         assert len(ids) == len(set(ids)), f'Duplicate shape IDs on Page {page}'
-        if TARGET < page <= TARGET + COUNT:
+        if target < page <= target + COUNT:
             assert 'TREE-SPECIFIC MODEL' in slide.notes_slide.notes_text_frame.text
             assert 'B light ·' not in visible(slide)
             assert sum(s.name.startswith('Attack legend swatch: ') for s in slide.shapes) == 4
@@ -66,11 +73,14 @@ def main():
     assert ASSET.is_file()
     prs = Presentation(DECK)
     old_count = len(prs.slides)
-    assert old_count in (46, 52), 'Unexpected deck size; refusing to overwrite'
-    inserting = old_count == 46
+    process_count = sello_process_count(prs)
+    target = attack_tree_target(prs)
+    assert old_count in (46 + process_count, 52 + process_count), 'Unexpected deck size; refusing to overwrite'
+    inserting = attack_tree_count(prs) == 0
+    assert old_count == (46 if inserting else 52) + process_count
     if inserting:
-        assert 'Cryptographic chain of custody' in visible(prs.slides[22])
-        assert prs.slides[23].name == b.EVALUATION_STACK_SLIDE_NAME
+        assert 'Cryptographic chain of custody' in visible(prs.slides[chain_of_custody_index(prs)])
+        assert prs.slides[target].name == b.EVALUATION_STACK_SLIDE_NAME
         assert not any(s.name.startswith(b.ATTACK_TREE_SLIDE_PREFIX) for s in prs.slides)
     else:
         check_structure(prs)
@@ -82,10 +92,10 @@ def main():
     backup = Path(tempfile.mkdtemp(prefix='vita-fl-before-attack-trees-')) / DECK.name
     shutil.copy2(DECK, backup)
     if inserting:
-        b.insert_attack_tree_slides(prs, TARGET)
+        b.insert_attack_tree_slides(prs, target)
     else:
         for i, (asset_slide, slug) in enumerate(zip(source.slides, b.ATTACK_TREE_SLUGS)):
-            b.apply_attack_tree_asset(prs.slides[TARGET + i], asset_slide, TARGET + i + 1, slug)
+            b.apply_attack_tree_asset(prs.slides[target + i], asset_slide, target + i + 1, slug)
     check_structure(prs)
 
     handle, filename = tempfile.mkstemp(prefix='.attack-trees-', suffix='.pptx', dir=ROOT)
@@ -96,14 +106,14 @@ def main():
         checked = check_structure(Presentation(candidate))
         preserved = 0
         for index, old in enumerate(before):
-            if not inserting and TARGET <= index < TARGET + COUNT:
+            if not inserting and target <= index < target + COUNT:
                 continue
-            new_index = index + (COUNT if inserting and index >= TARGET else 0)
+            new_index = index + (COUNT if inserting and index >= target else 0)
             assert snapshot(checked.slides[new_index]) == old, \
                 f'Existing Page {index + 1} changed beyond its footer'
             preserved += 1
         for i, asset_slide in enumerate(source.slides):
-            integrated = checked.slides[TARGET + i]
+            integrated = checked.slides[target + i]
             assert integrated.notes_slide.notes_text_frame.text == asset_slide.notes_slide.notes_text_frame.text
             assert len(integrated.shapes) == len(asset_slide.shapes)
             for approved, actual in zip(asset_slide.shapes, integrated.shapes):
@@ -117,20 +127,22 @@ def main():
                     assert old_zip.read(name) == new_zip.read(name), name
         # Exercise the same generator hook without regenerating the user's existing slides.
         generated = b.prepare_template()
-        for _ in range(TARGET):
+        for _ in range(target):
             generated.slides.add_slide(generated.slide_masters[1].slide_layouts[0])
-        b.insert_attack_tree_slides(generated, TARGET)
+        b.insert_attack_tree_slides(generated, target)
         for i in range(COUNT):
-            assert visible(generated.slides[TARGET + i]) == visible(checked.slides[TARGET + i])
-            assert generated.slides[TARGET + i].notes_slide.notes_text_frame.text == source.slides[i].notes_slide.notes_text_frame.text
+            assert visible(generated.slides[target + i]) == visible(checked.slides[target + i])
+            assert generated.slides[target + i].notes_slide.notes_text_frame.text == source.slides[i].notes_slide.notes_text_frame.text
         assert digest(CHAPTER) == chapter_hash
         os.replace(candidate, DECK)
     finally:
         candidate.unlink(missing_ok=True)
 
     RECORD.write_text(json.dumps({
-        'pages': list(range(24, 30)), 'slides_before': old_count, 'slides_after': 52,
-        'talk_pages': 35, 'backup_pages': 17, 'mode': 'insert' if inserting else 'replace',
+        'pages': list(range(target + 1, target + COUNT + 1)),
+        'slides_before': old_count, 'slides_after': len(checked.slides),
+        'talk_pages': len(checked.slides) - 17, 'backup_pages': 17,
+        'sello_process_pages': process_count, 'mode': 'insert' if inserting else 'replace',
         'preserved_other_slides_and_notes': preserved,
         'allowed_existing_change': 'page-number footers only on insertion; none outside trees on update',
         'main_deck_sha256_before': before_hash, 'main_deck_sha256_after': digest(DECK),
@@ -143,7 +155,8 @@ def main():
     if args.render:
         import render_preview
         render_preview.main()
-    print(f'{"Inserted" if inserting else "Updated"} attack trees on Pages 24–29; 52 pages (35 talk, 17 backup).')
+    print(f'{"Inserted" if inserting else "Updated"} attack trees on Pages {target + 1}–{target + COUNT}; '
+          f'{len(checked.slides)} pages ({len(checked.slides) - 17} talk, 17 backup).')
     print(f'Preserved {preserved} existing slides and notes; backup: {backup}')
     print(f'Checks: {RECORD}')
 

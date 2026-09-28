@@ -3600,6 +3600,88 @@ def slide_threat_detail(prs, number, threat_id, title, group, image_name):
     )
 
 
+SELLO_PROCESS_SLIDE_PREFIX = "VITA-FL Sello process: "
+SELLO_PROCESS_SLUGS = ("detailed", "generalized")
+SELLO_PROCESS_ASSET = ASSETS / "sello-process-b.pptx"
+
+
+def sello_process_target(prs):
+    """Find the insertion position immediately after the cryptographic chain."""
+    anchors = [index for index, slide in enumerate(prs.slides)
+               if any(shape.has_text_frame and shape.text.strip() == "Cryptographic chain of custody"
+                      for shape in slide.shapes)]
+    assert len(anchors) == 1, "Expected one cryptographic chain-of-custody slide"
+    return anchors[0] + 1
+
+
+def sello_process_count(prs):
+    """Validate that the two process views are absent or contiguous and ordered."""
+    found = [(index, slide.name) for index, slide in enumerate(prs.slides)
+             if slide.name.startswith(SELLO_PROCESS_SLIDE_PREFIX)]
+    if not found:
+        return 0
+    target = sello_process_target(prs)
+    assert found == [(target + offset, SELLO_PROCESS_SLIDE_PREFIX + slug)
+                     for offset, slug in enumerate(SELLO_PROCESS_SLUGS)], \
+        "Expected detailed and generalized Sello process views after the cryptographic chain"
+    return len(found)
+
+
+def apply_sello_process_asset(slide, source, page_number: int, slug: str):
+    """Copy every approved native shape; only convert the concept page footer."""
+    assert slug in SELLO_PROCESS_SLUGS
+    for shape in list(slide.shapes):
+        remove_shape(shape)
+    for shape in source.shapes:
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "Approved Sello process views must be self-contained native shapes"
+        for node in element.iter():
+            assert not any(key.startswith("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}")
+                           for key in node.attrib), "Unexpected relationship in Sello process asset"
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    slide.name = SELLO_PROCESS_SLIDE_PREFIX + slug
+    footers = [shape for shape in slide.shapes if shape.has_text_frame
+               and shape.top > Inches(6.7)
+               and shape.text.startswith(("Variant ", "Generalized B", "Page "))]
+    assert len(footers) == 1, "Expected exactly one process-asset footer"
+    text = footers[0].element.xpath(".//a:t")
+    assert len(text) == 1, "Refuse to reformat a multi-run footer"
+    text[0].text = f"Page {page_number}"
+    assert source.notes_slide.notes_text_frame.text.strip(), "Process speaker notes are required"
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
+
+
+def insert_sello_process_slides(prs, after_page=None):
+    """Insert the approved detailed and generalized flows while retaining other slides."""
+    assert sello_process_count(prs) == 0, "Process slides already exist"
+    if after_page is None:
+        after_page = sello_process_target(prs)
+    assert 0 <= after_page <= len(prs.slides)
+    source = Presentation(SELLO_PROCESS_ASSET)
+    assert len(source.slides) == len(SELLO_PROCESS_SLUGS)
+    assert (source.slide_width, source.slide_height) == (prs.slide_width, prs.slide_height)
+    added_ids = []
+    for offset, (asset_slide, slug) in enumerate(zip(source.slides, SELLO_PROCESS_SLUGS), 1):
+        slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+        apply_sello_process_asset(slide, asset_slide, after_page + offset, slug)
+        added_ids.append(prs.slides._sldIdLst[-1])
+    for offset, slide_id in enumerate(added_ids):
+        prs.slides._sldIdLst.remove(slide_id)
+        prs.slides._sldIdLst.insert(after_page + offset, slide_id)
+    for page, slide in enumerate(prs.slides, 1):
+        if page <= after_page:
+            continue
+        footers = [shape for shape in slide.shapes if shape.has_text_frame
+                   and shape.top > Inches(6.7) and shape.text.startswith("Page ")]
+        assert len(footers) == 1
+        text = footers[0].element.xpath(".//a:t")
+        assert len(text) == 1
+        text[0].text = f"Page {page}"
+    return prs
+
+
 ATTACK_TREE_SLIDE_PREFIX = "VITA-FL attack tree: "
 ATTACK_TREE_SLUGS = (
     "01-admission", "02-model", "03-recovery", "04-inference", "05-audit", "06-disclosure",
@@ -3697,8 +3779,10 @@ def build():
         slide_threat_detail(prs, number, *threat)
     assert len(prs.slides) == 46
     # Existing slides keep their original domain assignment before the insertion.
-    insert_attack_tree_slides(prs)
-    assert len(prs.slides) == 52
+    insert_sello_process_slides(prs)
+    assert len(prs.slides) == 48
+    insert_attack_tree_slides(prs, after_page=sello_process_target(prs) + len(SELLO_PROCESS_SLUGS))
+    assert len(prs.slides) == 54
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()
