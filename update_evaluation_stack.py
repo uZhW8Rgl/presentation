@@ -35,8 +35,9 @@ def evaluation_stack_target(prs):
 def check_structure(prs):
     tree_count = attack_tree_count(prs)
     process_count = sello_process_count(prs)
+    results_count = b.external_results_count(prs)
     target = evaluation_stack_target(prs)
-    assert len(prs.slides) == 46 + tree_count + process_count, \
+    assert len(prs.slides) == 46 + tree_count + process_count + results_count, \
         'Unexpected talk/backup page count for the evaluation and attack-tree layout'
     assert len(prs.slide_masters) == 2
     assert prs.slides[target].name == b.EVALUATION_STACK_SLIDE_NAME
@@ -44,9 +45,9 @@ def check_structure(prs):
     assert 'Cryptographic chain of custody' in visible(prs.slides[chain_of_custody_index(prs)])
     assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[target + 1])
     assert prs.slides[target + 2].name == b.TEST_EVALUATION_SLIDE_NAME
-    assert 'What changed over the 24 federated rounds?' in visible(prs.slides[target + 3])
-    assert 'Conclusion and outlook' in visible(prs.slides[target + 5])
-    assert 'Training and inference share one verified image' in visible(prs.slides[target + 6])
+    assert 'What changed over the 24 federated rounds?' in visible(prs.slides[target + 3 + results_count])
+    assert 'Conclusion and outlook' in visible(prs.slides[target + 5 + results_count])
+    assert 'Training and inference share one verified image' in visible(prs.slides[target + 6 + results_count])
     for number, slide in enumerate(prs.slides, 1):
         assert slide.notes_slide.notes_text_frame.text.strip(), f'Empty notes: Page {number}'
         if number > 1:
@@ -76,9 +77,10 @@ def main():
     old_count = len(prs.slides)
     tree_count = attack_tree_count(prs)
     process_count = sello_process_count(prs)
+    results_count = b.external_results_count(prs)
     target = evaluation_stack_target(prs)
-    inserting = old_count == 45 + tree_count + process_count
-    assert old_count in (45 + tree_count + process_count, 46 + tree_count + process_count), \
+    inserting = old_count == 45 + tree_count + process_count + results_count
+    assert old_count in (45 + tree_count + process_count + results_count, 46 + tree_count + process_count + results_count), \
         'Unexpected deck structure; refusing to overwrite it'
     if inserting:
         assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[target])
@@ -136,8 +138,9 @@ def main():
 
     RECORD.write_text(json.dumps({
         'page': target + 1, 'slides_before': old_count, 'slides_after': len(checked.slides),
-        'talk_pages': 29 + tree_count + process_count, 'backup_pages': 17,
+        'talk_pages': 29 + tree_count + process_count + results_count, 'backup_pages': 17,
         'attack_tree_pages': tree_count, 'sello_process_pages': process_count,
+        'external_results_pages': results_count,
         'mode': 'insert' if inserting else 'replace',
         'preserved_existing_slides_and_notes': preserved,
         'allowed_existing_change': (f'page-number footers only, starting at inserted Page {target + 1}'
@@ -154,7 +157,7 @@ def main():
         import render_preview
         render_preview.main()
     print(f'{"Inserted" if inserting else "Updated"} Page {target + 1}; '
-          f'{len(checked.slides)} pages ({29 + tree_count + process_count} talk, 17 backup).')
+          f'{len(checked.slides)} pages ({29 + tree_count + process_count + results_count} talk, 17 backup).')
     print(f'Preserved {preserved} existing slides and notes. Backup: {backup}')
     print(f'Checks: {RECORD}')
 

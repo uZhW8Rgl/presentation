@@ -116,15 +116,16 @@ def check_structure(prs):
     target = evaluation_target(prs)
     tree_count = attack_tree_count(prs)
     process_count = sello_process_count(prs)
+    results_count = b.external_results_count(prs)
     architecture_count = target - evaluation_section_target(prs) - 1
-    assert len(prs.slides) == 45 + architecture_count + tree_count + process_count, \
+    assert len(prs.slides) == 45 + architecture_count + tree_count + process_count + results_count, \
         "Unexpected talk/backup page count for the evaluation and attack-tree layout"
     assert len(prs.slide_masters) == 2
     assert prs.slides[target].name == b.TEST_EVALUATION_SLIDE_NAME
     assert sum(slide.name == b.TEST_EVALUATION_SLIDE_NAME for slide in prs.slides) == 1
-    assert "What changed over the 24 federated rounds?" in visible(prs.slides[target + 1])
-    assert "Conclusion and outlook" in visible(prs.slides[target + 3])
-    assert "Training and inference share one verified image" in visible(prs.slides[target + 4])
+    assert "What changed over the 24 federated rounds?" in visible(prs.slides[target + 1 + results_count])
+    assert "Conclusion and outlook" in visible(prs.slides[target + 3 + results_count])
+    assert "Training and inference share one verified image" in visible(prs.slides[target + 4 + results_count])
     for number, slide in enumerate(prs.slides, 1):
         assert slide.notes_slide.notes_text_frame.text.strip(), f"Empty notes: Page {number}"
         if number > 1:
@@ -153,9 +154,10 @@ def main():
     target = evaluation_target(prs)
     tree_count = attack_tree_count(prs)
     process_count = sello_process_count(prs)
+    results_count = b.external_results_count(prs)
     architecture_count = target - evaluation_section_target(prs) - 1
     inserting = not any(slide.name == b.TEST_EVALUATION_SLIDE_NAME for slide in prs.slides)
-    assert old_count == 44 + architecture_count + tree_count + process_count + int(not inserting), \
+    assert old_count == 44 + architecture_count + tree_count + process_count + results_count + int(not inserting), \
         "Unexpected deck size for its evaluation slides"
     if inserting:
         assert "What changed over the 24 federated rounds?" in visible(prs.slides[target])
@@ -214,8 +216,9 @@ def main():
 
     record = {
         "page": target + 1, "slides_before": old_count, "slides_after": len(checked.slides),
-        "talk_pages": 28 + architecture_count + tree_count + process_count, "backup_pages": 17,
+        "talk_pages": 28 + architecture_count + tree_count + process_count + results_count, "backup_pages": 17,
         "attack_tree_pages": tree_count, "sello_process_pages": process_count,
+        "external_results_pages": results_count,
         "mode": "insert" if inserting else "replace",
         "preserved_existing_slides_and_notes": preserved,
         "allowed_existing_change": (f"page-number footer only after inserted Page {target + 1}"
@@ -233,7 +236,7 @@ def main():
         import render_preview
         render_preview.main()
     print(f'{"Inserted" if inserting else "Updated"} Page {target + 1} in {DECK.name}; '
-          f'{len(checked.slides)} pages ({28 + architecture_count + tree_count + process_count} talk, 17 backup).')
+          f'{len(checked.slides)} pages ({28 + architecture_count + tree_count + process_count + results_count} talk, 17 backup).')
     print(f"Preserved {preserved} existing slides and their notes; backup: {backup}")
     print(f"Checks: {RECORD}")
 

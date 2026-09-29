@@ -2037,115 +2037,75 @@ def slide_tee_vs_zk(prs):
     slide = new_content_slide(
         prs,
         9,
-        "Why TEE/RA for the operational path?",
-        "Two independent ZK relations—not one neural-network circuit",
-    )
-
-    add_box(slide, 0.66, 1.47, 12.00, 0.51, fill=LIGHT, line=TU_RED, radius=False)
-    add_rich_text(
-        slide,
-        [
-            ("RELATION SCOPE   ", TU_RED, True, 10.5),
-            ("The proof would need to cover the surrounding cryptographic workflow as well as the tensors.", DARK, True, 12.0),
-        ],
-        0.88,
-        1.60,
-        11.56,
-        0.24,
-        align=PP_ALIGN.CENTER,
-        valign=MSO_ANCHOR.MIDDLE,
+        "Why TEE/RA?",
+        "ZK would need to cover two separate workflows",
     )
 
     panels = [
         (
             0.62,
-            "WORKER TRAINING AS A ZK RELATION",
+            "Worker training",
             "EVERY ROUND",
-            "STATEFUL TRAINING TRANSITION",
             [
-                "Resolve the exact parent model, round policy, and signed training inputs",
-                "Decrypt model material and verify signatures, commitments, hashes, and nonces",
-                "Encode forward/backward passes, optimizer state, and tensor updates",
-                "Hash, sign, encrypt, wrap, and package the resulting update for the aggregator",
+                "Verify inputs",
+                "Train + update state",
+                "Sign + encrypt update",
             ],
             PURPLE_TINT,
             PURPLE,
-            ORANGE,
         ),
         (
             6.82,
-            "DCAP ADMISSION AS A ZK RELATION",
-            "PER ADMISSION",
-            "QUOTE AND MEASUREMENT APPRAISAL",
+            "Worker admission",
+            "AT ENROLLMENT",
             [
-                "Parse Quote V4, TD report, certificate chain, QE identity, and TCB information",
-                "Verify P-256 signatures, hashes, revocation material, freshness, and appraisal policy",
-                "Replay every ordered application event into RTMR3 and match the quoted value",
-                "Bind REPORTDATA, Compose, image, registry, caller, role policy, and one-time nonce",
+                "Verify DCAP quote",
+                "Replay RTMR3",
+                "Bind identity + policy",
             ],
             BLUE_TINT,
             BLUE,
-            GREEN,
         ),
     ]
-    for x, heading, status, claim, bullets, fill, accent, status_color in panels:
-        add_box(slide, x, 2.17, 5.88, 2.94, fill=fill, line=accent, line_width=1.2)
-        add_text(slide, heading, x + 0.25, 2.39, 4.00, 0.35, 12.7, accent, True)
-        add_box(slide, x + 4.31, 2.35, 1.25, 0.35, fill=status_color, line=status_color, radius=False)
-        add_text(
-            slide,
-            status,
-            x + 4.38,
-            2.44,
-            1.11,
-            0.18,
-            8.4,
-            WHITE,
-            True,
-            align=PP_ALIGN.CENTER,
-            valign=MSO_ANCHOR.MIDDLE,
-        )
-        add_text(slide, claim, x + 0.27, 2.86, 5.30, 0.22, 9.5, accent, True)
+    for x, heading, status, bullets, fill, accent in panels:
+        add_box(slide, x, 1.77, 5.88, 3.10, fill=fill, line=accent, line_width=1.2)
+        add_text(slide, status, x + 0.32, 2.03, 5.20, 0.25, 10.5, accent, True)
+        add_text(slide, heading, x + 0.32, 2.44, 5.20, 0.48, 22, accent, True)
         add_bullets(
             slide,
             bullets,
-            x + 0.26,
-            3.14,
-            5.34,
-            1.72,
-            9.9,
+            x + 0.32,
+            3.13,
+            5.20,
+            1.43,
+            17.5,
             DARK,
             accent,
-            3,
+            13,
         )
 
-    add_box(slide, 0.92, 5.38, 11.50, 0.54, fill=TU_RED, line=TU_RED, radius=False)
-    add_rich_text(
+    add_box(slide, 0.62, 5.23, 12.08, 0.64, fill=TU_RED, line=TU_RED, radius=False)
+    add_text(
         slide,
-        [
-            ("VITA-FL DECISION   ", WHITE, True, 10.2),
-            (
-                "TEE/RA keeps both relations native and stateful; ZK remains useful for narrow encoded claims.",
-                WHITE,
-                True,
-                11.0,
-            ),
-        ],
-        1.15,
-        5.53,
-        11.04,
-        0.25,
+        "Native TEE training + on-chain attestation",
+        0.90,
+        5.36,
+        11.52,
+        0.37,
+        17,
+        WHITE,
+        True,
         align=PP_ALIGN.CENTER,
         valign=MSO_ANCHOR.MIDDLE,
     )
     add_text(
         slide,
-        "Scope statement—not a measured TEE-over-ZK speedup. Sources: RFC 9334 · Intel TDX/DCAP · Chen et al., EuroSys ’24.",
+        "Design rationale · no measured TEE–ZK speedup",
         0.77,
         6.02,
         11.78,
-        0.16,
-        7.1,
+        0.20,
+        8.5,
         DARK,
         False,
         align=PP_ALIGN.CENTER,
@@ -2160,8 +2120,8 @@ def slide_tee_vs_zk(prs):
         "formation performed after training. That proof is needed for every worker transition in every round. "
         "Separately, proving DCAP registration would require quote and certificate parsing, cryptographic "
         "signature and hash verification, collateral and TCB appraisal, and a complete ordered RTMR3 replay "
-        "with REPORTDATA and enrollment bindings. VITA-FL instead executes these stateful relations natively "
-        "inside measured TDX workloads and appraises remote-attestation evidence. This is a relation-scope "
+        "with REPORTDATA and enrollment bindings. VITA-FL executes training natively inside measured TDX "
+        "workloads and uses on-chain quote and policy verification for worker admission. This is a relation-scope "
         "argument, not an empirical claim that TEEs are universally faster than ZK. ZK remains suitable for "
         "narrow, precisely encoded claims. References: IETF RFC 9334; Intel TDX/DCAP documentation; and "
         "Chen et al., ZKML, EuroSys 2024, https://doi.org/10.1145/3627703.3650088.",
@@ -3016,6 +2976,8 @@ def slide_evaluation(prs):
 
 TEST_EVALUATION_SLIDE_NAME = "VITA-FL implemented test evaluation"
 EVALUATION_STACK_SLIDE_NAME = "VITA-FL evaluation tools architecture"
+EXTERNAL_RESULTS_SLIDE_NAME = "VITA-FL external test results"
+EXTERNAL_RESULTS_ASSET = ASSETS / "external-test-results-b.pptx"
 
 
 def _apply_native_evaluation_asset(slide, page_number: int, asset_name: str, slide_name: str):
@@ -3091,6 +3053,77 @@ def slide_test_evaluation(prs):
     """Use approved A: CI checks by subject and external system-test scenarios."""
     slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
     return apply_test_evaluation_asset(slide, len(prs.slides))
+
+
+
+def external_results_target(prs):
+    """Place observed external outcomes immediately after the test inventory."""
+    matches = [i for i, slide in enumerate(prs.slides)
+               if slide.name == TEST_EVALUATION_SLIDE_NAME]
+    assert len(matches) == 1, "Expected one CI/external test-inventory slide"
+    return matches[0] + 1
+
+
+def external_results_count(prs):
+    found = [i for i, slide in enumerate(prs.slides)
+             if slide.name == EXTERNAL_RESULTS_SLIDE_NAME]
+    if not found:
+        return 0
+    assert found == [external_results_target(prs)], "Unexpected external-results position or duplicate"
+    return 1
+
+
+def apply_external_results_asset(slide, page_number: int):
+    """Preserve approved variant B's editable shapes; replace its variant footer."""
+    approved = Presentation(EXTERNAL_RESULTS_ASSET)
+    assert len(approved.slides) == 1
+    source = approved.slides[0]
+    for shape in list(slide.shapes):
+        remove_shape(shape)
+    for shape in source.shapes:
+        element = deepcopy(shape.element)
+        assert not element.xpath(".//a:blip | .//a:hlinkClick | .//a:hlinkMouseOver"), \
+            "External results must remain self-contained native shapes"
+        for node in element.iter():
+            assert not any(key.startswith("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}")
+                           for key in node.attrib), "Unexpected relationship in external-results asset"
+        slide.shapes._spTree.insert_element_before(element, "p:extLst")
+    slide.name = EXTERNAL_RESULTS_SLIDE_NAME
+    footers = [shape for shape in slide.shapes if shape.has_text_frame
+               and shape.top > Inches(6.7) and shape.text.startswith(("Variant ", "Page "))]
+    assert len(footers) == 1
+    text = footers[0].element.xpath(".//a:t")
+    assert len(text) == 1
+    text[0].text = f"Page {page_number}"
+    assert source.notes_slide.notes_text_frame.text.strip()
+    add_note(slide, source.notes_slide.notes_text_frame.text)
+    return slide
+
+
+def slide_external_results(prs):
+    slide = prs.slides.add_slide(prs.slide_masters[1].slide_layouts[0])
+    return apply_external_results_asset(slide, len(prs.slides))
+
+
+def insert_external_results_slide(prs):
+    """Insert after other sections so existing domain badges remain unchanged."""
+    assert external_results_count(prs) == 0, "External results already exist"
+    target = external_results_target(prs)
+    slide_external_results(prs)
+    added = prs.slides._sldIdLst[-1]
+    prs.slides._sldIdLst.remove(added)
+    prs.slides._sldIdLst.insert(target, added)
+    for page, slide in enumerate(prs.slides, 1):
+        if page <= target:
+            continue
+        footers = [shape for shape in slide.shapes if shape.has_text_frame
+                   and shape.top > Inches(6.7) and shape.text.startswith("Page ")]
+        assert len(footers) == 1
+        text = footers[0].element.xpath(".//a:t")
+        assert len(text) == 1
+        text[0].text = f"Page {page}"
+    assert external_results_count(prs) == 1
+    return prs
 
 
 def slide_learning_trajectories(prs):
@@ -3783,6 +3816,8 @@ def build():
     assert len(prs.slides) == 48
     insert_attack_tree_slides(prs, after_page=sello_process_target(prs) + len(SELLO_PROCESS_SLUGS))
     assert len(prs.slides) == 54
+    insert_external_results_slide(prs)
+    assert len(prs.slides) == 55
     assert len(prs.slide_masters) == 2
     for index, slide in enumerate(prs.slides, start=1):
         assert slide.notes_slide.notes_text_frame.text.strip()

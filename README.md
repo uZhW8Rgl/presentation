@@ -1,10 +1,10 @@
 # VITA-FL — Master's Thesis Presentation
 
 This repository contains the English presentation for the VITA-FL master's
-thesis. It comprises thirty-seven talk pages, three compact backup and overview
+thesis. It comprises thirty-eight talk pages, three compact backup and overview
 pages (one worker-role overview and two threat overviews), and fourteen
-full-size use/misuse-case backup pages, for a total of fifty-four pages. The suggested
-talk timing is approximately thirty-one minutes. The deck is built directly from
+full-size use/misuse-case backup pages, for a total of fifty-five pages. The suggested
+talk timing is approximately thirty-two minutes. The deck is built directly from
 the official TU Berlin PowerPoint template, and its title page preserves the
 official TU Berlin branding.
 
@@ -12,7 +12,7 @@ official TU Berlin branding.
 
 - `TU_Berlin_Praesentation_Master_einfarbig_Rot.pptx`: unchanged TU Berlin source template
 - `VITA-FL_Thesis_Presentation_TU_Berlin.pptx`: editable 16:9 presentation
-- `preview/contact-sheet.png`: preview of all fifty-four pages
+- `preview/contact-sheet.png`: preview of all fifty-five pages
 - `build_presentation.py`: reproducible deck generator
 - `update_sello_process.py`: idempotent integration of detailed and generalized process slides on Pages 24–25
 - `assets/sello-process-b.pptx`: approved two-slide native Sello/AIR process asset
@@ -22,6 +22,9 @@ official TU Berlin branding.
 - `assets/attack-trees-integration.json`: integration and preservation checks
 - `update_evaluation_stack.py`: idempotent insertion/update of the approved evaluation-stack diagram on Page 32 with structural preservation checks
 - `update_slide25_test_evaluation.py`: idempotent insertion/update of the selected CI/external-test slide on Page 34 with structural preservation checks
+- `update_external_results.py`: idempotent integration of approved external-test catalogue B on Page 35
+- `assets/external-test-results-b.pptx`: approved editable external-results slide
+- `assets/external-test-results-integration.json`: insertion, source preservation and backup record
 - `attestation_slides.py`: on-chain verification diagram for Page 14 and the earlier key-derivation layout retained for concepts
 - `render_preview.py`: lightweight local QA renderer
 - `assets/threat-diagrams/T1.png` … `T14.png`: use/misuse-case source diagrams
@@ -36,7 +39,7 @@ official TU Berlin branding.
 - `assets/evaluation-stack-c.pptx`: approved native evaluation-stack diagram used on Page 32
 - `assets/test-evaluation-a.pptx`: approved native CI/external-test variant A used on Page 34
 - `assets/test-evaluation-integration.json`: insertion/update audit and backup location
-- `assets/worker-inference-a.pptx`: approved combined-image and internal-key diagram used on Page 38
+- `assets/worker-inference-a.pptx`: approved combined-image and internal-key diagram used on Page 39
 - `data/evaluation/authoritative_phala_6w_24r*.{csv,json}`: the sole six-worker, 24-round Phala run of the current deterministic equal-weight FedAvg path, including simulated Anvil gas accounting, used by the cloud-run and learning-metric slides; the generator records the run-specific Tier-1 allocation of six worker and two infrastructure TEE slots
 - `requirements.txt`: pinned Python dependencies
 
@@ -45,7 +48,7 @@ for layout inspection; PowerPoint remains authoritative for exact font metrics
 and line wrapping. Preview rendering expects the DejaVu Sans fonts at their
 standard Linux paths.
 
-Pages 1–6 have no domain legend. Pages 7–54, except the process and attack-tree diagrams on Pages 24–31, show compact **DFL** and **Agent**
+Pages 1–6 have no domain legend. Pages 7–55, except the process and attack-tree diagrams on Pages 24–31, show compact **DFL** and **Agent**
 chips at the top right, directly left of the TU Berlin logo. Active domains
 retain green (`#207548`) and blue (`#1764A1`); inactive domains are gray.
 Page 20 explicitly activates only **Agent**; its **DFL** chip is gray.
@@ -100,6 +103,11 @@ ledger and IPFS share the purple domain and each connects directly to the
 Receiver TEE. Two overlapping dashed frames include the shared infrastructure
 in both responsibility groups. The green and blue captions sit below their
 colored panels, inside the dashed frames.
+
+Page 12 condenses the TEE/RA rationale into two workflow cards with three short
+items each: worker training per round and worker admission at enrollment. The
+takeaway separates native TEE training from on-chain attestation. Detailed proof
+scope, references, and the limits of the comparison remain in the speaker notes.
 
 Page 13 shows the approved worker-image pipeline: GitHub push, worker tests,
 GHCR publication, Terraform, and `EXPECTED_WORKER_IMAGE` in the contracts
@@ -193,19 +201,30 @@ gate, while recovery stops the selected aggregator CVM. Speaker notes distinguis
 implemented checks, configured execution and observed results. Both DFL and
 Agent navigation chips are active.
 
+Page 35 contains the approved **External test catalogue: intervention and assertion**
+(variant B) from `assets/external-test-results-b.pptx`. It follows the coverage
+inventory with observed results: three controlled collection scenarios (5, 2 or
+0 accepted uploads), aggregator-stop/quorum recovery, unauthorized API requests
+and read-only contract-guard probes, and re-verification of evidence downloaded
+from the transparency log. Every category names the test action and checked
+property. Counts distinguish 3 scenarios, 16 security checks and 17 receipt checks.
+The notes retain canonical archive sources, earlier startup failures, provisioning
+and SCITT-key changes, and the limits of the selected scenarios. See
+[the results proposals and evidence](concepts/external-results/README.md).
+
 The earlier **808 = 731 unit/component + 77 integration** inventory remains only
 in the historical `concepts/test-evaluation/test-inventory.{csv,json,md}` files.
 Its absence of an automated complete cloud training/inference or fault-injection
 evaluation describes that historical inventory. It is not the current Page 34
 scope and does not change the legacy-profile Phala results on Page 33.
 
-Page 38 uses the approved [combined worker/inference diagram A](concepts/worker-inference/a-shared-image.png).
+Page 39 uses the approved [combined worker/inference diagram A](concepts/worker-inference/a-shared-image.png).
 One image and container contain the DFL and inference processes, with keys
 used internally. The agent receives results and signed evidence through its
 tool call, without a private-key transfer. Notes retain the distinction between
 on-chain admission and KMS key release and the associated update-policy assumption.
 
-Pages 38–54 are backup material and are not included in the timing below.
+Pages 39–55 are backup material and are not included in the timing below.
 
 ## Suggested timing
 
@@ -245,11 +264,12 @@ Pages 38–54 are backup material and are not included in the timing below.
 | 32 | Evaluation workflow: SMEW, SMA, vita-fl-td, and VITA-FL in Phala | 0:45 |
 | 33 | Sole-run protocol, Tier-1 capacity allocation, and workload summary | 0:45 |
 | 34 | CI checks by subject and configured external system tests | 0:55 |
-| 35 | BCE, macro-AUROC, macro-F1, accuracy, and exact match across all 24 rounds | 0:50 |
-| 36 | Dataset imbalance and metric interpretation | 0:45 |
-| 37 | Conclusion and outlook | 0:40 |
+| 35 | External test catalogue: interventions, assertions and observed outcomes | 0:50 |
+| 36 | BCE, macro-AUROC, macro-F1, accuracy, and exact match across all 24 rounds | 0:50 |
+| 37 | Dataset imbalance and metric interpretation | 0:45 |
+| 38 | Conclusion and outlook | 0:40 |
 
-Suggested total: approximately thirty-one minutes, including brief transitions
+Suggested total: approximately thirty-two minutes, including brief transitions
 between the pages. The added process slides have not been timed in a rehearsal. For a shorter slot, Pages 13–17 and 23
 can be treated as technical detail pages without breaking the main narrative.
 
@@ -263,7 +283,9 @@ selected CI/external-test variant A replaces the previous test matrix on Page 34
 The detailed and generalized Sello/AIR process slides occupy Pages 24–25,
 followed by the six approved attack trees on Pages 26–31. Their insertion
 preserved all 52 existing slides and notes; only subsequent page-number
-footers changed. The deck now has 54 pages (37 talk, 17 backup). The generator
+footers changed. The external-results catalogue was subsequently inserted as Page 35, preserving all
+54 previous slides and their notes apart from following page-number footers.
+The deck now has 55 pages (38 talk, 17 backup). The generator
 includes these diagrams from their independent assets. The former combined
 attestation/key slide was replaced with two native diagrams; all other slide
 edits were retained. A full regeneration recreates the
@@ -294,8 +316,8 @@ apart from page-number footers, and preserves existing media/masters/layouts.
 Repeated runs update the same six slides. The generator creates the existing
 slides with their original domain assignments before inserting the trees and
 renumbering; this preserves the meaning of the existing navigation badges.
-The evaluation/test updaters support both the earlier layout and the new 54-page
-layout. Chapter 4 is unchanged.
+The evaluation/test updaters support both the earlier layout and the current 55-page
+layout, including the optional external-results slide. Chapter 4 is unchanged.
 
 To insert or update the approved evaluation-stack slide while preserving
 existing PowerPoint edits, run from the presentation directory:
@@ -323,10 +345,25 @@ to the historical 808-definition inventory and is not a prerequisite for this bu
 The updater creates a backup in a new `vita-fl-before-test-evaluation-*`
 directory under the system temporary directory and validates the candidate before replacing the deck. It verifies
 the other slides' XML (apart from page numbers), speaker notes and slide
-relationships, unchanged media/masters/layouts, sequential Page 2–54 footers, the
-37-page talk/17-page backup boundary, native shapes and the generator hook.
+relationships, unchanged media/masters/layouts, sequential Page 2–55 footers, the
+38-page talk/17-page backup boundary, native shapes and the generator hook.
 A second run updates the test slide on Page 34 instead of adding another page. It records the
 asset and deck hashes in `assets/test-evaluation-integration.json`.
+
+To update the approved external-results slide while preserving other PowerPoint edits:
+
+```bash
+.venv/bin/python update_external_results.py --render
+```
+
+This imports the independent approved variant-B asset, locates the test inventory
+semantically, and inserts or replaces the following slide (currently Page 35).
+It verifies original slide XML, notes, relationships, media and masters, retains
+all approved native shapes except the page label, checks idempotent asset import,
+and makes a temporary backup before replacing the deck. The integration record
+is `assets/external-test-results-integration.json`. A full build adds this slide
+after the other optional sections so existing domain-navigation assignments stay
+unchanged. The historical 24-round model-quality evidence remains a separate run.
 
 For a complete regeneration, run from the presentation directory:
 

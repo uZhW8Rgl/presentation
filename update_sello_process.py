@@ -31,20 +31,21 @@ def digest(path):
 
 def check_structure(prs):
     target = b.sello_process_target(prs)
+    results_count = b.external_results_count(prs)
     assert b.sello_process_count(prs) == COUNT
     trees = [(index, slide.name) for index, slide in enumerate(prs.slides)
              if slide.name.startswith(b.ATTACK_TREE_SLIDE_PREFIX)]
     expected_trees = [(target + COUNT + offset, b.ATTACK_TREE_SLIDE_PREFIX + slug)
                       for offset, slug in enumerate(b.ATTACK_TREE_SLUGS)]
     assert trees in ([], expected_trees), 'Unexpected attack-tree position or order'
-    assert len(prs.slides) == 46 + COUNT + len(trees), 'Unexpected talk/backup page count'
+    assert len(prs.slides) == 46 + COUNT + len(trees) + results_count, 'Unexpected talk/backup page count'
     assert len(prs.slide_masters) == 2
     evaluation = target + COUNT + len(trees)
     assert prs.slides[evaluation].name == b.EVALUATION_STACK_SLIDE_NAME
     assert 'One end-to-end Phala FedAvg run' in visible(prs.slides[evaluation + 1])
     assert prs.slides[evaluation + 2].name == b.TEST_EVALUATION_SLIDE_NAME
-    assert 'Conclusion and outlook' in visible(prs.slides[evaluation + 5])
-    assert 'Training and inference share one verified image' in visible(prs.slides[evaluation + 6])
+    assert 'Conclusion and outlook' in visible(prs.slides[evaluation + 5 + results_count])
+    assert 'Training and inference share one verified image' in visible(prs.slides[evaluation + 6 + results_count])
     for page, slide in enumerate(prs.slides, 1):
         assert slide.notes_slide.notes_text_frame.text.strip(), f'Empty notes on Page {page}'
         if page > 1:
@@ -74,8 +75,9 @@ def main():
     prs = Presentation(DECK)
     old_count = len(prs.slides)
     target = b.sello_process_target(prs)
+    results_count = b.external_results_count(prs)
     inserting = b.sello_process_count(prs) == 0
-    assert old_count in ((46, 52) if inserting else (48, 54)), \
+    assert old_count - results_count in ((46, 52) if inserting else (48, 54)), \
         'Unexpected deck size; refusing to overwrite'
     if inserting:
         assert (prs.slides[target].name == b.EVALUATION_STACK_SLIDE_NAME
@@ -140,6 +142,7 @@ def main():
     RECORD.write_text(json.dumps({
         'pages': pages, 'slides_before': old_count, 'slides_after': new_count,
         'talk_pages': new_count - 17, 'backup_pages': 17,
+        'external_results_pages': results_count,
         'mode': 'insert' if inserting else 'replace',
         'preserved_other_slides_and_notes': preserved,
         'allowed_existing_change': 'page-number footers only on insertion; none outside process slides on update',

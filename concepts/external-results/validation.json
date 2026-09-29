@@ -1,0 +1,29 @@
+{
+  "slides": 3,
+  "native_editable_shapes": true,
+  "layout": "passed",
+  "pptx_roundtrip": "passed",
+  "assertions_against_archived_results": "passed",
+  "main_and_chapter_preserved": {
+    "presentation/VITA-FL_Thesis_Presentation_TU_Berlin.pptx": "1fac9ebb80f1b4a43cd924f5bafc610b83390dcbafa77bc8765b67ba0a7c1201",
+    "overleaf/chapters/chapter4.tex": "b13f77a28f5cf1e02b8e40d4a174d52a6a2aeb498ec92442191124740c6cf6c6"
+  },
+  "new_live_tests_executed": true,
+  "security_archive": "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d",
+  "collection_archives": {
+    "early": "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a",
+    "partial": "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e",
+    "zero": "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90"
+  },
+  "visual_review": "passed",
+  "design_revision": "concrete-test-scope-v2",
+  "preview_renderer": "Pillow; native PowerPoint may vary slightly in font metrics",
+  "visual_review_utc": "2026-09-29T15:18:41.263173+00:00",
+  "visual_review_details": "All three revised previews inspected. Test stimuli, verification targets and outcomes are visible; no text clipping or overlap; native PowerPoint may differ slightly in font metrics.",
+  "content_review": "Concrete test scope checked against canonical archives and verifier source; contract calls labeled eth_call; audit limits retained in notes.",
+  "preview_sha256": {
+    "a-result-cards.png": "4cebc3f498a401afd38243c9f3b2a3f0eb80bd98c87f33b101085ba42bbcfbc9",
+    "b-evidence-matrix.png": "848b4671dfd558af362af71bbb373f33ae3c1687a524a0db0b7e57935200c857",
+    "c-recovery-story.png": "d5a5e082a7c9d295fbf07ff1de84f8b705d39c87c2cb0ac93558464c34f1fb4f"
+  }
+}

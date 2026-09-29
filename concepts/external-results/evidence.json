@@ -1,0 +1,643 @@
+{
+  "review_date": "2026-09-29",
+  "run_date": "2026-09-25",
+  "recovery_run_id": "f1c2067d0e344f9c99f116335400f159",
+  "recovery_status": "PASS",
+  "successful_training_rounds": 5,
+  "active_workers": 6,
+  "contribution_counts": [
+    4,
+    4,
+    5,
+    5,
+    5
+  ],
+  "successful_attempt_ids": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "collection_event_timings": [
+    {
+      "round": 2,
+      "target": 5,
+      "opened": 1790350216,
+      "deadline": 1790350261,
+      "accepted": 4,
+      "closed": 1790350261,
+      "elapsed_seconds": 45
+    },
+    {
+      "round": 3,
+      "target": 5,
+      "opened": 1790350274,
+      "deadline": 1790350319,
+      "accepted": 4,
+      "closed": 1790350319,
+      "elapsed_seconds": 45
+    },
+    {
+      "round": 4,
+      "target": 5,
+      "opened": 1790350333,
+      "deadline": 1790350378,
+      "accepted": 5,
+      "closed": 1790350347,
+      "elapsed_seconds": 14
+    },
+    {
+      "round": 5,
+      "target": 5,
+      "opened": 1790350361,
+      "deadline": 1790350406,
+      "accepted": 5,
+      "closed": 1790350374,
+      "elapsed_seconds": 13
+    },
+    {
+      "round": 6,
+      "target": 5,
+      "opened": 1790350388,
+      "deadline": 1790350433,
+      "accepted": 5,
+      "closed": 1790350399,
+      "elapsed_seconds": 11
+    }
+  ],
+  "collection_timing_basis": "archived PolicyOpened data and InputsClosed block timestamps; not direct instrumentation of the local aggregator timer",
+  "configured_client_limit": 5,
+  "configured_deadline_ms": 45000,
+  "quorum_reports": [
+    1,
+    2,
+    3
+  ],
+  "required_reports": 3,
+  "eligible_reporters": 5,
+  "below_quorum_preserved": true,
+  "reselection_seconds": 112.38476599752903,
+  "publication_seconds": 169.4131330102682,
+  "audit_passed": 17,
+  "audit_groups": {
+    "scitt": 10,
+    "air-tdx": 1,
+    "session": 3,
+    "sello": 3
+  },
+  "audit_duration_seconds": 13.582580626010895,
+  "audit_limitations": [
+    "Verifier primitives are reused from the recorded VITA checkout; execution and policy selection are independent.",
+    "Quote cryptography/collateral is freshly appraised by the official Phala verifier, not locally reimplemented.",
+    "The original TLS handshake and challenge generation were not observed by this auditor.",
+    "Log signatures prove inclusion under the pinned log key, not global completeness or absence of split views.",
+    "SCITT publisher signatures are checked, but their embedded publisher certificates are not independent identity anchors."
+  ],
+  "partial_scenario_status": "ERROR",
+  "older_recovery_status": "ERROR",
+  "unobserved_scenarios": [],
+  "unobserved_scope": "No archived execution found in workspace SMEW/vita-fl-td results, including ignored files; this is not proof that no execution ever occurred.",
+  "security_checks_implemented": 16,
+  "security_inventory_source": "presentation/concepts/test-evaluation/ci-external/external-scope.json",
+  "sources": {
+    "SMEW/reports/vita-fl-recovery-5r-61b96e51/2026_09_25_17_22_19_749db20e/subprocess_output/result.json": "f2f07e30f8ad7b9278dcd6fd6dfaa0cc59658ea63fa930d5a9c2d8242d6dd91a",
+    "SMEW/reports/vita-fl-recovery-5r-61b96e51/2026_09_25_17_22_19_749db20e/subprocess_output/run-artifacts.zip": "d4e6ef04fa27f5fd301cab68e6dafea32e9514424fc97de6636948dd15fc6d5b",
+    "SMEW/reports/vita-fl-partial-5r-61b96e51/2026_09_25_17_35_46_15585dd8/subprocess_output/result.json": "016a566250e47e0ab773f8433ce1692c2c902d03dbca31ae86d6ff66f936d14e",
+    "SMEW/reports/vita-fl-recovery-5r-98664d28/2026_09_25_16_34_03_e48f9a7c/subprocess_output/result.json": "c65e37e9557e96d9d6e14d1f455a06cbd236cb9fa0350a62fd2c878d65300e40",
+    "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/smew.json": "f5dc90b8a74f3401fd2bd1eb89c2dfe04cfb5adb4c937400aa50669f326b6e0a",
+    "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/run.json": "ddaa054a0b1e42692982a31906c3abcb0d7807c297c9f60881623bf00c1f4e0f",
+    "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/manifest.json": "9cf759531999e1f50d2e6dfa012f0b41a6d0a85bf46cc646af8d56fbac6faf8e",
+    "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/subprocess_output/result.json": "f565faa66d5ca56b3204340681604f58853b682846e5d9184cd7b7f220012725",
+    "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/subprocess_output/run-artifacts.zip": "09e48552f5c81efbd596ee8c25f146545d82e395d11a0bb6732fc7fe92043d33",
+    "vita-fl-td/src/vita_fl_td/security_bridge.py": "4e42aa2ae5d5c664fa701100947a4222b3e37889c6b93cfdd79ea4904757a2c4",
+    "vita-fl-td/generated/security-check-20260929/vita-fl-security-5r-20260929-a2fb2bbf/audit-policy.json": "3e864a981eccf694a33995309edc29f41b3b2d30e59b7b694f04473a0016a229",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/smew.json": "391f4a7395740ed6fe613175022d00a93d9b713d822d51ba31a40d1eb0155c4a",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/run.json": "56f6891f68a568ea637f718b44e3ccfb230784ed2cded03ab66864c0d416a66c",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/manifest.json": "aaeac953d459e22249eb2da27e747df26fe207c1410d6d1aeb3980716282d3f9",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/result.json": "a25cfca56d05d3023408c706d0a7a04ccd31df8a71e0f61283beb5ce405144b2",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/run-artifacts.zip": "fe76a3b7909b14e9cb4033adf2be48b40ed29d90ebf685d82e3c6af5d14a23d4",
+    "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json": "9370831601f51f9b080f2dbd8e5d607bf0888f6df8c0fb2fdf45f2deb6415c1e",
+    "vita-fl-td/generated/collection-check-20260929/restart-verification.json": "9092709cf72471edd3652c0bfa068487390d2a2e5702d770b52ec5b898c51161",
+    "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/smew.json": "6a93603200259b2c542782a5c3ccd88cb3fb0e31459a695bd8feb91e988d442f",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/run.json": "5b663e8eddb828792c67aa8c45f9e7c42ea2ba7c92ad7b42f5812c327816b473",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/manifest.json": "5f82fba426b8f4afa1624ca64725bbddbb97be5db3b1317da6a121976026b67f",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/result.json": "cc15f4613545fa54952453ced7e0537e5b3ad6a8f3cef9e75d83ac59cf188c03",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/run-artifacts.zip": "fcdaf712fcf7cd054625c770bdf113a8b39f46d9a78d9b82f5d9ab4d28e4e1e4",
+    "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/smew.json": "6799756b96ab8f47029c941c22ec24d775a18a3a1b97d234b57e3bc1bee14ccd",
+    "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/run.json": "d51776687a2ae582340c687f0abcb202271bb875220b26ad8298d7c8aa427f73",
+    "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/manifest.json": "58a320cb948e83125dbf0e186d917dc65143b5a11f88be5cad07a22031be223b",
+    "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/result.json": "e0d155c8bbff1badc3b30e47fb106264705dcfaf0aebc8c7d337c245a0362658",
+    "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/run-artifacts.zip": "eb7eb982d50b6a499b92d5a780a944097ee507fffe01fa08cca663b77870ef86",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/smew.json": "41e31139a34bb66e5bb8b90de19dcd45bc95fbc17f163332dda57e158be390bb",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/run.json": "49ef2a17f7153d35941d005f0f6372402edce79e69c6a87c4cc61a74b95d8dc0",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/manifest.json": "839b10b71a2c99097a2562a1dcc5ebee3a4e1845129792d6ffead37a0078f1f4",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/result.json": "46e55c2cdb60fcc8ae0f32b4685d41ff77b0ddbacf8e77038ceccf29eaeb70e2",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/run-artifacts.zip": "3b9077b3338d08759bdd7c8fe2bbb1f07a7c08b74e4ba4b02700bdcc70040668",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/smew.json": "170f6d3ff8916837c68649a2ecc263594713b1529c6cac8ae4f47142a7dcd3f4",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/run.json": "734c89a72e472e0f7d7e97c533ab54faa607141358c5c3426f1de28611de42d9",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/manifest.json": "3f21c2bbab227f6f49af0b39e329cb5a7a1e8f929a7de5f9e039e8f88f598f89",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/result.json": "2dbd9a0e5422ef8267fb50089f098190c100d0ef688b469970d4ee871c9742d4",
+    "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/run-artifacts.zip": "713a07998a367dffb56d132ca96cb008a46b1d7941750e242029f53b08dd96c6",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/smew.json": "bc2a176e3c2aedd7bffad38b3ca6d2445db7e10841a931bb674f92dfd5c45b26",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/run.json": "6ced59625551dfe79d0dacc3be6ef6eb1918acde4805ce0bcac6c95530afd1a6",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/manifest.json": "02c2d4bef9786535105c0d08c78388be122676ae7d129aad4e1ef3a76f33156b",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/result.json": "7dd9fd18c3f10a6e1370b7b78c78177837200465f6884426d4040697df5f2b11",
+    "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/run-artifacts.zip": "c2490f2aa387939b6591e73ffdbaf9a456775c5123311940951f66ab47f8d324"
+  },
+  "new_live_tests_executed": true,
+  "security": {
+    "run_date": "2026-09-29",
+    "run_id": "fb5671a8fb3141208b1920993418dcf9",
+    "status": "PASS",
+    "report_directory": "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d",
+    "smew_state": "succeeded",
+    "smew_exit_code": 0,
+    "sma_status": "ok",
+    "checks_passed": 16,
+    "check_groups": {
+      "access_and_configuration": [
+        "ui_missing_credentials",
+        "ui_wrong_credentials",
+        "control_missing_credentials",
+        "control_wrong_credentials",
+        "control_configuration_unchanged"
+      ],
+      "contract_guards": [
+        "coordination_stale_round",
+        "coordination_wrong_aggregator",
+        "coordination_unregistered_action_key",
+        "coordination_policy_owner"
+      ],
+      "positive_inference": [
+        "agent_positive_control"
+      ],
+      "negative_inference_authorization": [
+        "inference_fetch_missing_authorization",
+        "inference_fetch_spoofed_authorization",
+        "inference_job_missing_authorization",
+        "inference_job_spoofed_authorization",
+        "inference_run_missing_authorization",
+        "inference_run_spoofed_authorization"
+      ]
+    },
+    "coverage_gaps": [
+      {
+        "threat": "T1",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Genuine hardware evidence for a substituted workload is not injected."
+      },
+      {
+        "threat": "T2",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "No replay of a captured valid PoP request or admission quote; only round/aggregator guards."
+      },
+      {
+        "threat": "T3",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Existing external APIs do not inject signed training-shard mutations."
+      },
+      {
+        "threat": "T4",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Positive publication binding is audited; no storage substitution is induced."
+      },
+      {
+        "threat": "T5",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "HTTP authorization does not establish every encryption or key-custody property."
+      },
+      {
+        "threat": "T6",
+        "status": "SKIP",
+        "boundary": "separate-system-scenario",
+        "reason": "Real outage/quorum/recovery requires the separate recovery scenario."
+      },
+      {
+        "threat": "T7",
+        "status": "SKIP",
+        "boundary": "residual",
+        "reason": "Valid poisoned contributions and clinical correctness are outside the active mean's guarantee."
+      },
+      {
+        "threat": "T8",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "No altered evidence is sent to the deployed verifier; cloud manipulation is disabled."
+      },
+      {
+        "threat": "T9",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Tool stage order, general prompt injection and malicious tool metadata are not tested."
+      },
+      {
+        "threat": "T10",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Publication completeness is audited on success; no suppression or log outage is induced."
+      },
+      {
+        "threat": "T11",
+        "status": "SKIP",
+        "boundary": "residual",
+        "reason": "Exact ledger bytes are read back; no independent witness establishes split-view consistency."
+      },
+      {
+        "threat": "T12",
+        "status": "SKIP",
+        "boundary": "not-tested",
+        "reason": "Bounded probes are not load tests or infrastructure-wide denial-of-service recovery."
+      },
+      {
+        "threat": "T13",
+        "status": "SKIP",
+        "boundary": "residual",
+        "reason": "Cryptographic, governance, key and platform-root compromise remain assumption boundaries."
+      },
+      {
+        "threat": "T14",
+        "status": "SKIP",
+        "boundary": "residual",
+        "reason": "A sufficient colluding coalition is not prevented by these authorization guards."
+      }
+    ],
+    "observed_outcomes": {
+      "unauthorized_http_401": 10,
+      "expected_eth_call_reverts": 4,
+      "configuration_unchanged": 1,
+      "authorized_inference_passed": 1
+    },
+    "audit_passed": 17,
+    "audit_groups": {
+      "scitt": 10,
+      "air-tdx": 1,
+      "session": 3,
+      "sello": 3
+    },
+    "audit_duration_seconds": 13.34210316836834,
+    "audit_limitations": [
+      "Verifier primitives are reused from the recorded VITA checkout; execution and policy selection are independent.",
+      "Quote cryptography/collateral is freshly appraised by the official Phala verifier, not locally reimplemented.",
+      "The original TLS handshake and challenge generation were not observed by this auditor.",
+      "Log signatures prove inclusion under the pinned log key, not global completeness or absence of split views.",
+      "SCITT publisher signatures are checked, but their embedded publisher certificates are not independent identity anchors."
+    ],
+    "successful_training_rounds": 5,
+    "active_workers": 6,
+    "deployment_app_id": "a2fb2bbf783c732037ea821b374cc8b6c9e29c67",
+    "recovery_deployment_app_id": "9736bdad088449709c03120e036b2ba583ed692f",
+    "same_deployment_images": true,
+    "deployment_images": {
+      "agent_image": "ghcr.io/uzhw8rgl/master-thesis-agent@sha256:5a3e19958d4b4f93368997e06fcfb33bbc25d36200d409455cd1344cf31aa293",
+      "control_api_image": "ghcr.io/uzhw8rgl/master-thesis-control-api@sha256:21210dfecf419c3f19d1a2ae1324a57ffc95f05416dd69a66b45bb397b0806c2",
+      "smart_contracts_image": "ghcr.io/uzhw8rgl/master-thesis-smart-contracts@sha256:16e99be39dec480cb4239e8e3d040ff2db7cbd525d56116daf3c33e6bfdcbcc5",
+      "transparency_log_image": "ghcr.io/uzhw8rgl/master-thesis-transparency-log@sha256:966e2084177b8d3c753d6598f3085c530dd0b94b7a8f8ddd55fd22a1bfa2e9f1",
+      "ui_image": "ghcr.io/uzhw8rgl/master-thesis-ui@sha256:2ccac61c97282638baed71f71a9539cc531770c4c15ef091e9dba6487b0c9091",
+      "worker_image": "ghcr.io/uzhw8rgl/master-thesis-dfl-worker@sha256:29561980345da343de7849e44ed6b116213d344cbd272ec70e885b79c9faebb8",
+      "zk_inference_image": "ghcr.io/uzhw8rgl/master-thesis-zk-inference@sha256:3a6d350f36846ef1f0b8153354f4c73a555aeb01d456c669012ffd926cdb74a8"
+    },
+    "test_driver_source_sha256": "40e1180725623773e9c2030711218fcc840e4b85c040ade71f5b398339b1a139",
+    "recovery_test_driver_source_sha256": "f34bf536d857e27c9aa37f556184bb373e029ea2285bf6772428815d5209f4c9",
+    "provisioning_terraform_parallelism": null,
+    "runtime_compose_sha256": null,
+    "audit_policy": {
+      "path": "vita-fl-td/generated/security-check-20260929/vita-fl-security-5r-20260929-a2fb2bbf/audit-policy.json",
+      "sha256": "3e864a981eccf694a33995309edc29f41b3b2d30e59b7b694f04473a0016a229",
+      "scitt_keys_sha256": "ffa512796b8a1c59e1e5e0e088693543f07f66f574ab7e7000db8b0f78eeadaf",
+      "trust_bootstrap": "authenticated-deployment-ui"
+    },
+    "sources": {
+      "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/smew.json": "f5dc90b8a74f3401fd2bd1eb89c2dfe04cfb5adb4c937400aa50669f326b6e0a",
+      "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/run.json": "ddaa054a0b1e42692982a31906c3abcb0d7807c297c9f60881623bf00c1f4e0f",
+      "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/manifest.json": "9cf759531999e1f50d2e6dfa012f0b41a6d0a85bf46cc646af8d56fbac6faf8e",
+      "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/subprocess_output/result.json": "f565faa66d5ca56b3204340681604f58853b682846e5d9184cd7b7f220012725",
+      "SMEW/reports/vita-fl-security-5r-20260929-a2fb2bbf/2026_09_29_13_35_26_f18d168d/subprocess_output/run-artifacts.zip": "09e48552f5c81efbd596ee8c25f146545d82e395d11a0bb6732fc7fe92043d33",
+      "vita-fl-td/src/vita_fl_td/security_bridge.py": "4e42aa2ae5d5c664fa701100947a4222b3e37889c6b93cfdd79ea4904757a2c4",
+      "vita-fl-td/generated/security-check-20260929/vita-fl-security-5r-20260929-a2fb2bbf/audit-policy.json": "3e864a981eccf694a33995309edc29f41b3b2d30e59b7b694f04473a0016a229"
+    }
+  },
+  "security_checks_observed_passed": 16,
+  "live_execution_note": "Separately executed 29 Sep campaigns are consumed; this slide generator launches no cloud run.",
+  "displayed_audit_source": "fb5671a8fb3141208b1920993418dcf9",
+  "collection": {
+    "scenarios_passed": 3,
+    "scenarios": {
+      "early": {
+        "run_id": "2d3b8717df2c477f88e040acd3d62a2d",
+        "run_date": "2026-09-29",
+        "status": "PASS",
+        "report_directory": "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a",
+        "assertions_passed": 143,
+        "allowed_clients": 5,
+        "blocked_clients": 0,
+        "successful_training_rounds": 5,
+        "active_workers": 6,
+        "attempts": {
+          "block": "0x68",
+          "completed": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "aborted": []
+        },
+        "contribution_counts": [
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "controlled_attempt_timing": {
+          "opened_timestamp": 1790687522,
+          "deadline_timestamp": 1790687567,
+          "basis": "PolicyOpened data and InputsClosed block timestamp; not local-timer instrumentation",
+          "closed_timestamp": 1790687538,
+          "elapsed_seconds": 16,
+          "relation_to_deadline": "before 45 s"
+        },
+        "deployment_app_id": "a2fb2bbf783c732037ea821b374cc8b6c9e29c67",
+        "test_driver_source_sha256": "40e1180725623773e9c2030711218fcc840e4b85c040ade71f5b398339b1a139",
+        "sources": {
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/smew.json": "391f4a7395740ed6fe613175022d00a93d9b713d822d51ba31a40d1eb0155c4a",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/run.json": "56f6891f68a568ea637f718b44e3ccfb230784ed2cded03ab66864c0d416a66c",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/manifest.json": "aaeac953d459e22249eb2da27e747df26fe207c1410d6d1aeb3980716282d3f9",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/result.json": "a25cfca56d05d3023408c706d0a7a04ccd31df8a71e0f61283beb5ce405144b2",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/run-artifacts.zip": "fe76a3b7909b14e9cb4033adf2be48b40ed29d90ebf685d82e3c6af5d14a23d4",
+          "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json": "9370831601f51f9b080f2dbd8e5d607bf0888f6df8c0fb2fdf45f2deb6415c1e",
+          "vita-fl-td/generated/collection-check-20260929/restart-verification.json": "9092709cf72471edd3652c0bfa068487390d2a2e5702d770b52ec5b898c51161",
+          "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2"
+        },
+        "provisioning_terraform_parallelism": 2,
+        "runtime_compose_sha256": "565b1455588174a6af1738c834d9254c124266b419cf0f589d8374be39e30899",
+        "previous_runtime_compose_sha256": "39696ae9a38f8e794695ff52a5ea1ac9c1639054a830f9a70c335c44c43e2c98",
+        "provisioning_config_changed_after_security_run": true,
+        "runtime_config_change": {
+          "service": "control-api",
+          "environment": {
+            "TF_CLI_ARGS_apply": "-parallelism=2"
+          }
+        },
+        "runtime_config_change_source": "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json",
+        "audit_policy": {
+          "path": "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json",
+          "sha256": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2",
+          "scitt_keys_sha256": "4e88fc22158be76e0e595ede59c54d77ea04476a31d5aa4ef1874abee339b56c",
+          "previous_scitt_keys_sha256": "ffa512796b8a1c59e1e5e0e088693543f07f66f574ab7e7000db8b0f78eeadaf",
+          "trust_bootstrap": "authenticated-deployment-ui",
+          "old_security_policy_preserved": true,
+          "platform_allowlist_and_sello_identity_unchanged": true,
+          "restart_verification_source": "vita-fl-td/generated/collection-check-20260929/restart-verification.json"
+        }
+      },
+      "partial": {
+        "run_id": "9b4dfb29086a42c39d57c5001a84ab90",
+        "run_date": "2026-09-29",
+        "status": "PASS",
+        "report_directory": "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e",
+        "assertions_passed": 144,
+        "allowed_clients": 2,
+        "blocked_clients": 3,
+        "successful_training_rounds": 5,
+        "active_workers": 6,
+        "attempts": {
+          "block": "0x66",
+          "completed": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "aborted": []
+        },
+        "contribution_counts": [
+          2,
+          5,
+          5,
+          5,
+          5
+        ],
+        "controlled_attempt_timing": {
+          "opened_timestamp": 1790688352,
+          "deadline_timestamp": 1790688397,
+          "basis": "PolicyOpened data and InputsClosed block timestamp; not local-timer instrumentation",
+          "closed_timestamp": 1790688397,
+          "elapsed_seconds": 45,
+          "relation_to_deadline": "at or after 45 s"
+        },
+        "deployment_app_id": "a2fb2bbf783c732037ea821b374cc8b6c9e29c67",
+        "test_driver_source_sha256": "40e1180725623773e9c2030711218fcc840e4b85c040ade71f5b398339b1a139",
+        "sources": {
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/smew.json": "6a93603200259b2c542782a5c3ccd88cb3fb0e31459a695bd8feb91e988d442f",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/run.json": "5b663e8eddb828792c67aa8c45f9e7c42ea2ba7c92ad7b42f5812c327816b473",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/manifest.json": "5f82fba426b8f4afa1624ca64725bbddbb97be5db3b1317da6a121976026b67f",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/result.json": "cc15f4613545fa54952453ced7e0537e5b3ad6a8f3cef9e75d83ac59cf188c03",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/run-artifacts.zip": "fcdaf712fcf7cd054625c770bdf113a8b39f46d9a78d9b82f5d9ab4d28e4e1e4",
+          "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json": "9370831601f51f9b080f2dbd8e5d607bf0888f6df8c0fb2fdf45f2deb6415c1e",
+          "vita-fl-td/generated/collection-check-20260929/restart-verification.json": "9092709cf72471edd3652c0bfa068487390d2a2e5702d770b52ec5b898c51161",
+          "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2"
+        },
+        "provisioning_terraform_parallelism": 2,
+        "runtime_compose_sha256": "565b1455588174a6af1738c834d9254c124266b419cf0f589d8374be39e30899",
+        "previous_runtime_compose_sha256": "39696ae9a38f8e794695ff52a5ea1ac9c1639054a830f9a70c335c44c43e2c98",
+        "provisioning_config_changed_after_security_run": true,
+        "runtime_config_change": {
+          "service": "control-api",
+          "environment": {
+            "TF_CLI_ARGS_apply": "-parallelism=2"
+          }
+        },
+        "runtime_config_change_source": "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json",
+        "audit_policy": {
+          "path": "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json",
+          "sha256": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2",
+          "scitt_keys_sha256": "4e88fc22158be76e0e595ede59c54d77ea04476a31d5aa4ef1874abee339b56c",
+          "previous_scitt_keys_sha256": "ffa512796b8a1c59e1e5e0e088693543f07f66f574ab7e7000db8b0f78eeadaf",
+          "trust_bootstrap": "authenticated-deployment-ui",
+          "old_security_policy_preserved": true,
+          "platform_allowlist_and_sello_identity_unchanged": true,
+          "restart_verification_source": "vita-fl-td/generated/collection-check-20260929/restart-verification.json"
+        }
+      },
+      "zero": {
+        "run_id": "eda875a3763244d8a240b4f9bbe68a99",
+        "run_date": "2026-09-29",
+        "status": "PASS",
+        "report_directory": "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90",
+        "assertions_passed": 172,
+        "allowed_clients": 0,
+        "blocked_clients": 5,
+        "successful_training_rounds": 5,
+        "active_workers": 6,
+        "attempts": {
+          "block": "0x6c",
+          "completed": [
+            0,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "aborted": [
+            1
+          ]
+        },
+        "contribution_counts": [
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "controlled_attempt_timing": {
+          "opened_timestamp": 1790689210,
+          "deadline_timestamp": 1790689255,
+          "basis": "PolicyOpened data and InputsClosed block timestamp; not local-timer instrumentation",
+          "relation_to_deadline": "no publication through deadline + 10 s"
+        },
+        "deployment_app_id": "a2fb2bbf783c732037ea821b374cc8b6c9e29c67",
+        "test_driver_source_sha256": "40e1180725623773e9c2030711218fcc840e4b85c040ade71f5b398339b1a139",
+        "sources": {
+          "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/smew.json": "6799756b96ab8f47029c941c22ec24d775a18a3a1b97d234b57e3bc1bee14ccd",
+          "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/run.json": "d51776687a2ae582340c687f0abcb202271bb875220b26ad8298d7c8aa427f73",
+          "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/manifest.json": "58a320cb948e83125dbf0e186d917dc65143b5a11f88be5cad07a22031be223b",
+          "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/result.json": "e0d155c8bbff1badc3b30e47fb106264705dcfaf0aebc8c7d337c245a0362658",
+          "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/run-artifacts.zip": "eb7eb982d50b6a499b92d5a780a944097ee507fffe01fa08cca663b77870ef86",
+          "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json": "9370831601f51f9b080f2dbd8e5d607bf0888f6df8c0fb2fdf45f2deb6415c1e",
+          "vita-fl-td/generated/collection-check-20260929/restart-verification.json": "9092709cf72471edd3652c0bfa068487390d2a2e5702d770b52ec5b898c51161",
+          "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2"
+        },
+        "quorum_required": 3,
+        "eligible_reporters": 5,
+        "below_quorum_preserved": true,
+        "empty_observation_seconds_after_deadline": 10,
+        "recovery_timings_seconds": {
+          "zero_quorum_after_deadline": 36.057513400912285,
+          "zero_recovery_after_deadline": 59.20849387347698
+        },
+        "provisioning_terraform_parallelism": 2,
+        "runtime_compose_sha256": "565b1455588174a6af1738c834d9254c124266b419cf0f589d8374be39e30899",
+        "previous_runtime_compose_sha256": "39696ae9a38f8e794695ff52a5ea1ac9c1639054a830f9a70c335c44c43e2c98",
+        "provisioning_config_changed_after_security_run": true,
+        "runtime_config_change": {
+          "service": "control-api",
+          "environment": {
+            "TF_CLI_ARGS_apply": "-parallelism=2"
+          }
+        },
+        "runtime_config_change_source": "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json",
+        "audit_policy": {
+          "path": "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json",
+          "sha256": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2",
+          "scitt_keys_sha256": "4e88fc22158be76e0e595ede59c54d77ea04476a31d5aa4ef1874abee339b56c",
+          "previous_scitt_keys_sha256": "ffa512796b8a1c59e1e5e0e088693543f07f66f574ab7e7000db8b0f78eeadaf",
+          "trust_bootstrap": "authenticated-deployment-ui",
+          "old_security_policy_preserved": true,
+          "platform_allowlist_and_sello_identity_unchanged": true,
+          "restart_verification_source": "vita-fl-td/generated/collection-check-20260929/restart-verification.json"
+        }
+      }
+    },
+    "earlier_failed_attempts": [
+      {
+        "report_directory": "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035",
+        "scenario": "early",
+        "run_id": "cf620aaa8d9640f89af76689c31409d7",
+        "status": "ERROR",
+        "errors": [
+          "RuntimeError: Control API POST /api/training/start: HTTP 409, expected 200"
+        ],
+        "sources": {
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/smew.json": "41e31139a34bb66e5bb8b90de19dcd45bc95fbc17f163332dda57e158be390bb",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/run.json": "49ef2a17f7153d35941d005f0f6372402edce79e69c6a87c4cc61a74b95d8dc0",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/manifest.json": "839b10b71a2c99097a2562a1dcc5ebee3a4e1845129792d6ffead37a0078f1f4",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/result.json": "46e55c2cdb60fcc8ae0f32b4685d41ff77b0ddbacf8e77038ceccf29eaeb70e2",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/run-artifacts.zip": "3b9077b3338d08759bdd7c8fe2bbb1f07a7c08b74e4ba4b02700bdcc70040668"
+        }
+      },
+      {
+        "report_directory": "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f",
+        "scenario": "early",
+        "run_id": "c93e3d33899a413da27931498561b318",
+        "status": "ERROR",
+        "errors": [
+          "RuntimeError: Control API POST /api/training/start: HTTP 500, expected 200"
+        ],
+        "sources": {
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/smew.json": "170f6d3ff8916837c68649a2ecc263594713b1529c6cac8ae4f47142a7dcd3f4",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/run.json": "734c89a72e472e0f7d7e97c533ab54faa607141358c5c3426f1de28611de42d9",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/manifest.json": "3f21c2bbab227f6f49af0b39e329cb5a7a1e8f929a7de5f9e039e8f88f598f89",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/result.json": "2dbd9a0e5422ef8267fb50089f098190c100d0ef688b469970d4ee871c9742d4",
+          "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/run-artifacts.zip": "713a07998a367dffb56d132ca96cb008a46b1d7941750e242029f53b08dd96c6"
+        }
+      },
+      {
+        "report_directory": "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816",
+        "scenario": "partial",
+        "run_id": "6325a81c97804a2c937c7cab9f0b65ea",
+        "status": "ERROR",
+        "errors": [
+          "RuntimeError: Control API POST /api/training/start: HTTP 500, expected 200"
+        ],
+        "sources": {
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/smew.json": "bc2a176e3c2aedd7bffad38b3ca6d2445db7e10841a931bb674f92dfd5c45b26",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/run.json": "6ced59625551dfe79d0dacc3be6ef6eb1918acde4805ce0bcac6c95530afd1a6",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/manifest.json": "02c2d4bef9786535105c0d08c78388be122676ae7d129aad4e1ef3a76f33156b",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/result.json": "7dd9fd18c3f10a6e1370b7b78c78177837200465f6884426d4040697df5f2b11",
+          "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/run-artifacts.zip": "c2490f2aa387939b6591e73ffdbaf9a456775c5123311940951f66ab47f8d324"
+        }
+      }
+    ],
+    "same_deployment_images": true,
+    "sources": {
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/smew.json": "391f4a7395740ed6fe613175022d00a93d9b713d822d51ba31a40d1eb0155c4a",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/run.json": "56f6891f68a568ea637f718b44e3ccfb230784ed2cded03ab66864c0d416a66c",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/manifest.json": "aaeac953d459e22249eb2da27e747df26fe207c1410d6d1aeb3980716282d3f9",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/result.json": "a25cfca56d05d3023408c706d0a7a04ccd31df8a71e0f61283beb5ce405144b2",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_15_02_42_ca2cea1a/subprocess_output/run-artifacts.zip": "fe76a3b7909b14e9cb4033adf2be48b40ed29d90ebf685d82e3c6af5d14a23d4",
+      "vita-fl-td/generated/collection-check-20260929/parallelism-plan.json": "9370831601f51f9b080f2dbd8e5d607bf0888f6df8c0fb2fdf45f2deb6415c1e",
+      "vita-fl-td/generated/collection-check-20260929/restart-verification.json": "9092709cf72471edd3652c0bfa068487390d2a2e5702d770b52ec5b898c51161",
+      "vita-fl-td/generated/collection-check-20260929/audit-policy-p2.json": "ab42502be003fac038dba7dd3980e694c65e9f5a8a130ccfe24de05fe3a356e2",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/smew.json": "6a93603200259b2c542782a5c3ccd88cb3fb0e31459a695bd8feb91e988d442f",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/run.json": "5b663e8eddb828792c67aa8c45f9e7c42ea2ba7c92ad7b42f5812c327816b473",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/manifest.json": "5f82fba426b8f4afa1624ca64725bbddbb97be5db3b1317da6a121976026b67f",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/result.json": "cc15f4613545fa54952453ced7e0537e5b3ad6a8f3cef9e75d83ac59cf188c03",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_15_16_23_dbffef0e/subprocess_output/run-artifacts.zip": "fcdaf712fcf7cd054625c770bdf113a8b39f46d9a78d9b82f5d9ab4d28e4e1e4",
+      "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/smew.json": "6799756b96ab8f47029c941c22ec24d775a18a3a1b97d234b57e3bc1bee14ccd",
+      "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/run.json": "d51776687a2ae582340c687f0abcb202271bb875220b26ad8298d7c8aa427f73",
+      "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/manifest.json": "58a320cb948e83125dbf0e186d917dc65143b5a11f88be5cad07a22031be223b",
+      "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/result.json": "e0d155c8bbff1badc3b30e47fb106264705dcfaf0aebc8c7d337c245a0362658",
+      "SMEW/reports/vita-fl-zero-5r-20260929-a2fb2bbf/2026_09_29_15_30_36_da447d90/subprocess_output/run-artifacts.zip": "eb7eb982d50b6a499b92d5a780a944097ee507fffe01fa08cca663b77870ef86",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/smew.json": "41e31139a34bb66e5bb8b90de19dcd45bc95fbc17f163332dda57e158be390bb",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/run.json": "49ef2a17f7153d35941d005f0f6372402edce79e69c6a87c4cc61a74b95d8dc0",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/manifest.json": "839b10b71a2c99097a2562a1dcc5ebee3a4e1845129792d6ffead37a0078f1f4",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/result.json": "46e55c2cdb60fcc8ae0f32b4685d41ff77b0ddbacf8e77038ceccf29eaeb70e2",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_33_19_245ab035/subprocess_output/run-artifacts.zip": "3b9077b3338d08759bdd7c8fe2bbb1f07a7c08b74e4ba4b02700bdcc70040668",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/smew.json": "170f6d3ff8916837c68649a2ecc263594713b1529c6cac8ae4f47142a7dcd3f4",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/run.json": "734c89a72e472e0f7d7e97c533ab54faa607141358c5c3426f1de28611de42d9",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/manifest.json": "3f21c2bbab227f6f49af0b39e329cb5a7a1e8f929a7de5f9e039e8f88f598f89",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/result.json": "2dbd9a0e5422ef8267fb50089f098190c100d0ef688b469970d4ee871c9742d4",
+      "SMEW/reports/vita-fl-early-5r-20260929-a2fb2bbf/2026_09_29_14_40_08_624be60f/subprocess_output/run-artifacts.zip": "713a07998a367dffb56d132ca96cb008a46b1d7941750e242029f53b08dd96c6",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/smew.json": "bc2a176e3c2aedd7bffad38b3ca6d2445db7e10841a931bb674f92dfd5c45b26",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/run.json": "6ced59625551dfe79d0dacc3be6ef6eb1918acde4805ce0bcac6c95530afd1a6",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/manifest.json": "02c2d4bef9786535105c0d08c78388be122676ae7d129aad4e1ef3a76f33156b",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/result.json": "7dd9fd18c3f10a6e1370b7b78c78177837200465f6884426d4040697df5f2b11",
+      "SMEW/reports/vita-fl-partial-5r-20260929-a2fb2bbf/2026_09_29_14_26_19_6fba5816/subprocess_output/run-artifacts.zip": "c2490f2aa387939b6591e73ffdbaf9a456775c5123311940951f66ab47f8d324"
+    },
+    "runtime_provisioning_config_changed": true,
+    "coverage_limit": "One successful execution per controlled scenario; selected collection boundaries, no reliability estimate."
+  }
+}

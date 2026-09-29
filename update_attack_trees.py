@@ -34,7 +34,8 @@ def digest(path):
 def check_structure(prs):
     target = attack_tree_target(prs)
     process_count = sello_process_count(prs)
-    assert len(prs.slides) == 52 + process_count, 'Unexpected talk/backup page count'
+    results_count = b.external_results_count(prs)
+    assert len(prs.slides) == 52 + process_count + results_count, 'Unexpected talk/backup page count'
     assert attack_tree_count(prs) == COUNT
     assert len(prs.slide_masters) == 2
     names = [b.ATTACK_TREE_SLIDE_PREFIX + slug for slug in b.ATTACK_TREE_SLUGS]
@@ -42,8 +43,8 @@ def check_structure(prs):
     assert sum(s.name.startswith(b.ATTACK_TREE_SLIDE_PREFIX) for s in prs.slides) == COUNT
     for i, text in ((chain_of_custody_index(prs), 'Cryptographic chain of custody'),
                     (target + COUNT + 1, 'One end-to-end Phala FedAvg run'),
-                    (target + COUNT + 5, 'Conclusion and outlook'),
-                    (target + COUNT + 6, 'Training and inference share one verified image')):
+                    (target + COUNT + 5 + results_count, 'Conclusion and outlook'),
+                    (target + COUNT + 6 + results_count, 'Training and inference share one verified image')):
         assert text in visible(prs.slides[i]), (i, text)
     assert prs.slides[target + COUNT].name == b.EVALUATION_STACK_SLIDE_NAME
     assert prs.slides[target + COUNT + 2].name == b.TEST_EVALUATION_SLIDE_NAME
@@ -74,10 +75,11 @@ def main():
     prs = Presentation(DECK)
     old_count = len(prs.slides)
     process_count = sello_process_count(prs)
+    results_count = b.external_results_count(prs)
     target = attack_tree_target(prs)
-    assert old_count in (46 + process_count, 52 + process_count), 'Unexpected deck size; refusing to overwrite'
+    assert old_count in (46 + process_count + results_count, 52 + process_count + results_count), 'Unexpected deck size; refusing to overwrite'
     inserting = attack_tree_count(prs) == 0
-    assert old_count == (46 if inserting else 52) + process_count
+    assert old_count == (46 if inserting else 52) + process_count + results_count
     if inserting:
         assert 'Cryptographic chain of custody' in visible(prs.slides[chain_of_custody_index(prs)])
         assert prs.slides[target].name == b.EVALUATION_STACK_SLIDE_NAME
@@ -142,7 +144,7 @@ def main():
         'pages': list(range(target + 1, target + COUNT + 1)),
         'slides_before': old_count, 'slides_after': len(checked.slides),
         'talk_pages': len(checked.slides) - 17, 'backup_pages': 17,
-        'sello_process_pages': process_count, 'mode': 'insert' if inserting else 'replace',
+        'sello_process_pages': process_count, 'external_results_pages': results_count, 'mode': 'insert' if inserting else 'replace',
         'preserved_other_slides_and_notes': preserved,
         'allowed_existing_change': 'page-number footers only on insertion; none outside trees on update',
         'main_deck_sha256_before': before_hash, 'main_deck_sha256_after': digest(DECK),
